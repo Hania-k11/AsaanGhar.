@@ -48,7 +48,7 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-xl text-green-950 mb-8"
           >
-            Asaan Ghar makesssss buying, selling, and renting properties simpler than ever before. Your journey to the
+            Asaan Ghar makes buyinggggg, selling, and renting properties simpler than ever before. Your journey to the
             perfect home starts here.
           </motion.p>
 
