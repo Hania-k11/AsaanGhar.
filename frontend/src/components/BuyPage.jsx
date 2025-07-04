@@ -15,7 +15,7 @@ import house13 from "../assets/house13.jpg";
 import house14 from "../assets/house14.jpg";
 import house15 from "../assets/house15.jpg";
 
-const properties = [
+const defaultProperties = [
   { id: 1, title: "Modern Family House", location: "DHA Phase 6, Karachi", price: "PKR 3.2 Crore", image: house1 },
   { id: 2, title: "Luxury Apartment", location: "Clifton, Karachi", price: "PKR 1.5 Crore", image: house2 },
   { id: 3, title: "Commercial Plot", location: "Gulistan-e-Johar", price: "PKR 5.0 Crore", image: house3 },
@@ -33,14 +33,14 @@ const properties = [
   { id: 15, title: "Brand New Home", location: "Shah Faisal Colony", price: "PKR 3.6 Crore", image: house15 },
 ];
 
-const BuyPage = () => {
+const BuyPage = ({ userProperties, setUserProperties }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const allProperties = [...defaultProperties, ...userProperties];
 
   const getPropertiesForPage = (page) => {
-    if (page === 1) return properties.slice(0, 6);   
-    if (page === 2) return properties.slice(6, 12);   
-    if (page === 3) return properties.slice(12, 15);  
-    return [];
+    const perPage = 6;
+    const start = (page - 1) * perPage;
+    return allProperties.slice(start, start + perPage);
   };
 
   const currentProperties = getPropertiesForPage(currentPage);
@@ -61,15 +61,30 @@ const BuyPage = () => {
               <h2 className="text-xl font-semibold">{property.title}</h2>
               <p className="text-gray-600">{property.location}</p>
               <p className="text-emerald-600 font-bold">{property.price}</p>
+              <p className="text-sm text-gray-500">{property.description}</p>
+              {property.owner && (
+                <p className="text-sm text-gray-500 mt-1">Posted by: {property.owner}</p>
+              )}
               <button className="mt-3 bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700">
                 View Details
               </button>
+
+              {/* Delete button for user-added properties */}
+              {property.id >= 1000000000000 && (
+                <button
+                  onClick={() =>
+                    setUserProperties((prev) => prev.filter((p) => p.id !== property.id))
+                  }
+                  className="block mt-2 text-red-500 hover:underline"
+                >
+                  Delete
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-center mt-10 space-x-2">
         {[1, 2, 3].map((pageNum) => (
           <button

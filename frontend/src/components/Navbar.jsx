@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Home, Menu, X } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 const Navbar = ({ onLoginClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,7 +16,14 @@ const Navbar = ({ onLoginClick }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navItems = ["Home", "Buy", "Sell", "Rent", "About", "Contact"];
+  const navItems = [
+    { name: "Home", path: "/" },
+    { name: "Buy", path: "/buy" },
+    { name: "Sell", path: "/sell" },
+    { name: "Rent", path: "#rent" },
+    { name: "About", path: "#about" },
+    { name: "Contact", path: "#contact" },
+  ];
 
   return (
     <motion.nav
@@ -38,22 +44,29 @@ const Navbar = ({ onLoginClick }) => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-8">
-          {navItems.map((item) => {
-            const path = item === "Home" ? "/" : `/${item.toLowerCase()}`;
-            const isActive = location.pathname === path;
-            return (
-              <motion.div key={item} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Link
-                  to={path}
-                  className={`font-medium transition-colors ${
-                    isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
-                  }`}
+          {navItems.map((item) => (
+            <motion.div key={item.name} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              {item.path.startsWith("#") ? (
+                <a
+                  href={item.path}
+                  className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
                 >
-                  {item}
-                </Link>
-              </motion.div>
-            );
-          })}
+                  {item.name}
+                </a>
+              ) : (
+                <NavLink
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `font-medium transition-colors ${
+                      isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
+                    }`
+                  }
+                >
+                  {item.name}
+                </NavLink>
+              )}
+            </motion.div>
+          ))}
         </div>
 
         {/* Desktop Login/Register Button */}
@@ -83,22 +96,31 @@ const Navbar = ({ onLoginClick }) => {
           className="md:hidden bg-white shadow-lg"
         >
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            {navItems.map((item) => {
-              const path = item === "Home" ? "/" : `/${item.toLowerCase()}`;
-              const isActive = location.pathname === path;
-              return (
-                <Link
-                  key={item}
-                  to={path}
-                  className={`font-medium py-2 transition-colors ${
-                    isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
-                  }`}
+            {navItems.map((item) => (
+              item.path.startsWith("#") ? (
+                <a
+                  key={item.name}
+                  href={item.path}
+                  className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  {item}
-                </Link>
-              );
-            })}
+                  {item.name}
+                </a>
+              ) : (
+                <NavLink
+                  key={item.name}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `py-2 font-medium transition-colors ${
+                      isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
+                    }`
+                  }
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </NavLink>
+              )
+            ))}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

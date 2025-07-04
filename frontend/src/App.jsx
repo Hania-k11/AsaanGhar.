@@ -9,10 +9,12 @@ import CallToAction from "./components/CallToAction";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
 import BuyPage from "./components/BuyPage";
+import SellPage from "./components/SellPage";
 import "./index.css";
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [userProperties, setUserProperties] = useState([]);
 
   return (
     <Router>
@@ -31,7 +33,19 @@ function App() {
               </>
             }
           />
-          <Route path="/buy" element={<BuyPage />} />
+          <Route
+            path="/buy"
+            element={
+              <BuyPage
+                userProperties={userProperties}
+                setUserProperties={setUserProperties}
+              />
+            }
+          />
+          <Route
+            path="/sell"
+            element={<SellPage setUserProperties={setUserProperties} />}
+          />
         </Routes>
         <Footer />
         <LoginModal show={showLoginModal} onClose={() => setShowLoginModal(false)} />
