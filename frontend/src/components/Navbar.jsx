@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Home, Menu, X } from "lucide-react";
+import { Link } from "react-router-dom"; 
 
 const Navbar = ({ onLoginClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,6 +15,8 @@ const Navbar = ({ onLoginClick }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const navItems = ["Home", "Buy", "Sell", "Rent", "About", "Contact"];
 
   return (
     <motion.nav
@@ -34,17 +37,27 @@ const Navbar = ({ onLoginClick }) => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-8">
-          {["Home", "Buy", "Sell", "Rent", "About", "Contact"].map((item) => (
-            <motion.a
-              key={item}
-              href={`#${item.toLowerCase()}`}
-              className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {item}
-            </motion.a>
-          ))}
+          {navItems.map((item) => {
+            return (
+              <motion.div key={item} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+                {item === "Buy" ? (
+                  <Link
+                    to="/buy"
+                    className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
+                  >
+                    {item}
+                  </Link>
+                ) : (
+                  <a
+                    href={`#${item.toLowerCase()}`}
+                    className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
+                  >
+                    {item}
+                  </a>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Desktop Login/Register Button */}
@@ -74,16 +87,27 @@ const Navbar = ({ onLoginClick }) => {
           className="md:hidden bg-white shadow-lg"
         >
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            {["Home", "Buy", "Sell", "Rent", "About", "Contact"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase()}`}
-                className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item === "Buy" ? (
+                <Link
+                  key={item}
+                  to="/buy"
+                  className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item}
+                </Link>
+              ) : (
+                <a
+                  key={item}
+                  href={`#${item.toLowerCase()}`}
+                  className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item}
+                </a>
+              )
+            )}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
