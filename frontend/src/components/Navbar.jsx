@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Home, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom"; 
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = ({ onLoginClick }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,23 +39,18 @@ const Navbar = ({ onLoginClick }) => {
         {/* Desktop Menu */}
         <div className="hidden md:flex space-x-8">
           {navItems.map((item) => {
+            const path = item === "Home" ? "/" : `/${item.toLowerCase()}`;
+            const isActive = location.pathname === path;
             return (
               <motion.div key={item} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                {item === "Buy" ? (
-                  <Link
-                    to="/buy"
-                    className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
-                  >
-                    {item}
-                  </Link>
-                ) : (
-                  <a
-                    href={`#${item.toLowerCase()}`}
-                    className="text-gray-700 hover:text-emerald-600 font-medium transition-colors"
-                  >
-                    {item}
-                  </a>
-                )}
+                <Link
+                  to={path}
+                  className={`font-medium transition-colors ${
+                    isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
+                  }`}
+                >
+                  {item}
+                </Link>
               </motion.div>
             );
           })}
@@ -87,27 +83,22 @@ const Navbar = ({ onLoginClick }) => {
           className="md:hidden bg-white shadow-lg"
         >
           <div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-            {navItems.map((item) =>
-              item === "Buy" ? (
+            {navItems.map((item) => {
+              const path = item === "Home" ? "/" : `/${item.toLowerCase()}`;
+              const isActive = location.pathname === path;
+              return (
                 <Link
                   key={item}
-                  to="/buy"
-                  className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
+                  to={path}
+                  className={`font-medium py-2 transition-colors ${
+                    isActive ? "text-emerald-600" : "text-gray-700 hover:text-emerald-600"
+                  }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item}
                 </Link>
-              ) : (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="text-gray-700 hover:text-emerald-600 font-medium py-2 transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item}
-                </a>
-              )
-            )}
+              );
+            })}
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

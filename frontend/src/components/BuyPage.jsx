@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import house1 from "../assets/house1.jpg";
 import house2 from "../assets/house2.jpg";
 import house3 from "../assets/house3.jpg";
@@ -32,7 +32,9 @@ const BuyPage = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentProperties = properties.slice(indexOfFirstItem, indexOfLastItem);
 
-  const totalPages = 3;
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentPage]);
 
   return (
     <div className="container mx-auto px-4 pt-24 pb-10">
