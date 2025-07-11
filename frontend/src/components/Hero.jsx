@@ -1,5 +1,5 @@
 
-import { Search, MapPin, HomeIcon, DollarSign } from "lucide-react"
+import { Search, Mic, MapPin, HomeIcon, DollarSign } from "lucide-react"
 import { motion } from "framer-motion" // eslint-disable-line no-unused-vars
 import FloatingElements from "./FloatingElements"
 
@@ -53,53 +53,29 @@ const Hero = () => {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="bg-white p-4 rounded-xl shadow-2xl"
-          >
-            <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-              <div className="flex-1 relative">
-                <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Location"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
-              </div>
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8, delay: 0.4 }}
+  className="flex justify-center"
+>
+  <div className="bg-white p-4 rounded-xl shadow-2xl w-full max-w-2xl">
+    <div className="relative">
+      {/* Left search icon */}
+      <Search className="absolute left-3 top-3 text-gray-400" size={20} />
 
-              <div className="flex-1 relative">
-                <HomeIcon className="absolute left-3 top-3 text-gray-400" size={20} />
-                <select className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent appearance-none bg-white">
-                  <option value="">Property Type</option>
-                  <option value="house">House</option>
-                  <option value="apartment">Apartment</option>
-                  <option value="condo">Condo</option>
-                  <option value="land">Land</option>
-                </select>
-              </div>
+      {/* Right mic icon */}
+      <Mic className="absolute right-3 top-3 text-gray-400 cursor-pointer" size={20} />
 
-              <div className="flex-1 relative">
-                <DollarSign className="absolute left-3 top-3 text-gray-400" size={20} />
-                <select className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent appearance-none bg-white">
-                  <option value="">Price Range</option>
-                  <option value="0-5000000">Under 50 Lac</option>
-                  <option value="5000000-10000000">50 Lac - 1 Crore</option>
-                  <option value="10000000-20000000">1 - 2 Crore</option>
-                  <option value="20000000+">Above 2 Crore</option>
-                </select>
-              </div>
+      {/* Input field */}
+      <input
+        type="text"
+        placeholder="Search"
+        className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+      />
+    </div>
+  </div>
+</motion.div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-8 py-3 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all flex items-center justify-center"
-              >
-                <Search className="mr-2" size={20} />
-                Search
-              </motion.button>
-            </div>
-          </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
