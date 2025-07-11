@@ -30,8 +30,8 @@ const Hero = () => {
         </motion.div>
       </div>
       
-      <div className="container mx-auto px-4 relative z-10 h-screen flex flex-col justify-center">
-    
+      <div className="container mx-auto px-4 relative z-10 h-screen flex flex-col justify-center items-center text-center">
+
         <div className="max-w-3xl">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -80,13 +80,13 @@ const Hero = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
+            transition={{ duration: 1, delay: 0.2 }}
             className="mt-8 flex items-center space-x-4"
           >
-            <p className="text-white font-medium">Trusted by:</p>
+            <p className="text-black font-medium">Trusted by:</p>
             <div className="flex space-x-6">
               {[1, 2, 3].map((i) => (
-                <motion.div key={i} whileHover={{ y: -5 }} className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
+                <motion.div key={i} whileHover={{ y: -5 }} className="bg-black/20 backdrop-blur-sm p-2 rounded-lg">
                   <div className="w-20 h-8 bg-white/30 rounded"></div>
                 </motion.div>
               ))}
