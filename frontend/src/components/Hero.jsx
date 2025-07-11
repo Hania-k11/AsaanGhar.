@@ -1,5 +1,5 @@
 
-import { Search, Mic, MapPin, HomeIcon, DollarSign } from "lucide-react"
+import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
 import { motion } from "framer-motion" // eslint-disable-line no-unused-vars
 import FloatingElements from "./FloatingElements"
 
@@ -33,6 +33,32 @@ const Hero = () => {
       <div className="container mx-auto px-4 relative z-10 h-screen flex flex-col justify-center items-center text-center">
 
         <div className="max-w-3xl">
+
+<motion.div
+  initial={{ opacity: 0, y: -10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="flex items-center justify-center mb-6 -mt-16 scale-200 md:scale-200"
+>
+  <motion.div
+    animate={{
+      y: [0, -5, 0], // up and down motion
+      rotate: [0, 5, -5, 0], // slight wiggle
+    }}
+    transition={{
+      duration: 2,
+      repeat: Infinity,
+      repeatType: "loop",
+    }}
+  >
+    <Home className="h-10 w-10 text-emerald-700 mr-2" />
+  </motion.div>
+  {/* <span className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-emerald-900 to-teal-700 bg-clip-text text-transparent">
+    Asaan Ghar
+  </span> */}
+</motion.div>
+
+
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -59,25 +85,33 @@ const Hero = () => {
   className="flex justify-center"
 >
   <div className="bg-white p-4 rounded-xl shadow-2xl w-full max-w-2xl">
-    <div className="relative">
-      {/* Left search icon */}
-      <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-
-      {/* Right mic icon */}
-      <Mic className="absolute right-3 top-3 text-gray-400 cursor-pointer" size={20} />
-
-      {/* Input field */}
+  <div className="flex items-center space-x-2">
+    {/* Search input with icon */}
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
       <input
         type="text"
-        placeholder="Search"
-        className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+        placeholder="Search for your desired property"
+        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
       />
     </div>
+
+    {/* Search button */}
+    <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition duration-300">
+      Search
+    </button>
+
+    {/* Mic icon */}
+    <button className="p-3 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-300">
+      <Mic className="text-gray-600" size={20} />
+    </button>
   </div>
+</div>
+
 </motion.div>
 
 
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.2 }}
@@ -91,13 +125,13 @@ const Hero = () => {
                 </motion.div>
               ))}
             </div>
-          </motion.div>
+          </motion.div> */}
         </div>
       </div>
 
       {/* Wave separator */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full h-auto">
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden ">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className=" w-full h-auto">
           <path
             fill="#ffffff"
             fillOpacity="1"
