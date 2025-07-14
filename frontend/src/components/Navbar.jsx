@@ -20,9 +20,9 @@ const Navbar = ({ onLoginClick }) => {
     { name: "Home", path: "/" },
     { name: "Buy", path: "/buy" },
     { name: "Sell", path: "/sell" },
-    { name: "Rent", path: "#rent" },
-    { name: "About", path: "#about" },
-    { name: "Contact", path: "#contact" },
+    { name: "Rent", path: "/rent" },
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
   ];
 
   return (
