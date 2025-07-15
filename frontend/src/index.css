@@ -44,3 +44,17 @@ html {
     transform: translateY(0px);
   }
 }
+
+@keyframes waveMove {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-40%);
+  }
+}
+
+.wave-svg {
+  animation: waveMove 8s linear infinite;
+}
+

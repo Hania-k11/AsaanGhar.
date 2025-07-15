@@ -3,8 +3,33 @@
 import { motion } from "framer-motion" // eslint-disable-line no-unused-vars
 import { Home, Phone, Mail, MapPin, Facebook, Twitter, Instagram, Linkedin, Youtube } from "lucide-react"
 
+
+const socialLinks = [
+  {
+    icon: Facebook,
+    href: "https://facebook.com",
+  },
+  {
+    icon: Twitter,
+    href: "https://twitter.com",
+  },
+  {
+    icon: Instagram,
+    href: "https://instagram.com",
+  },
+  {
+    icon: Linkedin,
+    href: "https://linkedin.com",
+  },
+  {
+    icon: Youtube,
+    href: "https://youtube.com",
+  },
+];
+
 const Footer = () => {
   return (
+    
     <footer className="bg-gray-900 text-white pt-16 pb-8">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
@@ -20,10 +45,12 @@ const Footer = () => {
               across Pakistan.
             </p>
             <div className="flex space-x-4">
-              {[Facebook, Twitter, Instagram, Linkedin, Youtube].map((Icon, index) => (
+              {socialLinks.map(({ icon: Icon, href }, index) => (
                 <motion.a
                   key={index}
-                  href="#"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   whileHover={{ y: -5, color: "#10b981" }}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -31,24 +58,42 @@ const Footer = () => {
                 </motion.a>
               ))}
             </div>
+
           </div>
 
           <div>
             <h3 className="text-lg font-bold mb-6 border-b border-gray-700 pb-2">Quick Links</h3>
             <ul className="space-y-3">
-              {["Home", "Buy Property", "Sell Property", "Rent Property", "About Us", "Contact Us"].map(
-                (item, index) => (
-                  <li key={index}>
-                    <motion.a
-                      href="#"
-                      className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center"
-                      whileHover={{ x: 5 }}
-                    >
-                      <span className="mr-2">›</span> {item}
-                    </motion.a>
-                  </li>
-                ),
-              )}
+              <li>
+                <motion.a href="/" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> Home
+                </motion.a>
+              </li>
+              <li>
+                <motion.a href="/buy" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> Buy Property
+                </motion.a>
+              </li>
+              <li>
+                <motion.a href="/sell" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> Sell Property
+                </motion.a>
+              </li>
+              <li>
+                <motion.a href="/rent" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> Rent Property
+                </motion.a>
+              </li>
+              <li>
+                <motion.a href="/about" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> About Us
+                </motion.a>
+              </li>
+              <li>
+                <motion.a href="/contact" className="text-gray-400 hover:text-emerald-400 transition-colors flex items-center" whileHover={{ x: 5 }}>
+                  <span className="mr-2">›</span> Contact Us
+                </motion.a>
+              </li>
             </ul>
           </div>
 
@@ -74,7 +119,7 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex items-start">
                 <MapPin className="text-emerald-400 mr-3 mt-1 flex-shrink-0" size={18} />
-                <span className="text-gray-400">123 Main Street, F-7, Islamabad, Pakistan</span>
+                <span className="text-gray-400">123 Main Street, Scheme 33, Karachi, Pakistan</span>
               </li>
               <li className="flex items-center">
                 <Phone className="text-emerald-400 mr-3 flex-shrink-0" size={18} />
@@ -107,7 +152,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 pt-8 mt-8 text-center text-gray-500 text-sm">
-          <p>© {new Date().getFullYear()} Asaan Ghar. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} AsaanGhar. All rights reserved.</p>
           <div className="flex justify-center space-x-6 mt-4">
             <a href="#" className="hover:text-emerald-400 transition-colors">
               Privacy Policy
