@@ -6,7 +6,10 @@ import LoginModal from "./components/LoginModal";
 import "./index.css";
 import ContactPage from "./components/ContactPage";
 import AboutPage from "./components/AboutPage";
+<<<<<<< HEAD
 import PropertyDetails from "./components/PropertyDetails";
+=======
+>>>>>>> 52d9a74fc2516b9ed1f9b0a0d29f83873fa61795
 
 // Lazy-loaded pages for performance
 const Hero = lazy(() => import("./components/Hero"));
@@ -69,10 +72,14 @@ function App() {
                 path="/about"
                 element={<AboutPage setUserProperties={setUserProperties} />}
               />
+<<<<<<< HEAD
               <Route
                 path="/property/:id"
                 element={<PropertyDetails />}
               />
+=======
+
+>>>>>>> 52d9a74fc2516b9ed1f9b0a0d29f83873fa61795
               <Route
                 path="*"
                 element={
@@ -80,7 +87,11 @@ function App() {
                     404 - Page Not Found
                   </div>
                 }
+<<<<<<< HEAD
               />
+=======
+              />  
+>>>>>>> 52d9a74fc2516b9ed1f9b0a0d29f83873fa61795
             </Routes>
           </Suspense>
         </main>
