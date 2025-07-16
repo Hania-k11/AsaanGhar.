@@ -1,5 +1,6 @@
+// Updated App.jsx
 import { useState, Suspense, lazy } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import LoginModal from "./components/LoginModal";
@@ -8,7 +9,6 @@ import ContactPage from "./components/ContactPage";
 import AboutPage from "./components/AboutPage";
 import PropertyDetails from "./components/PropertyDetails";
 
-// Lazy-loaded pages for performance
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() => import("./components/FeaturedProperties"));
 const HowItWorks = lazy(() => import("./components/HowItWorks"));
@@ -21,13 +21,31 @@ const RentPage = lazy(() => import("./components/RentPage"));
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [userProperties, setUserProperties] = useState([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
 
   const handleLoginToggle = () => setShowLoginModal((prev) => !prev);
+
+  const handleLoginSuccess = (name) => {
+    setIsLoggedIn(true);
+    setUserName(name);
+    setShowLoginModal(false);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserName("");
+  };
 
   return (
     <Router>
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
-        <Navbar onLoginClick={handleLoginToggle} />
+        <Navbar
+          onLoginClick={handleLoginToggle}
+          isLoggedIn={isLoggedIn}
+          userName={userName}
+          onLogout={handleLogout}
+        />
 
         <main className="flex-grow">
           <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
@@ -46,40 +64,22 @@ function App() {
               />
               <Route
                 path="/buy"
-                element={
-                  <BuyPage
-                    userProperties={userProperties}
-                    setUserProperties={setUserProperties}
-                  />
-                }
+                element={<BuyPage userProperties={userProperties} setUserProperties={setUserProperties} />}
               />
               <Route
                 path="/sell"
-                element={<SellPage setUserProperties={setUserProperties} />}
+                element={isLoggedIn ? <SellPage setUserProperties={setUserProperties} /> : <Navigate to="/" replace />}
               />
               <Route
                 path="/rent"
-                element={<RentPage setUserProperties={setUserProperties} />}
+                element={isLoggedIn ? <RentPage setUserProperties={setUserProperties} /> : <Navigate to="/" replace />}
               />
-              <Route
-                path="/contact"
-                element={<ContactPage setUserProperties={setUserProperties} />}
-              />
-              <Route
-                path="/about"
-                element={<AboutPage setUserProperties={setUserProperties} />}
-              />
-              <Route
-                path="/property/:id"
-                element={<PropertyDetails />}
-              />
+              <Route path="/contact" element={<ContactPage setUserProperties={setUserProperties} />} />
+              <Route path="/about" element={<AboutPage setUserProperties={setUserProperties} />} />
+              <Route path="/property/:id" element={<PropertyDetails />} />
               <Route
                 path="*"
-                element={
-                  <div className="text-center py-20 text-xl font-semibold text-gray-700">
-                    404 - Page Not Found
-                  </div>
-                }
+                element={<div className="text-center py-20 text-xl font-semibold text-gray-700">404 - Page Not Found</div>}
               />
             </Routes>
           </Suspense>
@@ -87,7 +87,11 @@ function App() {
 
         <Footer />
 
-        <LoginModal show={showLoginModal} onClose={handleLoginToggle} />
+        <LoginModal
+          show={showLoginModal}
+          onClose={handleLoginToggle}
+          onLoginSuccess={handleLoginSuccess}
+        />
       </div>
     </Router>
   );
