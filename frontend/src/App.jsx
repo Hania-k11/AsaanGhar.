@@ -16,7 +16,7 @@ const Testimonials = lazy(() => import("./components/Testimonials"));
 const CallToAction = lazy(() => import("./components/CallToAction"));
 const BuyPage = lazy(() => import("./components/BuyPage"));
 const SellPage = lazy(() => import("./components/SellPage"));
-const RentPage = lazy(() => import("./components/RentPage"));
+
 
 function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -70,10 +70,7 @@ function App() {
                 path="/sell"
                 element={isLoggedIn ? <SellPage setUserProperties={setUserProperties} /> : <Navigate to="/" replace />}
               />
-              <Route
-                path="/rent"
-                element={isLoggedIn ? <RentPage setUserProperties={setUserProperties} /> : <Navigate to="/" replace />}
-              />
+              
               <Route path="/contact" element={<ContactPage setUserProperties={setUserProperties} />} />
               <Route path="/about" element={<AboutPage setUserProperties={setUserProperties} />} />
               <Route path="/property/:id" element={<PropertyDetails />} />

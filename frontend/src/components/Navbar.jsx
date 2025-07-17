@@ -1,4 +1,3 @@
-// Updated Navbar.jsx
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Home, Menu, X, User, ChevronDown } from "lucide-react";
@@ -29,10 +28,7 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Buy", path: "/buy" },
-    ...(isLoggedIn ? [
-      { name: "Sell", path: "/sell" },
-      { name: "Rent", path: "/rent" }
-    ] : []),
+    ...(isLoggedIn ? [{ name: "Sell", path: "/sell" }] : []),
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
@@ -152,7 +148,9 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
                 <div className="mt-3 text-sm text-gray-700 space-y-2">
                   <div className="py-2 border-t">My Account</div>
                   <div className="py-2">Change Password</div>
-                  <div className="py-2 text-red-600 font-semibold" onClick={onLogout}>Logout</div>
+                  <div className="py-2 text-red-600 font-semibold" onClick={onLogout}>
+                    Logout
+                  </div>
                 </div>
               </>
             ) : (
