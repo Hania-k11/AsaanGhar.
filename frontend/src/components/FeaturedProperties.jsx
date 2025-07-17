@@ -1,84 +1,90 @@
-
-import { useInView } from "react-intersection-observer"
-import { MapPin, Bed, Bath, Square, Heart } from "lucide-react"
-import { motion } from "framer-motion" // eslint-disable-line no-unused-vars
+import { useState } from "react"
+import { MapPin, Bed, Bath, Square, Heart, ArrowRight } from "lucide-react"
 
 const PropertyCard = ({ property, index }) => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  })
+  const [isLiked, setIsLiked] = useState(false)
 
   return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+    <div 
+      className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 group border border-gray-200"
+      style={{ 
+        animationDelay: `${index * 150}ms`,
+        animation: 'fadeInUp 0.8s ease-out forwards'
+      }}
     >
-      <div className="relative overflow-hidden group">
-        <img
-          src={property.image || "/placeholder.svg"}
-          alt={property.title}
-          className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-        />
-        <div className="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-          {property.type}
+      <div className="relative overflow-hidden">
+        <div className="relative h-64 bg-gradient-to-br from-emerald-50 to-teal-50">
+          <img
+            src={property.image || `https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop&crop=center`}
+            alt={property.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
         </div>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="absolute top-4 right-4 bg-white/80 p-2 rounded-full text-gray-700 hover:text-red-500 transition-colors"
+        
+        <div className="absolute top-4 left-4">
+          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase ${
+            property.type === 'For Sale' 
+              ? 'bg-green-800 text-white' 
+              : 'bg-sky-800 text-white'
+          }`}>
+            {property.type}
+          </span>
+        </div>
+        
+        <button
+          onClick={() => setIsLiked(!isLiked)}
+          className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-2.5 rounded-full hover:bg-white transition-all duration-300 group/heart"
         >
-          <Heart size={20} />
-        </motion.button>
+          <Heart 
+            size={18} 
+            className={`transition-all duration-300 ${
+              isLiked 
+                ? 'text-red-500 fill-red-500' 
+                : 'text-gray-600 group-hover/heart:text-red-500'
+            }`}
+          />
+        </button>
       </div>
 
       <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold text-gray-800">{property.title}</h3>
-          <p className="text-xl font-bold text-emerald-600">{property.price}</p>
+        <div className="flex justify-between items-start mb-3">
+          <h3 className="text-xl font-bold text-gray-900 line-clamp-1">{property.title}</h3>
+          <p className="text-xl font-bold text-emerald-600 whitespace-nowrap ml-2">{property.price}</p>
         </div>
 
         <div className="flex items-center text-gray-500 mb-4">
-          <MapPin size={16} className="mr-1" />
-          <p className="text-sm">{property.location}</p>
+          <MapPin size={16} className="mr-2 flex-shrink-0" />
+          <p className="text-sm line-clamp-1">{property.location}</p>
         </div>
 
-        <div className="flex justify-between mb-6">
+        <div className="flex justify-between mb-6 text-sm">
           <div className="flex items-center">
-            <Bed size={18} className="text-gray-400 mr-1" />
-            <span className="text-gray-600">{property.beds}</span>
+            <Bed size={18} className="text-gray-400 mr-2" />
+            <span className="text-gray-700 font-medium">{property.beds}</span>
           </div>
           <div className="flex items-center">
-            <Bath size={18} className="text-gray-400 mr-1" />
-            <span className="text-gray-600">{property.baths}</span>
+            <Bath size={18} className="text-gray-400 mr-2" />
+            <span className="text-gray-700 font-medium">{property.baths}</span>
           </div>
           <div className="flex items-center">
-            <Square size={18} className="text-gray-400 mr-1" />
-            <span className="text-gray-600">{property.area}</span>
+            <Square size={18} className="text-gray-400 mr-2" />
+            <span className="text-gray-700 font-medium">{property.area}</span>
           </div>
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-lg font-medium hover:shadow-lg transition-all"
-        >
-          View Details
-        </motion.button>
+        <button className="w-full py-3 bg-emerald-100 border-2 border-emerald-500 text-white rounded-xl font-semibold hover:from-emerald-800 hover:to-green-700 transition-all duration-300 transform hover:translate-y-[-1px] hover:shadow-lg group/btn">
+          <span className="flex items-center text-green-950 justify-center">
+            View Details
+            <ArrowRight size={16} className="ml-2 transform group-hover/btn:translate-x-1 transition-transform duration-300" />
+          </span>
+        </button>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 const FeaturedProperties = () => {
-  const [ref, inView] = useInView({
-    triggerOnce: true,
-    threshold: 0.1,
-  })
-
   const properties = [
     {
       id: 1,
@@ -89,7 +95,7 @@ const FeaturedProperties = () => {
       beds: "4 Beds",
       baths: "3 Baths",
       area: "2400 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop&crop=center",
     },
     {
       id: 2,
@@ -100,7 +106,7 @@ const FeaturedProperties = () => {
       beds: "3 Beds",
       baths: "2 Baths",
       area: "1800 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop&crop=center",
     },
     {
       id: 3,
@@ -111,7 +117,7 @@ const FeaturedProperties = () => {
       beds: "5 Beds",
       baths: "4 Baths",
       area: "3200 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=600&h=400&fit=crop&crop=center",
     },
     {
       id: 4,
@@ -122,7 +128,7 @@ const FeaturedProperties = () => {
       beds: "1 Bed",
       baths: "1 Bath",
       area: "850 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&h=400&fit=crop&crop=center",
     },
     {
       id: 5,
@@ -133,7 +139,7 @@ const FeaturedProperties = () => {
       beds: "6 Beds",
       baths: "5 Baths",
       area: "4500 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600607688960-e095effe7b22?w=600&h=400&fit=crop&crop=center",
     },
     {
       id: 6,
@@ -144,49 +150,75 @@ const FeaturedProperties = () => {
       beds: "N/A",
       baths: "2 Baths",
       area: "2000 sq ft",
-      image: "/placeholder.svg?height=400&width=600",
+      image: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=600&h=400&fit=crop&crop=center",
     },
   ]
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <motion.div
-          ref={ref}
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Featured Properties</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover our handpicked selection of premium properties across Pakistan. Find your dream home among these
-            exceptional listings.
-          </p>
-        </motion.div>
+    <>
+   
+      
+      <section className="relative py-24 bg-emerald-800/70
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {properties.map((property, index) => (
-            <PropertyCard key={property.id} property={property} index={index} />
-          ))}
+ overflow-hidden">
+        {/* Professional Top Wave */}
+
+        <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0]">
+          <svg className="relative block w-full h-20" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 1200 120">
+            <path
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
+              fill="white"
+              opacity=" "
+            ></path>
+          </svg>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-center mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-white border-2 border-emerald-500 text-emerald-600 px-8 py-3 rounded-full font-medium hover:bg-emerald-50 transition-colors"
-          >
-            View All Properties
-          </motion.button>
-        </motion.div>
-      </div>
-    </section>
+        {/* Professional Bottom Wave */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] rotate-180">
+          <svg className="relative block w-full h-20" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 1200 120">
+            <path
+              d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z"
+              fill="white"
+              opacity=""
+            ></path>
+          </svg>
+        </div>
+
+        {/* Background Decorative Elements */}
+        <div className="absolute top-20 right-20 w-72 h-72 bg-gradient-to-br from-emerald-200/20 to-teal-200/20 rounded-full blur-3xl floating-element"></div>
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-gradient-to-br from-teal-200/20 to-emerald-200/20 rounded-full blur-3xl floating-element" style={{ animationDelay: '2s' }}></div>
+
+        {/* Main Content */}
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center px-4 py-2 bg-emerald-100 border-1 text-emerald-700 rounded-full text-sm font-medium mb-6">
+              <span className="w-2 h-2 bg-sky-800 rounded-full mr-2"></span>
+              Premium Properties
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight text-white">
+              Featured Properties
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed text-white/70">
+              Discover our handpicked selection of premium properties across Pakistan. Each listing represents 
+              exceptional value, prime locations, and outstanding architectural design.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            {properties.map((property, index) => (
+              <PropertyCard key={property.id} property={property} index={index} />
+            ))}
+          </div>
+
+          <div className="text-center">
+            <button className="inline-flex items-center px-8 py-4 bg-white border-2 border-emerald-500 text-emerald-600 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg group">
+              View All Properties
+              <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
+            </button>
+          </div>
+        </div>
+      </section>
+    </>
   )
 }
 

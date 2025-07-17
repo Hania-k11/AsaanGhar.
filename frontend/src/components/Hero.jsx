@@ -308,9 +308,7 @@ const Hero = () => {
       {/* Wave separator */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden">
         <motion.svg
-          animate={{
-            y: [0, -5, 0],
-          }}
+         
           transition={{
             duration: 4,
             repeat: Number.POSITIVE_INFINITY,
