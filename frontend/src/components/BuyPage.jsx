@@ -40,14 +40,25 @@ const BuyPage = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [filteredProperties, setFilteredProperties] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const propertiesPerPage = 6;
 
   useEffect(() => {
+    setCurrentPage(1); // Reset on filter change
     const newFiltered =
       filter === "all"
         ? defaultProperties
         : defaultProperties.filter((p) => p.type === filter);
     setFilteredProperties(newFiltered);
   }, [filter]);
+
+  const paginatedProperties =
+    filter === "all"
+      ? filteredProperties.slice(
+          (currentPage - 1) * propertiesPerPage,
+          currentPage * propertiesPerPage
+        )
+      : filteredProperties;
 
   return (
     <div className="container mx-auto px-4 pt-24 pb-10">
@@ -80,14 +91,14 @@ const BuyPage = () => {
 
       <AnimatePresence mode="wait">
         <motion.div
-          key={filter}
+          key={filter + currentPage}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -30 }}
           transition={{ duration: 0.4 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          {filteredProperties.map((property) => (
+          {paginatedProperties.map((property) => (
             <motion.div
               key={property.id}
               className="bg-white rounded-xl p-4 shadow-md border flex flex-col justify-between"
@@ -121,6 +132,26 @@ const BuyPage = () => {
           ))}
         </motion.div>
       </AnimatePresence>
+
+      {filter === "all" && (
+        <div className="flex justify-center mt-8 gap-2">
+          {Array.from({
+            length: Math.ceil(filteredProperties.length / propertiesPerPage),
+          }).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentPage(index + 1)}
+              className={`px-4 py-2 rounded-full border ${
+                currentPage === index + 1
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-emerald-600 border-emerald-600"
+              } transition-all duration-200`}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

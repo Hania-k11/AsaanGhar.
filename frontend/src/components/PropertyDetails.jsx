@@ -159,6 +159,9 @@ const PropertyDetails = () => {
               <div className="flex items-center"><LayoutGrid className="w-4 h-4 mr-2 text-emerald-500" /> Study Room</div>
             </div>
           </div>
+<div className="border-t pt-6 mt-6">
+ 
+</div>
 
           <div className="mt-10">
             <h3 className="text-xl font-semibold text-gray-700 mb-4">Location</h3>
@@ -193,13 +196,141 @@ const PropertyDetails = () => {
               ))}
             </div>
           </div>
+          <motion.div
+  className="mt-16 bg-white p-8 rounded-2xl shadow-2xl border border-gray-200"
+  initial={{ opacity: 0, y: 50 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6, ease: "easeOut" }}
+  viewport={{ once: true }}
+>
+  <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+    <Mail className="text-emerald-600" /> Contact the Owner
+  </h3>
+
+  <form className="space-y-6">
+    <motion.div
+      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+      initial={{ opacity: 0, x: -40 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.1, duration: 0.5 }}
+      viewport={{ once: true }}
+    >
+      <div className="relative">
+        <label className="text-sm font-medium text-gray-600 mb-1 block">Name*</label>
+        <input
+          type="text"
+          placeholder="Your Full Name"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+        />
+        <User2 className="absolute top-10 right-4 text-gray-400" size={18} />
+      </div>
+
+      <div className="relative">
+        <label className="text-sm font-medium text-gray-600 mb-1 block">Email*</label>
+        <input
+          type="email"
+          placeholder="your@email.com"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+        />
+        <Mail className="absolute top-10 right-4 text-gray-400" size={18} />
+      </div>
+    </motion.div>
+
+    <motion.div
+      className="relative"
+      initial={{ opacity: 0, x: 40 }}
+      whileInView={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+      viewport={{ once: true }}
+    >
+      <label className="text-sm font-medium text-gray-600 mb-1 block">Phone*</label>
+      <input
+        type="tel"
+        placeholder="+92 300 1234567"
+        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+      />
+      <Phone className="absolute top-10 right-4 text-gray-400" size={18} />
+    </motion.div>
+
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.5 }}
+      viewport={{ once: true }}
+    >
+      <label className="text-sm font-medium text-gray-600 mb-1 block">Message*</label>
+      <textarea
+        rows={4}
+        defaultValue={`I would like to inquire about your property Zameen - ID52811219. Please contact me at your earliest convenience.`}
+        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+      />
+    </motion.div>
+
+    <motion.div
+      className="text-sm text-gray-700 space-y-3"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.4 }}
+      viewport={{ once: true }}
+    >
+      <p className="font-medium">I am a:</p>
+      <div className="flex gap-6">
+        <label className="flex items-center gap-2">
+          <input type="radio" name="identity" className="accent-emerald-600" defaultChecked />
+          Buyer/Tenant
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name="identity" className="accent-emerald-600" />
+          Agent
+        </label>
+        <label className="flex items-center gap-2">
+          <input type="radio" name="identity" className="accent-emerald-600" />
+          Other
+        </label>
+      </div>
+
+      <label className="flex items-center gap-2 mt-2">
+        <input type="checkbox" className="accent-emerald-600" defaultChecked />
+        Keep me informed about similar properties.
+      </label>
+    </motion.div>
+
+    <motion.div
+      className="flex gap-4 pt-4"
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5, duration: 0.4 }}
+      viewport={{ once: true }}
+    >
+      <motion.button
+        type="submit"
+        className="bg-emerald-600 text-white px-6 py-3 rounded-full font-semibold shadow hover:bg-emerald-700 transition-all"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        Email
+      </motion.button>
+      <motion.a
+        href="tel:+923001234567"
+        className="bg-white border border-emerald-600 text-emerald-600 px-6 py-3 rounded-full font-semibold shadow hover:bg-emerald-50 transition-all"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        Call
+      </motion.a>
+    </motion.div>
+  </form>
+</motion.div>
+
 
           <motion.button
             onClick={() => navigate(-1)}
             className="mt-10 bg-emerald-600 text-white px-6 py-3 rounded-full hover:bg-emerald-700 transition-all shadow-md"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+          
           >
+            
             Back to Listings
           </motion.button>
         </div>
