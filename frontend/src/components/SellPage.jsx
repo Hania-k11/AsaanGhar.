@@ -1,355 +1,80 @@
 import React, { useState } from "react";
 
 const SellPage = ({ setUserProperties }) => {
-  const [activeTab, setActiveTab] = useState("sell");
-
-  const renderTabs = () => (
-    <div className="flex justify-center mb-10 gap-4">
-      <button
-        onClick={() => setActiveTab("sell")}
-        className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
-          activeTab === "sell"
-            ? "bg-emerald-600 text-white"
-            : "bg-white border border-emerald-600 text-emerald-600"
-        }`}
-      >
-        Sell
-      </button>
-      <button
-        onClick={() => setActiveTab("rent")}
-        className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 ${
-          activeTab === "rent"
-            ? "bg-emerald-600 text-white"
-            : "bg-white border border-emerald-600 text-emerald-600"
-        }`}
-      >
-        Rent
-      </button>
-    </div>
-  );
-
   return (
     <div className="pt-24 pb-10 px-4 container mx-auto bg-gray-50 min-h-screen">
       <div className="text-center mb-6">
         <h1 className="text-4xl font-extrabold text-emerald-600">
-          Post Your Property 
+          Post Your Property
         </h1>
         <p className="mt-2 text-lg text-gray-600">
-          Fill in the details below to create an eye-catching property listing.
+          Fill in the details below to create property listing
         </p>
       </div>
 
-      {renderTabs()}
-
-      {activeTab === "sell" ? (
-        <SellForm setUserProperties={setUserProperties} />
-      ) : (
-        <RentForm setUserProperties={setUserProperties} />
-      )}
+  
+      <RentForm setUserProperties={setUserProperties} />
     </div>
   );
 };
 
-
-// Paste your full SellForm code here
-const SellForm = ({ setUserProperties }) => {
-  // your full Sell form code goes here...
-   const [formData, setFormData] = useState({
-      title: "",
-      location: "",
-      price: "",
-      type: "",
-      bedrooms: "",
-      bathrooms: "",
-      area: "",
-      description: "",
-      owner: "",
-      contact: "",
-      yearBuilt: "",
-      parking: "",
-      image: null,
-    });
-  
-    const handleChange = (e) => {
-      const { name, value, files } = e.target;
-      if (name === "image") {
-        setFormData({ ...formData, image: files[0] });
-      } else {
-        setFormData({ ...formData, [name]: value });
-      }
-    };
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      const newProperty = {
-        id: Date.now(),
-        ...formData,
-        image: formData.image ? URL.createObjectURL(formData.image) : null,
-        listingType: "sell",
-      };
-      setUserProperties((prev) => [...prev, newProperty]);
-      alert("Property submitted successfully!");
-      setFormData({
-        title: "",
-        location: "",
-        price: "",
-        type: "",
-        bedrooms: "",
-        bathrooms: "",
-        area: "",
-        description: "",
-        owner: "",
-        contact: "",
-        yearBuilt: "",
-        parking: "",
-        image: null,
-      });
-    };
-  
-    return (
-      <div className="pt-4 pb-2 px-4 container mx-auto bg-gray-50 min-h-screen">
-        
-  
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-2xl space-y-8"
-          encType="multipart/form-data"
-        >
-          <section className="space-y-6">
-            <div className="flex items-center gap-2 text-emerald-600 mt-2">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={1.5}
-    stroke="currentColor"
-    className="h-8 w-8"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-    />
-  </svg>
-  <h2 className="text-2xl font-bold">Property Details</h2>
-</div>
-
-  
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Property Title (e.g., 10 Marla House for Sale)"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="Location (e.g., Bahria Town, Lahore)"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-            </div>
-  
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">PKR</span>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="Sale Price"
-                  required
-                  min="0"
-                  className="w-full pl-16 pr-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-                />
-              </div>
-  
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 appearance-none"
-              >
-                <option value="">Property Type</option>
-                <option value="House">House</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Plot">Plot</option>
-                <option value="Commercial">Commercial</option>
-              </select>
-  
-              <input
-                type="number"
-                name="bedrooms"
-                value={formData.bedrooms}
-                onChange={handleChange}
-                placeholder="Bedrooms"
-                min="0"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-                required
-              />
-              <input
-                type="number"
-                name="bathrooms"
-                value={formData.bathrooms}
-                onChange={handleChange}
-                placeholder="Bathrooms"
-                min="0"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-                required
-              />
-            </div>
-  
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                name="area"
-                value={formData.area}
-                onChange={handleChange}
-                placeholder="Area (e.g., 1800 sq ft)"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-              <input
-                type="number"
-                name="yearBuilt"
-                value={formData.yearBuilt}
-                onChange={handleChange}
-                placeholder="Year Built"
-                min="1800"
-                max={new Date().getFullYear()}
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-            </div>
-  
-            <input
-              type="number"
-              name="parking"
-              value={formData.parking}
-              onChange={handleChange}
-              placeholder="Parking Spaces"
-              className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-            />
-          </section>
-  
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-emerald-600">Property Description</h2>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Write a detailed description of the property"
-              rows="5"
-              required
-              className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-            />
-          </section>
-  
-          <section className="space-y-6">
-            <h2 className="text-2xl font-bold text-emerald-600">Contact Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                name="owner"
-                value={formData.owner}
-                onChange={handleChange}
-                placeholder="Owner's Name"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-              <input
-                type="text"
-                name="contact"
-                value={formData.contact}
-                onChange={handleChange}
-                placeholder="Phone / Email"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
-              />
-            </div>
-          </section>
-  
-          {/* ✅ Image Upload Section with icon */}
-          <section className="space-y-6">
-            <div className="flex items-center space-x-3 text-emerald-600">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-8 w-8"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 8.25H7.5a2.25 2.25 0 0 0-2.25 2.25v9a2.25 2.25 0 0 0 2.25 2.25h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25H15m0-3-3-3m0 0-3 3m3-3V15"
-                />
-              </svg>
-              <h2 className="text-2xl font-bold">Upload Property Image</h2>
-            </div>
-  
-            <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-emerald-500 transition-colors duration-200">
-              <label
-                htmlFor="image-upload"
-                className="block text-gray-500 font-semibold cursor-pointer"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-11 w-11 mx-auto text-gray-400"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"
-                  />
-                </svg>
-                Click or drag to upload image
-              </label>
-              <input
-                id="image-upload"
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleChange}
-                className="hidden"
-                required
-              />
-              {formData.image && (
-                <p className="mt-4 text-sm text-emerald-600 font-semibold">
-                  Selected file: {formData.image.name}
-                </p>
-              )}
-            </div>
-          </section>
-  
-          <button
-            type="submit"
-            className="w-full bg-emerald-600 text-white py-4 rounded-xl hover:bg-emerald-700 transition-all duration-300 font-bold text-lg shadow-lg"
-          >
-            Submit Property Listing
-          </button>
-        </form>
-      </div>
-    );
-  };
-  
-
-// Paste your full RentForm code here
 const RentForm = ({ setUserProperties }) => {
-    const [formData, setFormData] = useState({
-  // your full Rent const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
+    title: "",
+    location: "",
+    rent: "",
+    propertyType: "",
+    bedrooms: "",
+    bathrooms: "",
+    area: "",
+    description: "",
+    owner: "",
+    contact: "",
+    furnishing: "",
+    floor: "",
+    leaseDuration: "",
+    availableFrom: "",
+    maintenance: "",
+    deposit: "",
+    image: null,
+    yearBuilt: "",
+    parking: false,
+    balcony: false,
+    petFriendly: false,
+    laundryInUnit: false,
+    dishwasher: false,
+    airConditioning: false,
+    heating: false,
+    swimmingPool: false,
+    gym: false,
+    security: false,
+    gatedCommunity: false,
+    nearbySchools: "",
+    nearbyHospitals: "",
+    nearbyShopping: "",
+    publicTransportAccess: false,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked, files } = e.target;
+    setFormData({
+      ...formData,
+      [name]:
+        type === "checkbox" ? checked : name === "image" ? files[0] : value,
+    });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newProperty = {
+      id: Date.now(),
+      ...formData,
+      image: formData.image ? URL.createObjectURL(formData.image) : null,
+      listingType: "rent",
+    };
+    setUserProperties((prev) => [...prev, newProperty]);
+    alert("Rental listing submitted successfully!");
+    setFormData({
       title: "",
       location: "",
       rent: "",
@@ -377,191 +102,174 @@ const RentForm = ({ setUserProperties }) => {
       heating: false,
       swimmingPool: false,
       gym: false,
-      security24_7: false,
+      security: false,
       gatedCommunity: false,
       nearbySchools: "",
       nearbyHospitals: "",
       nearbyShopping: "",
       publicTransportAccess: false,
     });
-  
-    const handleChange = (e) => {
-      const { name, value, type, checked, files } = e.target;
-      setFormData({
-        ...formData,
-        [name]:
-          type === "checkbox" ? checked : name === "image" ? files[0] : value,
-      });
-    };
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      const newProperty = {
-        id: Date.now(),
-        ...formData,
-        image: formData.image ? URL.createObjectURL(formData.image) : null,
-        listingType: "rent",
-      };
-      setUserProperties((prev) => [...prev, newProperty]);
-      alert("Rental listing submitted successfully!");
-      setFormData({
-        title: "",
-        location: "",
-        rent: "",
-        propertyType: "",
-        bedrooms: "",
-        bathrooms: "",
-        area: "",
-        description: "",
-        owner: "",
-        contact: "",
-        furnishing: "",
-        floor: "",
-        leaseDuration: "",
-        availableFrom: "",
-        maintenance: "",
-        deposit: "",
-        image: null,
-        yearBuilt: "",
-        parking: false,
-        balcony: false,
-        petFriendly: false,
-        laundryInUnit: false,
-        dishwasher: false,
-        airConditioning: false,
-        heating: false,
-        swimmingPool: false,
-        gym: false,
-        security24_7: false,
-        gatedCommunity: false,
-        nearbySchools: "",
-        nearbyHospitals: "",
-        nearbyShopping: "",
-        publicTransportAccess: false,
-      });
-    };
-  
-    return (
-      <div className="pt-4 pb-2 px-4 container mx-auto bg-gray-50 min-h-screen">
-        
-  
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-2xl space-y-8"
-          encType="multipart/form-data"
-        >
-          {/* Basic Property Information */}
-          <section className="space-y-6">
-            <div className="flex items-center space-x-3 text-emerald-600">
-                <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="h-8 w-8"
-              >
-              <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                />
-              </svg>
-              <h2 className="text-2xl font-bold">Property Details</h2>
-            </div>
-  
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Property Title (e.g., Spacious 3-Bed Apartment)"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-                required
-              />
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                placeholder="Location (e.g., DHA Phase 6, Karachi)"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-              />
-            </div>
-  
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">PKR</span>
-                <input
-                  type="number"
-                  name="rent"
-                  value={formData.rent}
-                  onChange={handleChange}
-                  placeholder="Monthly Rent"
-                  required
-                  min="0"
-                  className="w-full pl-16 pr-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-                />
-              </div>
-              <select
-                name="propertyType"
-                value={formData.propertyType}
-                onChange={handleChange}
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 appearance-none transition-colors duration-200"
-              >
-                <option value="">Property Type</option>
-                <option value="House">House</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Room">Room</option>
-                <option value="Commercial">Commercial</option>
-                <option value="Office">Office Space</option>
-                <option value="Shop">Shop</option>
-                <option value="Warehouse">Warehouse</option>
-              </select>
-              <input
-                type="number"
-                name="bedrooms"
-                value={formData.bedrooms}
-                onChange={handleChange}
-                placeholder="Bedrooms"
-                min="0"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-              />
-              <input
-                type="number"
-                name="bathrooms"
-                value={formData.bathrooms}
-                onChange={handleChange}
-                placeholder="Bathrooms"
-                min="0"
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-              />
-            </div>
-  
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                type="text"
-                name="area"
-                value={formData.area}
-                onChange={handleChange}
-                placeholder="Area (e.g., 1200 sq ft or 10 Marla)"
-                required
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-              />
-              <input
-                type="number"
-                name="yearBuilt"
-                value={formData.yearBuilt}
-                onChange={handleChange}
-                placeholder="Year Built (Optional)"
-                min="1800"
-                max={new Date().getFullYear()}
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-              />
-            </div>
+  };
+
+  return (
+    <form
+  onSubmit={handleSubmit}
+  className="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-2xl space-y-10"
+  encType="multipart/form-data"
+>
+  {/* Property Details Section */}
+  <section className="space-y-6">
+    <div className="flex items-center space-x-3 text-emerald-600">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-8 w-8">
+        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+      </svg>
+      <h2 className="text-2xl font-bold">Property Details</h2>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <input
+        type="text"
+        name="title"
+        value={formData.title}
+        onChange={handleChange}
+        placeholder="Property Title (e.g., Spacious 3-Bed Apartment)"
+        className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+        required
+      />
+     <div className="relative">
+  <select
+    name="listingType"
+    value={formData.listingType}
+    onChange={handleChange}
+    required
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl text-gray-500 bg-white appearance-none focus:outline-none focus:ring-4 focus:ring-emerald-200"
+  >
+    <option value="" disabled selected>
+      Listing Type
+    </option>
+    <option value="sell">Sell</option>
+    <option value="rent">Rent</option>
+  </select>
+
+  {/* Custom Arrow */}
+  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+    <svg
+      className="h-5 w-5"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+        clipRule="evenodd"
+      />
+    </svg>
+  </div>
+</div>
+
+      
+      <input
+        type="text"
+        name="location"
+        value={formData.location}
+        onChange={handleChange}
+        placeholder="Location (e.g., DHA Phase 6, Karachi)"
+        className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+        required
+      />
+
+      <div className="relative">
+        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">PKR</span>
+        <input
+          type="number"
+          name="rent"
+          value={formData.rent}
+          onChange={handleChange}
+          placeholder="Monthly Rent"
+          min="0"
+          className="w-full pl-16 pr-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+          required
+        />
+      </div>
+    </div>
+
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="relative">
+    <select
+      name="propertyType"
+      value={formData.propertyType}
+      onChange={handleChange}
+      required
+      className="w-full px-5 py-3 border border-gray-300 rounded-xl text-gray-500 bg-white appearance-none focus:outline-none focus:ring-4 focus:ring-emerald-200 pr-10"
+    >
+      <option value="" disabled hidden>Property Type</option>
+      <option value="House">House</option>
+      <option value="Apartment">Apartment</option>
+      <option value="Room">Room</option>
+      <option value="Commercial">Commercial</option>
+      <option value="Office">Office Space</option>
+      <option value="Shop">Shop</option>
+      <option value="Warehouse">Warehouse</option>
+    </select>
+
+    <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path
+          fillRule="evenodd"
+          d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+          clipRule="evenodd"
+        />
+      </svg>
+    </div>
+  </div>
+
+  <input
+    type="text"
+    name="area"
+    value={formData.area}
+    onChange={handleChange}
+    placeholder="Area (e.g., 120 sq ft or 10 Marla)"
+    required
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
+  />
+</div>
+
+{/* Bedrooms, Bathrooms, Year Built - all in one line */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+  <input
+    type="number"
+    name="bedrooms"
+    value={formData.bedrooms}
+    onChange={handleChange}
+    placeholder="Bedrooms"
+    min="0"
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+  />
+
+  <input
+    type="number"
+    name="bathrooms"
+    value={formData.bathrooms}
+    onChange={handleChange}
+    placeholder="Bathrooms"
+    min="0"
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+  />
+
+  <input
+    type="number"
+    name="yearBuilt"
+    value={formData.yearBuilt}
+    onChange={handleChange}
+    placeholder="Year Built"
+    min="1800"
+    max={new Date().getFullYear()}
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200"
+  />
+</div>
+
+
           </section>
   
           <hr className="border-gray-200" />
@@ -591,17 +299,38 @@ const RentForm = ({ setUserProperties }) => {
             />
   
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <select
-                name="furnishing"
-                value={formData.furnishing}
-                onChange={handleChange}
-                className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 appearance-none transition-colors duration-200"
-              >
-                <option value="">Furnishing Status</option>
-                <option value="Furnished">Furnished</option>
-                <option value="Unfurnished">Unfurnished</option>
-                <option value="Semi-Furnished">Semi-Furnished</option>
-              </select>
+              <div className="relative">
+  <select
+    name="furnishing"
+    value={formData.furnishing}
+    onChange={handleChange}
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 appearance-none transition-colors duration-200 text-gray-500"
+    required
+  >
+    <option value="" disabled hidden>
+      Furnishing Status
+    </option>
+    <option value="Furnished">Furnished</option>
+    <option value="Unfurnished">Unfurnished</option>
+    <option value="Semi-Furnished">Semi-Furnished</option>
+  </select>
+
+  {/* Optional: Custom Arrow like others */}
+  <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-gray-400">
+    <svg
+      className="h-5 w-5"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.25a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+        clipRule="evenodd"
+      />
+    </svg>
+  </div>
+</div>
+
               <input
                 type="text"
                 name="floor"
@@ -622,17 +351,18 @@ const RentForm = ({ setUserProperties }) => {
                 className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
               />
               <div className="relative">
-                <label className="absolute -top-3 left-3 text-sm text-gray-500 bg-white px-1">
-                  Available From
-                </label>
-                <input
-                  type="date"
-                  name="availableFrom"
-                  value={formData.availableFrom}
-                  onChange={handleChange}
-                  className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
-                />
-              </div>
+  <label className="absolute -top-3 left-3 text-sm text-gray-400 font-normal bg-white px-1">
+    Available From
+  </label>
+  <input
+    type="date"
+    name="availableFrom"
+    value={formData.availableFrom}
+    onChange={handleChange}
+    className="w-full px-5 py-3 border border-gray-300 rounded-xl text-gray-500 focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
+  />
+</div>
+
             </div>
           </section>
   
@@ -705,7 +435,7 @@ const RentForm = ({ setUserProperties }) => {
                 name="contact"
                 value={formData.contact}
                 onChange={handleChange}
-                placeholder="Contact Info (Phone Number and/or Email)"
+                placeholder="Contact Info (Phone Number or Email)"
                 required
                 className="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-200 transition-colors duration-200"
               />
@@ -765,11 +495,35 @@ const RentForm = ({ setUserProperties }) => {
             type="submit"
             className="w-full bg-emerald-600 text-white py-4 rounded-xl hover:bg-emerald-700 transition-all duration-300 font-bold text-lg shadow-lg"
           >
-            Submit Rental Property Listing
+            Submit Property 
           </button>
-        </form>
-      </div>
-    );
-
+    </form>
+  );
 };
+
 export default SellPage;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
