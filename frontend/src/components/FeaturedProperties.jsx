@@ -1,5 +1,7 @@
 import { useState } from "react"
 import { MapPin, Bed, Bath, Square, Heart, ArrowRight } from "lucide-react"
+import { Link } from "react-router-dom";
+
 
 const PropertyCard = ({ property, index }) => {
   const [isLiked, setIsLiked] = useState(false)
@@ -210,12 +212,14 @@ const FeaturedProperties = () => {
             ))}
           </div>
 
-          <div className="text-center">
-            <button className="inline-flex items-center px-8 py-4 bg-white border-2 border-emerald-500 text-emerald-600 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 transform hover:translate-y-[-2px] hover:shadow-lg group">
-              View All Properties
-              <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
-            </button>
-          </div>
+         <div className="text-center">
+      <Link to="/buy">
+        <button className="inline-flex items-center px-8 py-4 bg-white border-2 border-emerald-500 text-emerald-600 rounded-full font-semibold hover:bg-emerald-50 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg group">
+          View All Properties
+          <ArrowRight size={20} className="ml-2 transform group-hover:translate-x-1 transition-transform duration-300" />
+        </button>
+      </Link>
+    </div>
         </div>
       </section>
     </>

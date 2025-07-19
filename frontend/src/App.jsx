@@ -8,6 +8,8 @@ import "./index.css";
 import ContactPage from "./components/ContactPage";
 import AboutPage from "./components/AboutPage";
 import PropertyDetails from "./components/PropertyDetails";
+import ScrollToTop from "./components/ScrollToTop";
+
 
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() => import("./components/FeaturedProperties"));
@@ -39,6 +41,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
         <Navbar
           onLoginClick={handleLoginToggle}
