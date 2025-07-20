@@ -44,7 +44,7 @@ const BuyPage = () => {
   const propertiesPerPage = 6;
 
   useEffect(() => {
-    setCurrentPage(1); // Reset on filter change
+    setCurrentPage(1); 
     const newFiltered =
       filter === "all"
         ? defaultProperties
