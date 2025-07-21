@@ -1,157 +1,436 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Bed, Bath, Square, ArrowRight } from "lucide-react";
-import house1 from "../assets/house1.jpg";
-import house2 from "../assets/house2.jpg";
-import house3 from "../assets/house3.jpg";
-import house4 from "../assets/house4.jpg";
-import house5 from "../assets/house5.jpg";
-import house6 from "../assets/house6.jpg";
-import house7 from "../assets/house7.jpg";
-import house8 from "../assets/house8.jpg";
-import house9 from "../assets/house9.jpg";
-import house10 from "../assets/house10.jpg";
-import house11 from "../assets/house11.jpg";
-import house12 from "../assets/house12.jpg";
-import house13 from "../assets/house13.jpg";
-import house14 from "../assets/house14.jpg";
-import house15 from "../assets/house15.jpg";
+import { MapPin, Bed, Bath, Square, ArrowRight, Heart, Share2, Filter, Search, Grid3X3, List, Eye, Star, TrendingUp, Award, Calendar } from "lucide-react";
 
 const defaultProperties = [
-  { id: 1, title: "Modern Family House", location: "DHA Phase 5, Lahore", price: "PKR 1.2 Crore", image: house1, type: "sale", beds: "4 Beds", baths: "3 Baths", area: "2400 sq ft" },
-  { id: 2, title: "Luxury Apartment", location: "Bahria Town, Islamabad", price: "PKR 85 Lac", image: house2, type: "sale", beds: "3 Beds", baths: "2 Baths", area: "1800 sq ft" },
-  { id: 3, title: "Penthouse Suite", location: "Clifton, Karachi", price: "PKR 2.5 Crore", image: house3, type: "sale", beds: "5 Beds", baths: "4 Baths", area: "3200 sq ft" },
-  { id: 4, title: "Elegant Villa", location: "PECHS Block 2", price: "PKR 6.5 Crore", image: house4, type: "sale", beds: "5 Beds", baths: "4 Baths", area: "4000 sq ft" },
-  { id: 5, title: "Studio Flat", location: "Bahadurabad", price: "PKR 90 Lakh", image: house5, type: "rent", beds: "1 Bed", baths: "1 Bath", area: "800 sq ft" },
-  { id: 6, title: "Townhouse", location: "North Nazimabad", price: "PKR 2.8 Crore", image: house6, type: "rent", beds: "4 Beds", baths: "3 Baths", area: "2200 sq ft" },
-  { id: 7, title: "Corner Plot", location: "Scheme 33", price: "PKR 3.1 Crore", image: house7, type: "sale", beds: "N/A", baths: "N/A", area: "2800 sq ft" },
-  { id: 8, title: "Duplex House", location: "Nazimabad", price: "PKR 4.2 Crore", image: house8, type: "sale", beds: "5 Beds", baths: "3 Baths", area: "3000 sq ft" },
-  { id: 9, title: "Farmhouse", location: "Gadap Town", price: "PKR 12.0 Crore", image: house9, type: "sale", beds: "6 Beds", baths: "5 Baths", area: "5000 sq ft" },
-  { id: 10, title: "Penthouse", location: "Sea View", price: "PKR 8.9 Crore", image: house10, type: "rent", beds: "4 Beds", baths: "4 Baths", area: "3500 sq ft" },
-  { id: 11, title: "Cottage", location: "Malir Cantt", price: "PKR 1.2 Crore", image: house11, type: "sale", beds: "3 Beds", baths: "2 Baths", area: "1600 sq ft" },
-  { id: 12, title: "Bungalow", location: "Defence Phase 8", price: "PKR 7.5 Crore", image: house12, type: "sale", beds: "5 Beds", baths: "4 Baths", area: "4200 sq ft" },
-  { id: 13, title: "Apartment", location: "Tariq Road", price: "PKR 1.8 Crore", image: house13, type: "rent", beds: "3 Beds", baths: "2 Baths", area: "1700 sq ft" },
-  { id: 14, title: "House with Basement", location: "Gulshan-e-Iqbal", price: "PKR 6.0 Crore", image: house14, type: "sale", beds: "5 Beds", baths: "4 Baths", area: "3900 sq ft" },
-  { id: 15, title: "Brand New Home", location: "Shah Faisal Colony", price: "PKR 3.6 Crore", image: house15, type: "sale", beds: "4 Beds", baths: "3 Baths", area: "2500 sq ft" }
+  { id: 1, title: "Modern Family House", location: "DHA Phase 5, Lahore", price: "PKR 1.2 Crore", image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800", type: "sale", beds: "4 Beds", baths: "3 Baths", area: "2400 sq ft", rating: 4.8, views: 1250, featured: true, yearBuilt: "2022" },
+  { id: 2, title: "Luxury Apartment", location: "Bahria Town, Islamabad", price: "PKR 85 Lac", image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800", type: "sale", beds: "3 Beds", baths: "2 Baths", area: "1800 sq ft", rating: 4.6, views: 980, featured: false, yearBuilt: "2021" },
+  { id: 3, title: "Penthouse Suite", location: "Clifton, Karachi", price: "PKR 2.5 Crore", image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800", type: "sale", beds: "5 Beds", baths: "4 Baths", area: "3200 sq ft", rating: 4.9, views: 2100, featured: true, yearBuilt: "2023" },
+  { id: 4, title: "Elegant Villa", location: "PECHS Block 2", price: "PKR 6.5 Crore", image: "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800", type: "sale", beds: "5 Beds", baths: "4 Baths", area: "4000 sq ft", rating: 4.7, views: 1800, featured: true, yearBuilt: "2022" },
+  { id: 5, title: "Studio Flat", location: "Bahadurabad", price: "PKR 90 Lakh", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800", type: "rent", beds: "1 Bed", baths: "1 Bath", area: "800 sq ft", rating: 4.3, views: 650, featured: false, yearBuilt: "2020" },
+  { id: 6, title: "Townhouse", location: "North Nazimabad", price: "PKR 2.8 Crore", image: "https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?w=800", type: "rent", beds: "4 Beds", baths: "3 Baths", area: "2200 sq ft", rating: 4.5, views: 1100, featured: false, yearBuilt: "2021" },
+  { id: 7, title: "Corner Plot", location: "Scheme 33", price: "PKR 3.1 Crore", image: "https://images.unsplash.com/photo-1605146769289-440113cc3d00?w=800", type: "sale", beds: "N/A", baths: "N/A", area: "2800 sq ft", rating: 4.4, views: 850, featured: false, yearBuilt: "N/A" },
+  { id: 8, title: "Duplex House", location: "Nazimabad", price: "PKR 4.2 Crore", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800", type: "sale", beds: "5 Beds", baths: "3 Baths", area: "3000 sq ft", rating: 4.6, views: 1400, featured: false, yearBuilt: "2022" },
+  { id: 9, title: "Farmhouse", location: "Gadap Town", price: "PKR 12.0 Crore", image: "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800", type: "sale", beds: "6 Beds", baths: "5 Baths", area: "5000 sq ft", rating: 4.9, views: 3200, featured: true, yearBuilt: "2023" },
+  { id: 10, title: "Penthouse", location: "Sea View", price: "PKR 8.9 Crore", image: "https://images.unsplash.com/photo-1600566753151-384129cf4e3e?w=800", type: "rent", beds: "4 Beds", baths: "4 Baths", area: "3500 sq ft", rating: 4.8, views: 2800, featured: true, yearBuilt: "2023" },
+  { id: 11, title: "Cottage", location: "Malir Cantt", price: "PKR 1.2 Crore", image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800", type: "sale", beds: "3 Beds", baths: "2 Baths", area: "1600 sq ft", rating: 4.4, views: 750, featured: false, yearBuilt: "2021" },
+  { id: 12, title: "Bungalow", location: "Defence Phase 8", price: "PKR 7.5 Crore", image: "https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800", type: "sale", beds: "5 Beds", baths: "4 Baths", area: "4200 sq ft", rating: 4.7, views: 2500, featured: true, yearBuilt: "2022" },
+  { id: 13, title: "Apartment", location: "Tariq Road", price: "PKR 1.8 Crore", image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800", type: "rent", beds: "3 Beds", baths: "2 Baths", area: "1700 sq ft", rating: 4.5, views: 900, featured: false, yearBuilt: "2020" },
+  { id: 14, title: "House with Basement", location: "Gulshan-e-Iqbal", price: "PKR 6.0 Crore", image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800", type: "sale", beds: "5 Beds", baths: "4 Baths", area: "3900 sq ft", rating: 4.6, views: 1900, featured: false, yearBuilt: "2021" },
+  { id: 15, title: "Brand New Home", location: "Shah Faisal Colony", price: "PKR 3.6 Crore", image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800", type: "sale", beds: "4 Beds", baths: "3 Baths", area: "2500 sq ft", rating: 4.5, views: 1200, featured: false, yearBuilt: "2023" }
 ];
 
 const BuyPage = () => {
-  const navigate = useNavigate();
+   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [filteredProperties, setFilteredProperties] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("grid");
+  const [sortBy, setSortBy] = useState("featured");
+  const [likedProperties, setLikedProperties] = useState(new Set());
+  const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState([0, 15]);
   const propertiesPerPage = 6;
 
   useEffect(() => {
-    setCurrentPage(1); 
-    const newFiltered =
-      filter === "all"
-        ? defaultProperties
-        : defaultProperties.filter((p) => p.type === filter);
-    setFilteredProperties(newFiltered);
-  }, [filter]);
+    setCurrentPage(1);
+    let filtered = defaultProperties;
 
-  const paginatedProperties =
-    filter === "all"
-      ? filteredProperties.slice(
-          (currentPage - 1) * propertiesPerPage,
-          currentPage * propertiesPerPage
-        )
-      : filteredProperties;
+    // Filter by type
+    if (filter !== "all") {
+      filtered = filtered.filter((p) => p.type === filter);
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter((p) => 
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.location.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by price range (simplified for demonstration)
+    filtered = filtered.filter((p) => {
+      const price = parseFloat(p.price.replace(/[^\d.]/g, ''));
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
+
+    // Sort properties
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "featured": return b.featured - a.featured || b.rating - a.rating;
+        case "price-low": return parseFloat(a.price.replace(/[^\d.]/g, '')) - parseFloat(b.price.replace(/[^\d.]/g, ''));
+        case "price-high": return parseFloat(b.price.replace(/[^\d.]/g, '')) - parseFloat(a.price.replace(/[^\d.]/g, ''));
+        case "newest": return parseInt(b.yearBuilt || "0") - parseInt(a.yearBuilt || "0");
+        case "rating": return b.rating - a.rating;
+        default: return 0;
+      }
+    });
+
+    setFilteredProperties(filtered);
+  }, [filter, searchTerm, sortBy, priceRange]);
+
+  const toggleLike = (propertyId) => {
+    const newLiked = new Set(likedProperties);
+    if (newLiked.has(propertyId)) {
+      newLiked.delete(propertyId);
+    } else {
+      newLiked.add(propertyId);
+    }
+    setLikedProperties(newLiked);
+  };
+
+  const paginatedProperties = filteredProperties.slice(
+    (currentPage - 1) * propertiesPerPage,
+    currentPage * propertiesPerPage
+  );
+
+  const totalPages = Math.ceil(filteredProperties.length / propertiesPerPage);
 
   return (
-    <div className="container mx-auto px-4 pt-24 pb-10">
-      <motion.h1
-        className="text-3xl font-bold text-emerald-600 mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        Properties for {filter === "rent" ? "Rent" : filter === "sale" ? "Sale" : "Sale & Rent"}
-      </motion.h1>
-
-      <div className="flex gap-4 mb-6">
-        {["all", "sale", "rent"].map((type) => (
-          <motion.button
-            key={type}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            className={`px-4 py-2 rounded-full border transition-all duration-300 ${
-              filter === type
-                ? "bg-emerald-600 text-white"
-                : "bg-white text-emerald-600 border-emerald-600"
-            }`}
-            onClick={() => setFilter(type)}
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      {/* Hero Section with Enhanced Header */}
+      <div className="bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-24 pb-5">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-8"
           >
-            {type === "all" ? "All" : type === "sale" ? "For Sale" : "For Rent"}
-          </motion.button>
-        ))}
-      </div>
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+              Buy your Properties at Ease
+            </h1>
+            <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
+              Discover exceptional homes that match your lifestyle. From luxury penthouses to cozy apartments.
+            </p>
+            
+            {/* Advanced Search Bar */}
+            <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-200" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search "
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  />
+                </div>
+                
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                >
+                  <option value="all">All Properties</option>
+                  <option value="sale">For Sale</option>
+                  <option value="rent">For Rent</option>
+                </select>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={filter + currentPage}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -30 }}
-          transition={{ duration: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          {paginatedProperties.map((property) => (
-            <motion.div
-              key={property.id}
-              className="bg-white rounded-xl p-4 shadow-md border flex flex-col justify-between"
-              whileHover={{ scale: 1.01 }}
-              transition={{ duration: 0.3 }}
-            >
-              <img
-                src={property.image}
-                alt={property.title}
-                className="w-full h-48 object-cover rounded-lg mb-3"
-              />
-              <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-semibold truncate">{property.title}</h2>
-                <p className="text-emerald-600 font-bold">{property.price}</p>
-              </div>
-              <p className="flex items-center text-gray-600 text-sm mb-3">
-                <MapPin size={14} className="mr-1" /> {property.location}
-              </p>
-              <div className="flex justify-between text-sm text-gray-700 mb-3">
-                <div className="flex items-center gap-1"><Bed size={14} /> {property.beds}</div>
-                <div className="flex items-center gap-1"><Bath size={14} /> {property.baths}</div>
-                <div className="flex items-center gap-1"><Square size={14} /> {property.area}</div>
-              </div>
-              <button
-                onClick={() => navigate(`/property/${property.id}`, { state: { property } })}
-                className="mt-auto bg-green-100 text-green-800 font-semibold rounded-lg py-2 w-full border border-green-500 hover:bg-green-200 flex items-center justify-center gap-2 transition-all"
-              >
-                View Details <ArrowRight size={16} />
-              </button>
-            </motion.div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                >
+                  
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest First</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
 
-      {filter === "all" && (
-        <div className="flex justify-center mt-8 gap-2">
-          {Array.from({
-            length: Math.ceil(filteredProperties.length / propertiesPerPage),
-          }).map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentPage(index + 1)}
-              className={`px-4 py-2 rounded-full border ${
-                currentPage === index + 1
-                  ? "bg-emerald-600 text-white"
-                  : "bg-white text-emerald-600 border-emerald-600"
-              } transition-all duration-200`}
-            >
-              {index + 1}
-            </button>
-          ))}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                >
+                  <Filter size={20} />
+                  Filters
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+         
         </div>
-      )}
+      
+      
+      </div>
+      
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Enhanced Filter Controls */}
+        <div className="flex flex-wrap items-center justify-between mb-8 gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-gray-700 font-semibold">
+              {filteredProperties.length} Properties Found
+            </span>
+            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="flex gap-2">
+              {["all", "sale", "rent"].map((type) => (
+                <motion.button
+                  key={type}
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  className={`px-6 py-2 rounded-full font-medium transition-all duration-300 ${
+                    filter === type
+                      ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200"
+                      : "bg-white text-emerald-600 border-2 border-emerald-200 hover:border-emerald-400"
+                  }`}
+                  onClick={() => setFilter(type)}
+                >
+                  {type === "all" ? "All" : type === "sale" ? "For Sale" : "For Rent"}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-2 rounded-md transition-colors ${viewMode === "grid" ? "bg-white shadow-sm text-emerald-600" : "text-gray-500"}`}
+              >
+                <Grid3X3 size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-2 rounded-md transition-colors ${viewMode === "list" ? "bg-white shadow-sm text-emerald-600" : "text-gray-500"}`}
+              >
+                <List size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Property Grid */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={filter + currentPage + viewMode}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.4 }}
+            className={viewMode === "grid" 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" 
+              : "space-y-6"
+            }
+          >
+            {paginatedProperties.map((property, index) => (
+              <motion.div
+                key={property.id}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 ${
+                  viewMode === "list" ? "flex gap-6" : ""
+                }`}
+                whileHover={{ y: -8 }}
+              >
+                {/* Property Image */}
+                <div className={`relative overflow-hidden ${viewMode === "list" ? "w-80 h-64" : "h-64"}`}>
+                  <img
+                    src={property.image}
+                    alt={property.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  
+                  {/* Overlay Elements */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Featured Badge */}
+                  {property.featured && (
+                    <div className="absolute top-4 left-4">
+                      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                        <Star size={12} fill="currentColor" />
+                        Featured
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(property.id);
+                      }}
+                      className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
+                        likedProperties.has(property.id)
+                          ? "bg-red-500 text-white"
+                          : "bg-white/90 text-gray-700 hover:bg-red-50 hover:text-red-500"
+                      }`}
+                    >
+                      <Heart size={16} fill={likedProperties.has(property.id) ? "currentColor" : "none"} />
+                    </motion.button>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="p-2 bg-white/90 rounded-full backdrop-blur-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                    >
+                      <Share2 size={16} />
+                    </motion.button>
+                  </div>
+
+                  {/* Property Type Badge */}
+                  <div className="absolute bottom-4 left-4">
+                    <div className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                      property.type === "sale" 
+                        ? "bg-emerald-500/90 text-white" 
+                        : "bg-blue-500/90 text-white"
+                    }`}>
+                      For {property.type === "sale" ? "Sale" : "Rent"}
+                    </div>
+                  </div>
+
+                  {/* Views Counter */}
+                  <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+                    <Eye size={12} />
+                    {property.views}
+                  </div>
+                </div>
+
+                {/* Property Details */}
+                <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors">
+                        {property.title}
+                      </h3>
+                      <p className="flex items-center text-gray-600 text-sm">
+                        <MapPin size={14} className="mr-1 text-emerald-500" />
+                        {property.location}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-emerald-600">{property.price}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Star size={12} fill="currentColor" className="text-yellow-400" />
+                        <span className="text-sm text-gray-600">{property.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Property Features */}
+                  <div className="flex justify-between items-center py-3 border-t border-gray-100">
+                    <div className="flex items-center gap-4 text-sm text-gray-700">
+                      {property.beds !== "N/A" && (
+                        <div className="flex items-center gap-1">
+                          <Bed size={16} className="text-emerald-500" />
+                          <span>{property.beds}</span>
+                        </div>
+                      )}
+                      {property.baths !== "N/A" && (
+                        <div className="flex items-center gap-1">
+                          <Bath size={16} className="text-emerald-500" />
+                          <span>{property.baths}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1">
+                        <Square size={16} className="text-emerald-500" />
+                        <span>{property.area}</span>
+                      </div>
+                    </div>
+                    
+                    {property.yearBuilt && property.yearBuilt !== "N/A" && (
+                      <div className="flex items-center gap-1 text-sm text-gray-600">
+                        <Calendar size={14} />
+                        <span>{property.yearBuilt}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* View Details Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/property/${property.id}`, { state: { property } })}
+                    className="mt-4 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-6 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
+                  >
+                    View Details
+                    <ArrowRight size={16} />
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Enhanced Pagination */}
+        {totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center items-center mt-12 gap-2"
+          >
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Previous
+            </button>
+            
+            {Array.from({ length: totalPages }).map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentPage(index + 1)}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  currentPage === index + 1
+                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200"
+                    : "bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50"
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              Next
+            </button>
+          </motion.div>
+        )}
+
+        {/* No Results State */}
+        {filteredProperties.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16"
+          >
+            <div className="w-32 h-32 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Search size={48} className="text-emerald-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">No Properties Found</h3>
+            <p className="text-gray-600 mb-6 max-w-md mx-auto">
+              We couldn't find any properties matching your criteria. Try adjusting your filters or search terms.
+            </p>
+            <button
+              onClick={() => {
+                setFilter("all");
+                setSearchTerm("");
+                setPriceRange([0, 15]);
+              }}
+              className="px-6 py-3 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              Clear All Filters
+            </button>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };
