@@ -92,7 +92,7 @@ const BuyPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Hero Section with Enhanced Header */}
-      <div className="bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-24 pb-5">
+      <div className="bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-24 pb-5 ">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
@@ -111,20 +111,21 @@ const BuyPage = () => {
             <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-200" size={20} />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-900" size={20} />
                   <input
                     type="text"
                     placeholder="Search "
+                   
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white placeholder-emerald-200 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="w-full pl-10 pr-4 py-3 placeholder-emerald-800 bg-white/20 border border-white/30 rounded-lg text-emerald-900  focus:outline-none focus:ring-2 focus:ring-white/50"
                   />
                 </div>
                 
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
-                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
                 >
                   <option value="all">All Properties</option>
                   <option value="sale">For Sale</option>
@@ -134,7 +135,7 @@ const BuyPage = () => {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
                 >
                   
                   <option value="price-low">Price: Low to High</option>
