@@ -9,6 +9,7 @@ import ContactPage from "./components/ContactPage";
 import AboutPage from "./components/AboutPage";
 import PropertyDetails from "./components/PropertyDetails";
 import ScrollToTop from "./components/ScrollToTop";
+import MouseFollower from './components/MouseFollower'
 
 
 const Hero = lazy(() => import("./components/Hero"));
@@ -39,6 +40,8 @@ function App() {
     setUserName("");
   };
 
+
+  
   return (
     <Router>
       <ScrollToTop />
@@ -59,9 +62,11 @@ function App() {
                   <>
                     <Hero />
                     <FeaturedProperties />
-                    <HowItWorks />
+                     <HowItWorks />
+                     <CallToAction />
+                   
                     <Testimonials />
-                    <CallToAction />
+                   
                   </>
                 }
               />
@@ -92,6 +97,8 @@ function App() {
           onClose={handleLoginToggle}
           onLoginSuccess={handleLoginSuccess}
         />
+
+        <MouseFollower />
       </div>
     </Router>
   );
