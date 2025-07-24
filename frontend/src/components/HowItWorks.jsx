@@ -79,7 +79,7 @@ const HowItWorks = () => {
 
 
  {/* Top Wave */}
-<div className="absolute -top-2 left-0 w-full leading-[0]">
+<div className="absolute -top-1 left-0 w-full leading-[0]">
   <svg
     className="relative block w-full h-auto"
     xmlns="http://www.w3.org/2000/svg"
