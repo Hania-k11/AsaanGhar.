@@ -307,7 +307,7 @@ const Hero = () => {
       </div>
 
       {/* Wave separator */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden">
+      <div className="absolute -bottom-1 left-0 w-full overflow-hidden">
         <motion.svg
          
           transition={{
@@ -332,7 +332,8 @@ const Hero = () => {
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
-            fill="#ffffff"
+            fill="#ffffffff
+"
             fillOpacity="1"
           />
         </motion.svg>

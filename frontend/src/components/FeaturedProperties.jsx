@@ -160,7 +160,7 @@ const FeaturedProperties = () => {
     <>
    
       
-      <section className="relative py-24 bg-emerald-800/70
+      <section className="relative py-24 bg-gradient-to-b from-cyan-900 via-emerald-500/20 to-emerald-800/80
 
  overflow-hidden">
         {/* Professional Top Wave */}
