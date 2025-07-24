@@ -1,6 +1,47 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import LoginModal from "./LoginModal";
 
-const SellPage = ({ setUserProperties }) => {
+const SellPage = ({
+  isLoggedIn,
+  userName,
+  setUserProperties,
+  onLoginClick,
+  onLoginSuccess,
+}) => {
+  const [formState, setFormState] = useState({ title: "", description: "" });
+  const [showLoginModal, setShowLoginModal] = useState(false); // ✅ fixed variable name
+
+  useEffect(() => {
+    if (isLoggedIn) setShowLoginModal(false);
+  }, [isLoggedIn]);
+
+  const handleInputChange = (e) => {
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      onLoginClick("form"); // ✅ fixed missing argument
+      return;
+    }
+
+    setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      onLoginClick("form"); // ✅ fixed missing argument
+      return;
+    }
+
+    setUserProperties((prev) => [...prev, formState]);
+    setFormState({ title: "", description: "" });
+  };
+
+  const handleLoginClick = (source) => {
+    setShowLoginModal(true);
+    onLoginClick(source); // ✅ centralized login logic
+  };
+
   return (
     <div className="pt-24 pb-10 px-4 container mx-auto bg-gray-50 min-h-screen">
       <div className="text-center mb-6">
@@ -8,17 +49,27 @@ const SellPage = ({ setUserProperties }) => {
           Post Your Property
         </h1>
         <p className="mt-2 text-lg text-gray-600">
-          Fill in the details below to create property listing
+          Fill in the details below to create a property listing.
         </p>
       </div>
 
-  
-      <RentForm setUserProperties={setUserProperties} />
+      <RentForm
+        setUserProperties={setUserProperties}
+        isLoggedIn={isLoggedIn}
+        onLoginClick={handleLoginClick} // ✅ updated to use internal handler
+      />
+
+      <LoginModal
+        show={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={onLoginSuccess}
+      />
     </div>
   );
 };
 
-const RentForm = ({ setUserProperties }) => {
+
+const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
@@ -57,23 +108,34 @@ const RentForm = ({ setUserProperties }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    setFormData({
-      ...formData,
-      [name]:
-        type === "checkbox" ? checked : name === "image" ? files[0] : value,
-    });
+    if (!isLoggedIn) {
+      onLoginClick("input");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : name === "image" ? files[0] : value,
+    }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isLoggedIn) {
+      onLoginClick("submit");
+      return;
+    }
+
     const newProperty = {
       id: Date.now(),
       ...formData,
       image: formData.image ? URL.createObjectURL(formData.image) : null,
       listingType: "rent",
     };
+
     setUserProperties((prev) => [...prev, newProperty]);
     alert("Rental listing submitted successfully!");
+
     setFormData({
       title: "",
       location: "",
@@ -113,10 +175,11 @@ const RentForm = ({ setUserProperties }) => {
 
   return (
     <form
-  onSubmit={handleSubmit}
-  className="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-2xl space-y-10"
-  encType="multipart/form-data"
->
+      onSubmit={handleSubmit}
+      className="max-w-4xl mx-auto bg-white p-10 rounded-3xl shadow-2xl space-y-10"
+      encType="multipart/form-data"
+    >
+
   {/* Property Details Section */}
   <section className="space-y-6">
     <div className="flex items-center space-x-3 text-emerald-600">
@@ -487,16 +550,19 @@ const RentForm = ({ setUserProperties }) => {
                   Selected file: {formData.image.name}
                 </p>
               )}
+              
             </div>
           </section>
   
           {/* Submit Button */}
           <button
-            type="submit"
-            className="w-full bg-emerald-600 text-white py-4 rounded-xl hover:bg-emerald-700 transition-all duration-300 font-bold text-lg shadow-lg"
-          >
-            Submit Property 
-          </button>
+  type="submit"
+  id="rent-form-submit"
+  className="w-full bg-emerald-600 text-white py-4 rounded-xl hover:bg-emerald-700 transition-all duration-300 font-bold text-lg shadow-lg"
+>
+  Submit Property 
+</button>
+
     </form>
   );
 };

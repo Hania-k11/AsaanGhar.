@@ -6,16 +6,17 @@ import {
   X,
   User,
   ChevronDown,
-  Settings,
   LogOut,
 } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef();
+  const desktopDropdownRef = useRef();
+  const mobileDropdownRef = useRef();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -25,7 +26,12 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        desktopDropdownRef.current &&
+        !desktopDropdownRef.current.contains(event.target) &&
+        mobileDropdownRef.current &&
+        !mobileDropdownRef.current.contains(event.target)
+      ) {
         setDropdownOpen(false);
       }
     };
@@ -33,10 +39,15 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setDropdownOpen(false);
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Buy", path: "/buy" },
-    ...(isLoggedIn ? [{ name: "Sell", path: "/sell" }] : []),
+    { name: "Sell", path: "/sell" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
@@ -58,7 +69,6 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
           </span>
         </motion.div>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex space-x-8">
           {navItems.map((item) => (
             <NavLink
@@ -77,177 +87,146 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
           ))}
         </div>
 
-        {/* Desktop Login/Profile */}
-    <div
-      className="hidden md:flex items-center space-x-4 relative"
-      ref={dropdownRef}
-    >
-      {isLoggedIn ? (
-        <div className="relative">
-          {/* ✅ Profile button */}
-          <div
-            className="flex items-center space-x-2 cursor-pointer"
-            onClick={() => setDropdownOpen((prev) => !prev)}
-          >
-            <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md hover:bg-emerald-700 transition">
-              <User className="w-5 h-5" />
-            </div>
-            <span className="font-medium text-gray-800">{userName}</span>
-            <ChevronDown size={18} className="text-gray-600" />
-          </div>
-
-          {/* ✅ Dropdown */}
-          {dropdownOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.2 }}
-              className="absolute top-full right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50"
-            >
-              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md">
-                My Account
-              </div>
-              <div className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md">
-                Change Password
-              </div>
+        <div className="hidden md:flex items-center space-x-4 relative" ref={desktopDropdownRef}>
+          {isLoggedIn ? (
+            <div className="relative">
               <div
-                className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  onLogout(); // ✅ call logout
-                }}
+                className="flex items-center space-x-2 cursor-pointer"
+                onClick={() => setDropdownOpen((prev) => !prev)}
               >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md transition"
+                >
+                  <User className="w-5 h-5" />
+                </motion.div>
+                <span className="font-medium text-gray-800">{userName}</span>
+                <ChevronDown size={18} className="text-gray-600" />
               </div>
-            </motion.div>
-          )}
-        </div>
-      ) : (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md hover:shadow-xl transition-all duration-300"
-          onClick={onLoginClick}
-        >
-          Login / Register
-        </motion.button>
-      )}
-    </div>
 
-        {/* Mobile Menu Button */}
- <div className="md:hidden flex items-center space-x-3 relative" ref={dropdownRef}>
-  {/* User icon for mobile */}
-  {isLoggedIn && (
-    <div
-      className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md cursor-pointer"
-      onClick={() => setDropdownOpen(!dropdownOpen)}
-    >
-      <User size={20} />
-    </div>
-  )}
-
-  {/* Mobile Menu Button */}
-  <motion.button
-    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-    className="bg-white/20 backdrop-blur-md rounded-xl p-2.5 border border-white/30 shadow-lg"
-    whileTap={{ scale: 0.95 }}
-  >
-    <AnimatePresence mode="wait">
-      {mobileMenuOpen ? (
-        <motion.div
-          key="close"
-          initial={{ rotate: -90, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          exit={{ rotate: 90, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <X size={20} className="text-gray-700" />
-        </motion.div>
-      ) : (
-        <motion.div
-          key="menu"
-          initial={{ rotate: 90, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          exit={{ rotate: -90, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Menu size={20} className="text-gray-700" />
-        </motion.div>
-      )}
-    </AnimatePresence>
-  </motion.button>
-
-  {/* Mobile User Dropdown */}
-  <AnimatePresence>
-    {dropdownOpen && isLoggedIn && (
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-xl py-2 text-sm z-50"
-      >
-        <div className="mt-6 pt-6 border-t border-gray-200/50">
-                {isLoggedIn ? (
+              <AnimatePresence>
+                {dropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute top-full right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50"
                   >
-                    <div className="flex items-center space-x-3 mb-4 p-4 bg-emerald-50/50 rounded-xl">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-md">
-                        <User size={20} />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-800">
-                          {userName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Premium Member
-                        </div>
-                      </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      My Account
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center py-3 px-4 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50/50 rounded-xl cursor-pointer transition-colors">
-                        <Settings className="w-4 h-4 mr-3" />
-                        Settings
-                      </div>
-                      <div
-                        className="flex items-center py-3 px-4 text-red-600 hover:bg-red-50/50 rounded-xl cursor-pointer transition-colors font-medium"
-                        onClick={onLogout}
-                      >
-                        <LogOut className="w-4 h-4 mr-3" />
-                        Logout
-                      </div>
+                    <div
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
+                      onClick={() => setDropdownOpen(false)}
+                    >
+                      Change Password
+                    </div>
+                    <div
+                      className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        onLogout();
+                      }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
                     </div>
                   </motion.div>
-                ) : (
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onLoginClick();
-                    }}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Login / Register
-                  </motion.button>
                 )}
-              </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
+              </AnimatePresence>
+            </div>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md hover:shadow-xl transition-all duration-300"
+              onClick={onLoginClick}
+            >
+              Login / Register
+            </motion.button>
+          )}
+        </div>
 
+        <div className="md:hidden flex items-center space-x-3 relative" ref={mobileDropdownRef}>
+          {isLoggedIn && (
+            <div
+              className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md cursor-pointer"
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+            >
+              <User size={20} />
+            </div>
+          )}
+          {!isLoggedIn && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="text-sm px-4 py-2 bg-emerald-600 text-white rounded-xl shadow"
+              onClick={onLoginClick}
+            >
+              Login
+            </motion.button>
+          )}
+          <motion.button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="bg-white/20 backdrop-blur-md rounded-xl p-2.5 border border-white/30 shadow-lg"
+            whileTap={{ scale: 0.95 }}
+          >
+            <AnimatePresence mode="wait">
+              {mobileMenuOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <X size={20} className="text-gray-700" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="menu"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Menu size={20} className="text-gray-700" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.button>
 
+          <AnimatePresence>
+            {dropdownOpen && isLoggedIn && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-xl py-2 text-sm z-50"
+              >
+                <div className="px-4 py-2 text-gray-700 font-semibold">{userName}</div>
+                <div
+                  className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    onLogout();
+                  }}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -291,31 +270,6 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
                   </motion.div>
                 ))}
               </motion.div>
-
-              <div className="mt-6 pt-6 border-t border-gray-200/50">
-                {isLoggedIn ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                  >
-                 
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      onLoginClick();
-                    }}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    Login / Register
-                  </motion.button>
-                )}
-              </div>
             </div>
           </motion.div>
         )}

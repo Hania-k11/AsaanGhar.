@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -13,6 +13,21 @@ const LoginModal = ({ show, onClose, onLoginSuccess }) => {
     phone: "",
     agree: false,
   });
+
+  useEffect(() => {
+    if (!show) {
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        gender: "",
+        phone: "",
+        agree: false,
+      });
+      setIsSignup(false);
+    }
+  }, [show]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -35,7 +50,11 @@ const LoginModal = ({ show, onClose, onLoginSuccess }) => {
       return;
     }
 
-    alert(`${isSignup ? "Signup" : "Login"} Successful`);
+    if (!form.email || !form.password) {
+      alert("Please enter email and password");
+      return;
+    }
+
     onLoginSuccess(form.name || "User");
   };
 
