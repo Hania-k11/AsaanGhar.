@@ -4,11 +4,16 @@ import FloatingElements from "./FloatingElements"
 
 const Hero = () => {
   return (
-    <div className="relative pt-10 overflow-hidden font-sans">
+    <div className="relative pt-10 overflow-hidden font-sans ">
       
       {/* Background with parallax effect */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-200/80 to-teal-800/50 z-10"></div>
+
+ 
+
+   <div className="absolute inset-0 z-10 bg-gradient-to-b from-gray-200/50 via-emerald-200/80 to-teal-800/60 backdrop-blur-sm shadow-[inset_0_-15px_30px_-10px_rgba(0,0,0,0.3)]"></div>
+        
+        
         <motion.div
           initial={{ scale: 1.1 }}
           animate={{
@@ -21,11 +26,7 @@ const Hero = () => {
           }}
           className="w-full h-full"
         >
-          <img
-            src="/placeholder.svg?height=800&width=1600"
-            alt="Modern homes"
-            className="w-full h-screen object-cover"
-          />
+          
         </motion.div>
       </div>
 
@@ -61,9 +62,9 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight"
+          className="text-4xl md:text-6xl font-extrabold text-cyan-900 mb-4 leading-tight"
         >
-          Find Your <span className="text-emerald-800">Asaan Ghar</span> With Ease
+          Find Your <span className="text-emerald-700">Asaan Ghar</span> With Ease
         </motion.h1>
 
         {/* Subheading */}
