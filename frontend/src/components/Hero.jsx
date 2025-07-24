@@ -33,13 +33,13 @@ const Hero = () => {
       
 
       {/* Main content container */}
-      <div className="container mx-auto px-6 z-20 relative flex flex-col items-center justify-center h-screen text-center">
+      <div className="container  mx-auto px-6 z-20 relative flex flex-col items-center justify-center h-screen text-center">
         {/* Icon with animation */}
         <motion.div
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="flex items-center justify-center mb-6 -mt-20"
+          className="flex items-center justify-center mb-6 md:-mt-20"
         >
           <motion.div
             animate={{
@@ -53,7 +53,7 @@ const Hero = () => {
             }}
             className="bg-white p-2 rounded-full shadow-lg"
           >
-            <Home className="h-20 w-22 text-emerald-600" />
+            <Home className=" h-17 w-18 m:h-20 m:w-22 text-emerald-600" />
           </motion.div>
         </motion.div>
 
