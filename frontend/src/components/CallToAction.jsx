@@ -31,14 +31,14 @@ const CallToAction = () => {
   ]
 
   return (
-    <section className="relative py-10 overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-black">
+    <section className="relative py-20 overflow-hidden bg-gradient-to-br from-slate-900 via-gray-900 to-black">
       
       {/* Top SVG */}
 
 
 
  
- {/* <div className="absolute -top-8 left-0 w-full overflow-hidden leading-none z-10 rotate-180">
+ <div className="absolute -top-8 left-0 w-full overflow-hidden leading-none z-10 rotate-180">
   <svg
     className="block w-full h-28 md:h-32"
     xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,7 @@ const CallToAction = () => {
     />
   </svg>
 </div>
- */}
+
 
 
 

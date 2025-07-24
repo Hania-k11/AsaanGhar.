@@ -176,6 +176,22 @@ const FeaturedProperties = () => {
         </div> */}
 
 
+
+ {/* bot\\\TOMMMMMMMMMMMMMMMM top con */}
+<div className="absolute -top-8 left-0 w-full overflow-hidden leading-none z-10 rotate-180">
+  <svg
+    className="block w-full h-28 md:h-32"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 1440 120"
+    preserveAspectRatio="none"
+  >
+    <path
+      fill="#ffffff"
+      d="M0,0 C360,100 1080,100 1440,0 L1440,120 L0,120 Z"
+    />
+  </svg>
+</div>
+
  {/* botTOMMMMMMMMMMMMMMMM */}
     <div className="absolute -bottom-2 left-0 w-full overflow-hidden leading-none rotate-180">
   <svg
