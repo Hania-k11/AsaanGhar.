@@ -10,6 +10,7 @@ import AboutPage from "./components/AboutPage";
 import PropertyDetails from "./components/PropertyDetails";
 import ScrollToTop from "./components/ScrollToTop";
 import MouseFollower from './components/MouseFollower'
+import StartJourney from "./components/StartJourney"
 
 
 const Hero = lazy(() => import("./components/Hero"));
@@ -65,7 +66,8 @@ function App() {
                      <HowItWorks />
                      <CallToAction />
                    
-                    <Testimonials />
+                    {/* <Testimonials /> */}
+                    <StartJourney />
                    
                   </>
                 }
