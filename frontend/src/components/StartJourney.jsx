@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { motion } from "framer-motion";
 import { ArrowRight, Home, Search, Key, Heart, Sparkles, MapPin, Star, Users, CheckCircle } from "lucide-react"
 
 const StartJourney = () => {
@@ -74,16 +75,25 @@ const StartJourney = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-              <button className="group bg-gradient-to-r from-emerald-600 to-blue-300 text-white px-10 py-5 rounded-2xl font-semibold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:from-emerald-700 hover:to-blue-700 flex items-center gap-3">
-                <Home size={24} className="group-hover:animate-bounce" />
-                Browse Properties
-                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
-              </button>
-              
-              <button className="group bg-white text-gray-800 px-10 py-5 rounded-2xl font-semibold text-lg border-2 border-gray-200 hover:border-emerald-300 hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                <Search size={24} className="group-hover:animate-pulse" />
-                Advanced Search
-              </button>
+             
+             <motion.button
+  whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.15)" }}
+  whileTap={{ scale: 0.98 }}
+  className="group bg-gradient-to-r from-cyan-500/50 to-emerald-600 group relative  px-10 py-4 rounded-2xl font-semibold shadow-2xl transition-all duration-300  justify-center overflow-hidden00 text-white px-10 py-5 rounded-2xl font-semibold text-lg flex items-center gap-3 hover:from-emerald-700/70 hover:to-emerald-800"
+>
+  <Home size={24} className="group-hover:animate-bounce" />
+  Browse Properties
+  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform duration-300" />
+</motion.button>
+
+<motion.button
+  whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.1)" }}
+   whileTap={{ scale: 0.98 }}
+  className="group bg-white text-gray-800 px-10 py-5 rounded-2xl font-semibold text-lg border-2 border-gray-200 hover:border-emerald-300 flex items-center gap-3 font-semibold backdrop-blur-md hover:border-white/50 transition-all duration-300"
+>
+  <Search size={24} className="group-hover:animate-pulse" />
+  Advanced Search
+</motion.button>
             </div>
             
             <div className="mt-8 flex items-center justify-center gap-2 text-gray-600">
