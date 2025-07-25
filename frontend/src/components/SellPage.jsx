@@ -454,6 +454,59 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   </div>
                 </div>
 
+
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">City *</label>
+  <div className="relative">
+    <select
+      name="city"
+      value={formData.city}
+      onChange={handleChange}
+      className={`w-full px-4 py-4 border-2 rounded-xl appearance-none bg-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+        errors.city ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+      }`}
+    >
+      <option value="">Select a City</option>
+      <option value="Karachi">Karachi</option>
+      <option value="Lahore">Lahore</option>
+      <option value="Islamabad">Islamabad</option>
+      <option value="Rawalpindi">Rawalpindi</option>
+      <option value="Peshawar">Peshawar</option>
+      <option value="Quetta">Quetta</option>
+      <option value="Faisalabad">Faisalabad</option>
+      <option value="Multan">Multan</option>
+      <option value="Hyderabad">Hyderabad</option>
+      <option value="Sialkot">Sialkot</option>
+      <option value="Gujranwala">Gujranwala</option>
+      <option value="Bahawalpur">Bahawalpur</option>
+      <option value="Sargodha">Sargodha</option>
+      <option value="Sukkur">Sukkur</option>
+      <option value="Abbottabad">Abbottabad</option>
+      <option value="Mardan">Mardan</option>
+      <option value="Mingora">Mingora</option>
+      <option value="Mirpur">Mirpur</option>
+      <option value="Gwadar">Gwadar</option>
+      <option value="Dera Ghazi Khan">Dera Ghazi Khan</option>
+      <option value="Rahim Yar Khan">Rahim Yar Khan</option>
+      <option value="Larkana">Larkana</option>
+      <option value="Okara">Okara</option>
+      <option value="Sheikhupura">Sheikhupura</option>
+      <option value="Jhelum">Jhelum</option>
+      <option value="Nawabshah">Nawabshah</option>
+      <option value="Chiniot">Chiniot</option>
+      <option value="Kasur">Kasur</option>
+      <option value="Tando Adam">Tando Adam</option>
+      <option value="Bannu">Bannu</option>
+    </select>
+    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </div>
+  </div>
+  {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+</div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
                   <input
@@ -468,6 +521,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   />
                   {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                 </div>
+
+
+
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
