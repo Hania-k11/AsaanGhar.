@@ -30,6 +30,22 @@ const Hero = () => {
         </motion.div>
       </div>
 
+{/* Background with subtle gradient */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-10 bg-gradient-to-b from-white/30 via-emerald-200/10 to-gray-100/40 backdrop-blur-sm"></div>
+        <motion.div
+          initial={{ scale: 1.05 }}
+          animate={{ scale: 1 }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            repeatType: "reverse",
+            ease: "easeInOut"
+          }}
+          className="w-full h-full bg-[url('/homebg.avif')] bg-cover bg-center opacity-30 md:opacity-40"
+        />
+      </div>
+
       
 
       {/* Main content container */}
@@ -62,9 +78,9 @@ const Hero = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-6xl font-extrabold text-cyan-900 mb-4 leading-tight"
+          className="text-4xl md:text-6xl font-extrabold drop-shadow-[4px_4px_2px_white] text-cyan-950/90 mb-4   leading-tight"
         >
-          Find Your <span className="text-emerald-700">Asaan Ghar</span> With Ease
+          Find Your <span className="text-emerald-700 drop-shadow-[2px_2px_2px_white] ">Dream Place</span> With Ease
         </motion.h1>
 
         {/* Subheading */}

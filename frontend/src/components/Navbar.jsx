@@ -58,7 +58,7 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
       className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md py-2" : "bg-transparent py-4"
+        isScrolled ? "bg-white shadow-md py-2" : " bg-white md:bg-white/30 shadow-sm py-3"
       }`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">

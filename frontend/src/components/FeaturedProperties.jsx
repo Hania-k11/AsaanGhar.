@@ -104,16 +104,18 @@ const FeaturedProperties = () => {
   ]
 
   return (
-    <section className="relative py-32 bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-50/50 overflow-hidden">
+    <section className="relative py-32 bg-gradient-to-br from-slate-200 via-emerald-50/30 to-teal-50/50 overflow-hidden">
         {/* Top Wave */}
         <div className="absolute -top-1 left-0 w-full overflow-hidden leading-none z-10 rotate-180">
           <svg
-            className="block w-full h-24 md:h-32"
+            className="block w-full h-24 md:h-32 drop-shadow-lg"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 1440 120"
             preserveAspectRatio="none"
           >
-            <path fill="#ffffff" d="M0,0 C360,80 1080,80 1440,0 L1440,120 L0,120 Z" />
+            <path fill="#ffffff" 
+                     
+      d="M0,0 C360,80 1080,80 1440,0 L1440,120 L0,120 Z" />
           </svg>
         </div>
 
