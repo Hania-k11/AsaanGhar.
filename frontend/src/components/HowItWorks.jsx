@@ -251,7 +251,7 @@ const HowItWorks = () => {
       </div>
 
       {/* Mouse Follower */}
-      <div 
+      {/* <div 
         className="fixed w-6 h-6 bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-full pointer-events-none z-50 opacity-20 blur transition-opacity duration-300"
         style={{
           left: mousePosition.x - 12,
@@ -259,6 +259,9 @@ const HowItWorks = () => {
           transform: 'translate3d(0, 0, 0)'
         }}
       ></div>
+
+
+      -------------------------------------- */}
 
        {/* <div 
         className="fixed pointer-events-none z-50 opacity-30 transition-all duration-300 ease-out"
