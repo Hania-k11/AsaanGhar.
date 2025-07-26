@@ -177,133 +177,160 @@ const PropertyDetails = () => {
       ))}
     </Slider>
   </div>
-
-  <div className="p-10 space-y-10">
-   <motion.div
-  initial={{ opacity: 0, y: 30 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
-  className="border-b pb-6 border-gray-200 space-y-4"
->
-  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
-      {property.title}
-    </h1>
-
-    <div className="flex items-center gap-1 sm:gap-2 bg-emerald-50 px-4 py-2 rounded-full shadow-sm group hover:shadow-md transition">
-      <span className="text-sm font-semibold text-emerald-700 uppercase tracking-wide">
-        PKR
-      </span>
-      <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 group-hover:scale-105 transition-transform duration-300">
-        {property.price.replace("PKR", "").trim()}
-      </span>
+<div className="p-10 space-y-10">
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6 }}
+    className="border-b pb-6 border-gray-200 space-y-4"
+  >
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+        {property.title}
+      </h1>
+      <div className="flex items-center gap-1 sm:gap-2 bg-emerald-50 px-4 py-2 rounded-full shadow-sm group hover:shadow-md transition">
+        <span className="text-sm font-semibold text-emerald-700 uppercase tracking-wide">PKR</span>
+        <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 group-hover:scale-105 transition-transform duration-300">
+          {property.price.replace("PKR", "").trim()}
+        </span>
+      </div>
     </div>
-  </div>
+    <p className="text-gray-600 text-base flex items-center gap-2">
+      <MapPin size={18} className="text-emerald-600" />
+      {property.location}, {property.city}
+    </p>
+  </motion.div>
 
-  <p className="text-gray-600 text-base flex items-center gap-2">
-    <MapPin size={18} className="text-emerald-600" />
-    {property.location}
-  </p>
-</motion.div>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1, duration: 0.5 }}
+    className="grid grid-cols-2 md:grid-cols-3 gap-4"
+  >
+    <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
+      <Bed size={20} className="text-emerald-600" />
+      <span className="text-gray-800 font-medium">{property.beds}</span>
+    </div>
+    <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
+      <Bath size={20} className="text-emerald-600" />
+      <span className="text-gray-800 font-medium">{property.baths}</span>
+    </div>
+    <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
+      <Square size={20} className="text-emerald-600" />
+      <span className="text-gray-800 font-medium">{property.area}</span>
+    </div>
+  </motion.div>
 
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.2, duration: 0.5 }}
+    className="space-y-4"
+  >
+    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+      <Info size={20} className="text-emerald-600" /> Description
+    </h3>
+    <p className="text-gray-700 leading-relaxed text-base">
+      {property.description || "This beautifully designed property offers modern amenities and ample space ideal for families or professionals. Close to schools, parks, and shopping centers."}
+    </p>
+  </motion.div>
 
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.3, duration: 0.5 }}
+    className="space-y-4"
+  >
+    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+      <ListChecks size={20} className="text-emerald-600" /> Amenities
+    </h3>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
+      {(property.amenities || [
+        "Car Parking",
+        "Gated Community",
+        "Air Conditioning",
+        "Balcony",
+        "24/7 Security",
+        "Pet Friendly"
+      ]).map((item, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="w-2 h-2 bg-emerald-600 rounded-full" />
+          {item}
+        </div>
+      ))}
+    </div>
+  </motion.div>
+
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.4, duration: 0.5 }}
+    className="space-y-4"
+  >
+    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+      <Landmark size={20} className="text-emerald-600" /> Property Details
+    </h3>
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
+      <p><span className="font-medium">Property Type:</span> Apartment</p>
+      <p><span className="font-medium">Built Year:</span> {property.builtYear || "2021"}</p>
+      <p><span className="font-medium">Furnishing:</span> {property.furnishing || "Fully Furnished"}</p>
+      <p><span className="font-medium">Floor:</span> 2</p>
+      <p><span className="font-medium">Available From:</span> {property.availableFrom ? new Date(property.availableFrom).toLocaleDateString() : "30/03/2025"}</p>
+      <p><span className="font-medium">Security Deposit:</span> {property.securityDeposit ? `PKR ${property.securityDeposit}` : "PKR 100,000"}</p>
+      {property.type?.toLowerCase().includes("rent") && (
+        <p><span className="font-medium">Monthly Maintenance:</span> {property.maintenance ? `PKR ${property.maintenance}` : "PKR 5,000"}</p>
+      )}
+    </div>
+  </motion.div>
+
+  {property.nearbyFacilities && (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.5 }}
-      className="grid grid-cols-2 md:grid-cols-3 gap-4"
-    >
-      <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
-        <Bed size={20} className="text-emerald-600" />
-        <span className="text-gray-800 font-medium">{property.beds}</span>
-      </div>
-      <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
-        <Bath size={20} className="text-emerald-600" />
-        <span className="text-gray-800 font-medium">{property.baths}</span>
-      </div>
-      <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
-        <Square size={20} className="text-emerald-600" />
-        <span className="text-gray-800 font-medium">{property.area}</span>
-      </div>
-    </motion.div>
-
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2, duration: 0.5 }}
+      transition={{ delay: 0.45, duration: 0.5 }}
       className="space-y-4"
     >
-      <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-        <Info size={20} className="text-emerald-600" /> Description
-      </h3>
-      <p className="text-gray-700 leading-relaxed text-base">
-        This beautifully designed property offers modern amenities and ample space ideal for families or professionals. Close to schools, parks, and shopping centers.
-      </p>
-    </motion.div>
-
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3, duration: 0.5 }}
-      className="space-y-4"
-    >
-      <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-        <ListChecks size={20} className="text-emerald-600" /> Amenities
-      </h3>
+      <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">🏥 Nearby Facilities</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
-        {["Car Parking", "24/7 Security", "Balcony", "Internet"].map((item, i) => (
+        {(property.nearbyFacilities || [
+          "Hospitals",
+          "Schools",
+          "Shopping Centres"
+        ]).map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-emerald-600 rounded-full" />
-            {item}
+            <span className="w-2 h-2 bg-emerald-600 rounded-full" /> {item}
           </div>
         ))}
       </div>
     </motion.div>
+  )}
 
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.4, duration: 0.5 }}
-      className="space-y-4"
-    >
-      <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-        <Landmark size={20} className="text-emerald-600" /> Property Details
-      </h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
-        <p><span className="font-medium">Built Year:</span> 2021</p>
-        <p><span className="font-medium">Floors:</span> 2</p>
-        <p><span className="font-medium">Furnished:</span> Yes</p>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.5, duration: 0.5 }}
+    className="pt-6"
+  >
+    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3">
+      🗺️ Location
+    </h3>
+    <div className="relative rounded-2xl overflow-hidden shadow-md">
+      <iframe
+        title="Property Location"
+        className="w-full h-[320px] md:h-[360px] rounded-2xl"
+        frameBorder="0"
+        loading="lazy"
+        allowFullScreen
+        src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&hl=en&z=18&output=embed`}
+      ></iframe>
+      <div className="absolute top-3 left-3 bg-white bg-opacity-90 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full shadow-sm">
+        {property.location}, {property.city}
       </div>
-    </motion.div>
-
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-      className="pt-6"
-    >
-     <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3">
-  🗺️ Location
-</h3>
-
-<div className="relative rounded-2xl overflow-hidden shadow-md">
-  <iframe
-    title="Property Location"
-    className="w-full h-[320px] md:h-[360px] rounded-2xl"
-    frameBorder="0"
-    loading="lazy"
-    allowFullScreen
-    src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&hl=en&z=18&output=embed`}
-  ></iframe>
-
-  <div className="absolute top-3 left-3 bg-white bg-opacity-90 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full shadow-sm">
-    {property.location}
-  </div>
+    </div>
+  </motion.div>
+</div>
 </div>
 
-    </motion.div>
-  </div>
-</div>
 <motion.div
   initial={{ opacity: 0, y: 40 }}
   animate={{ opacity: 1, y: 0 }}
@@ -576,11 +603,31 @@ const PropertyDetails = () => {
           />
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          {/* Top-Left Badge */}
-          <div className="absolute top-4 left-4">
-            
+         
+            {/* Top-Left Badge */}
+<div className="absolute top-4 left-4">
+  <span className={`text-xs font-semibold px-3 py-1 rounded-full shadow-sm ${
+    property.type?.toLowerCase().includes("rent")
+      ? "bg-blue-100 text-blue-700"
+      : "bg-green-100 text-green-700"
+  }`}>
+    {property.type}
+  </span>
+</div>
 
-          </div>
+
+
+
+
+
+
+
+
+
+
+
+
+        
           {/* Top-Right Action Icons */}
           <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button className="p-2 bg-white/90 rounded-full backdrop-blur-sm text-gray-700 hover:bg-red-100 hover:text-red-600 transition-colors">
