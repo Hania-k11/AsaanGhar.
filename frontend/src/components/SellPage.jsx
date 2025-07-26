@@ -2,10 +2,6 @@
 
 import { useState, useEffect } from "react"
 import LoginModal from "./LoginModal"
-import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
-import { motion } from "framer-motion"
-import FloatingElements from "./FloatingElements"
-
 
 const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLoginSuccess }) => {
   const [formState, setFormState] = useState({ title: "", description: "" })
@@ -45,33 +41,24 @@ const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLog
       <div className="pt-24 pb-16 px-4 container mx-auto max-w-6xl">
         {/* Header Section */}
         <div className="text-center mb-12">
-          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
-          */}
-             <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex items-center pt-8 md:pt-20 justify-center mb-6 md:-mt-20"
-        >
-          <motion.div
-            animate={{
-              y: [0, -5, 0],
-              rotate: [0, 3, -3, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-            className="bg-white p-2 rounded-full shadow-lg"
-          >
-            <Home className=" h-17 w-18 m:h-20 m:w-22 text-emerald-600" />
-          </motion.div>
-        </motion.div>
-
-          {/* </div> */}
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-8 h-8 text-emerald-600"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V9.75a.75.75 0 01.75-.75h.75a.75.75 0 01.75.75v11.25m-4.5 0h-2.25m13.5-9L12 2.25 2.25 12M6 10.5V21a.75.75 0 001.125 1.125h13.5A.75.75 0 0021.75 21V10.5"
+              />
+            </svg>
+          </div>
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Sell Your <span className="text-emerald-600">Property</span>
+            List Your <span className="text-emerald-600">Property</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             Create a professional property listing in minutes. Reach thousands of potential buyers and tenants.
@@ -185,6 +172,10 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   }
 
   const validateStep = (step) => {
+      console.log(`validateStep called for step ${step}, 
+  
+    isSubmitting: ${ isSubmitting}` );
+  console.trace(); // Keep for debugging
     const newErrors = {}
 
     if (step === 1) {
@@ -245,6 +236,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   }
 
   const handleSubmit = async (e) => {
+     console.log("handleSubmit triggered");
+     console.log("Form submission triggered", e);
     e.preventDefault()
     if (!isLoggedIn) {
       onLoginClick("submit")
@@ -340,29 +333,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Progress Steps - Mobile Optimized */}
-      <div className="mb-8 sm:mb-12">
-        {/* Mobile Progress Bar */}
-        <div className="block sm:hidden mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-emerald-600">
-              Step {currentStep} of {steps.length}
-            </span>
-            <span className="text-sm text-gray-500">{Math.round((currentStep / steps.length) * 100)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / steps.length) * 100}%` }}
-            />
-          </div>
-          <p className="text-center mt-3 text-lg font-semibold text-gray-900">
-            {steps[currentStep - 1].icon} {steps[currentStep - 1].title}
-          </p>
-        </div>
-
-        {/* Desktop Progress Steps */}
-        <div className="hidden sm:flex items-center justify-between mb-8">
+      {/* Progress Steps */}
+      <div className="mb-12">
+        <div className="flex items-center justify-between mb-8">
           {steps.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
@@ -372,7 +345,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
               >
                 {currentStep > step.id ? "✓" : step.icon}
               </div>
-              <div className="ml-3 hidden lg:block">
+              <div className="ml-3 hidden sm:block">
                 <p className={`text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
                   Step {step.id}
                 </p>
@@ -380,7 +353,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-8 lg:w-16 h-1 mx-2 lg:mx-4 rounded-full transition-all duration-300 ${
+                  className={`w-16 h-1 mx-4 rounded-full transition-all duration-300 ${
                     currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
                   }`}
                 />
@@ -390,10 +363,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl overflow-hidden mx-2 sm:mx-0"
-      >
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Step 1: Basic Details */}
         {currentStep === 1 && (
           <div className="p-8 sm:p-12">
@@ -454,59 +424,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   </div>
                 </div>
 
-
-<div>
-  <label className="block text-sm font-semibold text-gray-700 mb-2">City *</label>
-  <div className="relative">
-    <select
-      name="city"
-      value={formData.city}
-      onChange={handleChange}
-      className={`w-full px-4 py-4 border-2 rounded-xl appearance-none bg-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-        errors.city ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-      }`}
-    >
-      <option value="">Select a City</option>
-      <option value="Karachi">Karachi</option>
-      <option value="Lahore">Lahore</option>
-      <option value="Islamabad">Islamabad</option>
-      <option value="Rawalpindi">Rawalpindi</option>
-      <option value="Peshawar">Peshawar</option>
-      <option value="Quetta">Quetta</option>
-      <option value="Faisalabad">Faisalabad</option>
-      <option value="Multan">Multan</option>
-      <option value="Hyderabad">Hyderabad</option>
-      <option value="Sialkot">Sialkot</option>
-      <option value="Gujranwala">Gujranwala</option>
-      <option value="Bahawalpur">Bahawalpur</option>
-      <option value="Sargodha">Sargodha</option>
-      <option value="Sukkur">Sukkur</option>
-      <option value="Abbottabad">Abbottabad</option>
-      <option value="Mardan">Mardan</option>
-      <option value="Mingora">Mingora</option>
-      <option value="Mirpur">Mirpur</option>
-      <option value="Gwadar">Gwadar</option>
-      <option value="Dera Ghazi Khan">Dera Ghazi Khan</option>
-      <option value="Rahim Yar Khan">Rahim Yar Khan</option>
-      <option value="Larkana">Larkana</option>
-      <option value="Okara">Okara</option>
-      <option value="Sheikhupura">Sheikhupura</option>
-      <option value="Jhelum">Jhelum</option>
-      <option value="Nawabshah">Nawabshah</option>
-      <option value="Chiniot">Chiniot</option>
-      <option value="Kasur">Kasur</option>
-      <option value="Tando Adam">Tando Adam</option>
-      <option value="Bannu">Bannu</option>
-    </select>
-    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </div>
-  </div>
-  {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
-</div>
-
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
                   <input
@@ -521,9 +438,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   />
                   {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                 </div>
-
-
-
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -996,7 +910,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                     >
                       {formData.contactPreferences.email ? "✓" : "📧"}
                     </div>
-
                     <div>
                       <span
                         className={`text-sm font-semibold transition-colors duration-200 ${
@@ -1007,7 +920,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                       </span>
                       <p className="text-xs text-gray-500">Receive inquiries via email</p>
                     </div>
-                    
                   </label>
 
                   <label
@@ -1158,120 +1070,59 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
         )}
 
         {/* Navigation Buttons */}
-        <div className="px-4 sm:px-8 lg:px-12 py-4 sm:py-6 bg-gray-50 border-t border-gray-200">
-          {/* Mobile Layout */}
-          <div className="flex flex-col space-y-4 sm:hidden">
-            <div className="flex justify-center space-x-2">
-              {steps.map((step) => (
-                <div
-                  key={step.id}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                    currentStep >= step.id ? "bg-emerald-600" : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
+        <div className="px-8 sm:px-12 py-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+          <button
+            type="button"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              currentStep === 1
+                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
+            }`}
+          >
+            Previous
+          </button>
 
-            <div className="flex justify-between items-center">
-              <button
-                type="button"
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                  currentStep === 1
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
+          <div className="flex space-x-2">
+            {steps.map((step) => (
+              <div
+                key={step.id}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  currentStep >= step.id ? "bg-emerald-600" : "bg-gray-300"
                 }`}
-              >
-                Previous
-              </button>
-
-              {currentStep < 4 ? (
-                <button
-                  type="button"
-                  onClick={nextStep}
-                  className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl text-sm"
-                >
-                  Next Step
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl text-sm ${
-                    isSubmitting
-                      ? "bg-gray-400 text-white cursor-not-allowed"
-                      : "bg-emerald-600 text-white hover:bg-emerald-700"
-                  }`}
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Publishing...</span>
-                    </div>
-                  ) : (
-                    "Publish Listing"
-                  )}
-                </button>
-              )}
-            </div>
+              />
+            ))}
           </div>
 
-          {/* Desktop Layout */}
-          <div className="hidden sm:flex justify-between items-center">
+          {currentStep < 4 ? (
             <button
               type="button"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
-                currentStep === 1
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
+              onClick={nextStep}
+              className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+            >
+              Next Step
+            </button>
+          ) : (
+            <button
+              type="button"
+               onClick={handleSubmit}
+              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
+                isSubmitting
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : "bg-emerald-600 text-white hover:bg-emerald-700"
               }`}
             >
-              Previous
+              {isSubmitting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Publishing...</span>
+                </div>
+              ) : (
+                "Publish Listing"
+              )}
             </button>
-
-            <div className="flex space-x-2">
-              {steps.map((step) => (
-                <div
-                  key={step.id}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    currentStep >= step.id ? "bg-emerald-600" : "bg-gray-300"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {currentStep < 4 ? (
-              <button
-                type="button"
-                onClick={nextStep}
-                className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                Next Step
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
-                  isSubmitting
-                    ? "bg-gray-400 text-white cursor-not-allowed"
-                    : "bg-emerald-600 text-white hover:bg-emerald-700"
-                }`}
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Publishing...</span>
-                  </div>
-                ) : (
-                  "Publish Listing"
-                )}
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </form>
     </div>
