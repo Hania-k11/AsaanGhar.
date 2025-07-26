@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react"
 import LoginModal from "./LoginModal"
+import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
+import { motion } from "framer-motion"
+import FloatingElements from "./FloatingElements"
+
 
 const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLoginSuccess }) => {
   const [formState, setFormState] = useState({ title: "", description: "" })
@@ -40,23 +44,30 @@ const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLog
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
       <div className="pt-24 pb-16 px-4 container mx-auto max-w-6xl">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2}
-              stroke="currentColor"
-              className="w-8 h-8 text-emerald-600"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V9.75a.75.75 0 01.75-.75h.75a.75.75 0 01.75.75v11.25m-4.5 0h-2.25m13.5-9L12 2.25 2.25 12M6 10.5V21a.75.75 0 001.125 1.125h13.5A.75.75 0 0021.75 21V10.5"
-              />
-            </svg>
-          </div>
+         <div className="text-center mb-12">
+          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
+          */}
+             <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="flex items-center pt-8 md:pt-20 justify-center mb-6 md:-mt-20"
+        >
+          <motion.div
+            animate={{
+              y: [0, -5, 0],
+              rotate: [0, 3, -3, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "loop",
+            }}
+            className="bg-white p-2 rounded-full shadow-lg"
+          >
+            <Home className=" h-17 w-18 m:h-20 m:w-22 text-emerald-600" />
+          </motion.div>
+        </motion.div>
           <h1 className="text-5xl font-bold text-gray-900 mb-4">
             List Your <span className="text-emerald-600">Property</span>
           </h1>
