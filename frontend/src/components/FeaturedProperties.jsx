@@ -193,7 +193,7 @@ const FeaturedProperties = () => {
             />
           </button>
 
-          <p className="text-gray-500 mt-6 text-sm font-medium">
+          <p className="text-gray-500 mt-6 text-xs md:text-sm font-medium">
             • Asaan Ghar is Pakistan's first easy property site •
           </p>
         </div>
