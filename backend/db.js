@@ -9,6 +9,23 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
+
+// Test the connection
+pool.getConnection()
+  .then(connection => {
+    console.log('Database connected successfully');
+    connection.release();
+  })
+  .catch(err => {
+    console.error('Error connecting to the database:', {
+      message: err.message,
+      code: err.code,
+      errno: err.errno
+    });
+  });
 
 module.exports = pool;

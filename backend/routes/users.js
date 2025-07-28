@@ -4,11 +4,38 @@ const pool = require('../db');
 
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM users');
+    // First test the connection
+    const connection = await pool.getConnection();
+    console.log('Database connection successful');
+
+    // Test if the users table exists
+    const [tables] = await connection.query('SHOW TABLES LIKE "users"');
+    if (tables.length === 0) {
+      connection.release();
+      return res.status(404).json({ 
+        error: 'Table not found',
+        message: 'The users table does not exist in the database'
+      });
+    }
+
+    // If we get here, try the actual query
+    const [rows] = await connection.query('SELECT * FROM users');
+    connection.release();
     res.json(rows);
   } catch (err) {
-    console.error('Error:', err);
-    res.status(500).json({ error: 'Something went wrong' });
+    console.error('Detailed DB Error:', {
+      message: err.message,
+      code: err.code,
+      errno: err.errno,
+      sqlState: err.sqlState,
+      sqlMessage: err.sqlMessage,
+      stack: err.stack
+    });
+    res.status(500).json({ 
+      error: 'Database error',
+      details: err.message,
+      code: err.code
+    });
   }
 });
 
