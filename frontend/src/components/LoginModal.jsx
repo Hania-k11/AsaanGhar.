@@ -3,19 +3,20 @@ import { X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios'; // Ensure axios is imported
+import axios from 'axios'; 
+
 
 const LoginModal = () => {
 
 const navigate = useNavigate();
-  const { userDetails } = useAuth();
+const { userDetails } = useAuth();
+const { setUserDetails } = useAuth();
 
 
 
-   const email = userDetails?.email || '';
-   const password = userDetails?.password || '';
+ //  Import context
+const { showLoginModal: show, setShowLoginModal: setShow } = useAuth();
 
-  const [show, setShow] = useState(true); // trigger manually for now
   const [isSignup, setIsSignup] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -50,27 +51,42 @@ const navigate = useNavigate();
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (isSignup && form.password !== form.confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
+  if (!form.email || !form.password) {
+    alert("Please enter email and password");
+    return;
+  }
 
-    if (isSignup && !form.agree) {
-      alert("Please agree to the terms");
-      return;
-    }
+  if (isSignup) {
+    // You can implement sign up later — right now, only handle login
+    alert("Signup logic not implemented yet");
+    return;
+  }
 
-    if (!form.email || !form.password) {
-      alert("Please enter email and password");
-      return;
-    }
+  try {
+    const res = await axios.post(
+      "https://asaanghar-production.up.railway.app/api/users/login",
+      {
+        email: form.email,
+        password: form.password,
+      }
+    );
 
-    alert(`Logged in as ${form.name || "User"}`);
-    setShow(false); // close modal after success
-  };
+    const user = res.data.user;
+    setUserDetails(user);
+    console.log("Logged in:", user);
+    alert(`Welcome, ${user.name}`);
+    setShow(false);
+    // Save user to context/localStorage if needed
+    // navigate('/dashboard') or wherever you want
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.message || "Login failed");
+  }
+};
+
 
   if (!show) return null;
 

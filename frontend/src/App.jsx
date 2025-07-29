@@ -14,6 +14,9 @@ import { AuthProvider } from "./context/AuthContext";
 import ReactDOM from "react-dom/client";
 import { useContext, useState } from 'react'
 import { AuthContext } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
+
+
 
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() =>
@@ -29,7 +32,9 @@ function App() {
 
 
  const state = useContext(AuthContext)
-  console.log("Contextyy", state)
+  // console.log("Contextyy", state)
+  const { userDetails } = useAuth();
+  console.log("User Details:", userDetails);
 
   return (
 
@@ -62,7 +67,8 @@ function App() {
               />
               <Route path="/buy" element={<BuyPage />} />
               <Route path="/sell" element={<SellPage />} />
-
+              
+             
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/property/:id" element={<PropertyDetails />} />

@@ -9,15 +9,19 @@ import {
   LogOut,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import LoginModal from "./LoginModal"; // 👈 Make sure path is correct
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userName, setUserName] = useState("Ali Khan");
-  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+  
+  const { userDetails, logout } = useAuth();
+  const { setShowLoginModal } = useAuth();
+
 
   const desktopDropdownRef = useRef();
   const mobileDropdownRef = useRef();
@@ -49,18 +53,9 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName("");
-    setDropdownOpen(false);
-    setShowModal(true); // 🔥 Trigger login modal again
-  };
+ 
 
-  const handleLoginSuccess = (name) => {
-    setUserName(name);
-    setIsLoggedIn(true);
-    setShowModal(false);
-  };
+
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -106,7 +101,7 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center space-x-4 relative" ref={desktopDropdownRef}>
-          {isLoggedIn ? (
+          {userDetails ? (
             <div className="relative">
               <div
                 className="flex items-center space-x-2 cursor-pointer"
@@ -118,7 +113,7 @@ const Navbar = () => {
                 >
                   <User className="w-5 h-5" />
                 </motion.div>
-                <span className="font-medium text-gray-800">{userName}</span>
+                <span className="font-medium text-gray-800">{userDetails.name}</span>
                 <ChevronDown size={18} className="text-gray-600" />
               </div>
 
@@ -147,7 +142,7 @@ const Navbar = () => {
                       className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
                       onClick={() => {
                         setDropdownOpen(false);
-                        handleLogout();
+                        logout();
                       }}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
@@ -162,15 +157,15 @@ const Navbar = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md hover:shadow-xl transition-all duration-300"
-              onClick={onLoginClick}
-            >
-              Login / Register
+              onClick={() => setShowLoginModal(true)} // ✅ OPEN MODAL
+    >
+      Login / Register
             </motion.button>
           )}
         </div>
 
         <div className="md:hidden flex items-center space-x-3 relative" ref={mobileDropdownRef}>
-          {isLoggedIn && (
+          {userDetails && (
             <div
               className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md cursor-pointer"
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -178,14 +173,14 @@ const Navbar = () => {
               <User size={20} />
             </div>
           )}
-          {!isLoggedIn && (
+          {!userDetails && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="text-sm px-4 py-2 bg-emerald-600 text-white rounded-xl shadow"
-              onClick={onLoginClick}
-            >
-              Login
+              onClick={() => setShowLoginModal(true)} // ✅ OPEN MODAL
+    >
+      Login
             </motion.button>
           )}
           <motion.button
@@ -219,7 +214,7 @@ const Navbar = () => {
           </motion.button>
 
           <AnimatePresence>
-            {dropdownOpen && isLoggedIn && (
+            {dropdownOpen && userDetails && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -227,13 +222,13 @@ const Navbar = () => {
                 transition={{ duration: 0.2 }}
                 className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-xl py-2 text-sm z-50"
               >
-                <div className="px-4 py-2 text-gray-700 font-semibold">{userName}</div>
+                <div className="px-4 py-2 text-gray-700 font-semibold">{userDetails.name}</div>
                 <div
                   className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
                   onClick={() => {
                     setDropdownOpen(false);
                     setMobileMenuOpen(false);
-                    onLogout();
+                    logout();
                   }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />

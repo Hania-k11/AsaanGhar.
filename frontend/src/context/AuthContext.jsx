@@ -11,46 +11,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // stores logged-in user
   const [loading, setLoading] = useState(true); // loading on mount
 
-  // Fetch user on mount
-//   useEffect(() => {
-//     const fetchUser = async () => {
-//       try {
-//         const res = await axios.get("https://asaanghar-production.up.railway.app/api/users"); // adjust if needed
-//         setUser(res.data);
-//       } catch (err) {
-//         setUser(null);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
 
-//     fetchUser();
-//   }, []);
 
-  // Login function
-//   const login = async (email, password) => {
-//     try {
-//       const res = await axios.post("https://asaanghar-production.up.railway.app/api/users", { email, password });
-//       setUser(res.data.user); // adjust based on your API response
-//       return { success: true };
-//     } catch (err) {
-//       return {
-//         success: false,
-//         message: err.response?.data?.message || "Login failed",
-//       };
-//     }
-//   };
-
-  // Logout function
-//   const logout = async () => {
-//     try {
-//       await axios.post("/api/users/logout"); // or just clear frontend token
-//       setUser(null);
-//     } catch (err) {
-//       console.error("Logout error:", err);
-//     }
-//   };
-
+  ///MODAL
+ const [showLoginModal, setShowLoginModal] = useState(false);
+ //-----------------------------------------
 
     const [userDetails, setUserDetails] = useState(() => {
         return localStorage.getItem('userDetails') 
@@ -58,7 +23,23 @@ export const AuthProvider = ({ children }) => {
           : null; // Check localStorage for initial value
       });
   
- 
+ useEffect(() => {
+    if (userDetails) {
+      localStorage.setItem("userDetails", JSON.stringify(userDetails));
+    } else {
+      localStorage.removeItem("userDetails");
+    }
+  }, [userDetails]);
+
+  const logout = async () => {
+    try {
+      setUserDetails(null);
+      localStorage.removeItem("userDetails");
+      // optionally: await axios.post("/api/users/logout");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+  }
 
 
   const clearUserDetails = () => {
@@ -66,7 +47,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('userDetails');
   };
   return (
-    <AuthContext.Provider value={{ user,  loading, userDetails, setUserDetails, clearUserDetails }}>
+    <AuthContext.Provider value={{ user,  loading, userDetails, setUserDetails, clearUserDetails,
+      logout, showLoginModal, setShowLoginModal
+     }}>
       {children}
     </AuthContext.Provider>
   );
