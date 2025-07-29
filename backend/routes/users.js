@@ -39,4 +39,26 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [email]);
+
+    if (rows.length === 0 || rows[0].password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const user = rows[0];
+    delete user.password; // never expose password
+
+    return res.json({ user });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
