@@ -1,8 +1,21 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import axios from 'axios'; // Ensure axios is imported
 
-const LoginModal = ({ show, onClose, onLoginSuccess }) => {
+const LoginModal = () => {
+
+const navigate = useNavigate();
+  const { userDetails } = useAuth();
+
+
+
+   const email = userDetails?.email || '';
+   const password = userDetails?.password || '';
+
+  const [show, setShow] = useState(true); // trigger manually for now
   const [isSignup, setIsSignup] = useState(false);
   const [form, setForm] = useState({
     name: "",
@@ -55,7 +68,8 @@ const LoginModal = ({ show, onClose, onLoginSuccess }) => {
       return;
     }
 
-    onLoginSuccess(form.name || "User");
+    alert(`Logged in as ${form.name || "User"}`);
+    setShow(false); // close modal after success
   };
 
   if (!show) return null;
@@ -72,7 +86,8 @@ const LoginModal = ({ show, onClose, onLoginSuccess }) => {
         className="relative bg-white rounded-3xl w-full max-w-md p-8 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500">
+         {/* onclose replaceee */}
+        <button onClick={() => setShow(false)} className="absolute top-4 right-4 text-gray-500">
           <X />
         </button>
 

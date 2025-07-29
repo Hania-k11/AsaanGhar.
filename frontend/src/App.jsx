@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from "react";
+import {  Suspense, lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -10,9 +10,15 @@ import PropertyDetails from "./components/PropertyDetails";
 import ScrollToTop from "./components/ScrollToTop";
 import MouseFollower from "./components/MouseFollower";
 import StartJourney from "./components/StartJourney";
+import { AuthProvider } from "./context/AuthContext";
+import ReactDOM from "react-dom/client";
+import { useContext, useState } from 'react'
+import { AuthContext } from './context/AuthContext';
 
 const Hero = lazy(() => import("./components/Hero"));
-const FeaturedProperties = lazy(() => import("./components/FeaturedProperties"));
+const FeaturedProperties = lazy(() =>
+  import("./components/FeaturedProperties")
+);
 const HowItWorks = lazy(() => import("./components/HowItWorks"));
 const Testimonials = lazy(() => import("./components/Testimonials"));
 const CallToAction = lazy(() => import("./components/CallToAction"));
@@ -20,45 +26,27 @@ const BuyPage = lazy(() => import("./components/BuyPage"));
 const SellPage = lazy(() => import("./components/SellPage"));
 
 function App() {
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [userProperties, setUserProperties] = useState([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [loginSource, setLoginSource] = useState("");
 
-  const handleLoginClick = (source = "") => {
-    setLoginSource(source);
-    setShowLoginModal(true);
-  };
 
-  const handleLoginClose = () => {
-    setShowLoginModal(false);
-  };
-
-  const handleLoginSuccess = (name) => {
-    setIsLoggedIn(true);
-    setUserName(name);
-    setShowLoginModal(false);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName("");
-  };
+ const state = useContext(AuthContext)
+  console.log("Contextyy", state)
 
   return (
+
+     <AuthProvider>
+        
+         
+         
+      
     <Router>
       <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
-        <Navbar
-          onLoginClick={handleLoginClick}
-          isLoggedIn={isLoggedIn}
-          userName={userName}
-          onLogout={handleLogout}
-        />
+        <Navbar />
 
         <main className="flex-grow">
-          <Suspense fallback={<div className="text-center py-10">Loading...</div>}>
+          <Suspense
+            fallback={<div className="text-center py-10">Loading...</div>}
+          >
             <Routes>
               <Route
                 path="/"
@@ -72,29 +60,9 @@ function App() {
                   </>
                 }
               />
-              <Route
-                path="/buy"
-                element={
-                  <BuyPage
-                    userProperties={userProperties}
-                    setUserProperties={setUserProperties}
-                    isLoggedIn={isLoggedIn}
-                    onLoginClick={() => handleLoginClick("buy")}
-                  />
-                }
-              />
-              <Route
-                path="/sell"
-                element={
-                  <SellPage
-                    isLoggedIn={isLoggedIn}
-                    userName={userName}
-                    setUserProperties={setUserProperties}
-                    onLoginClick={() => handleLoginClick("sell")}
-                    onLoginSuccess={handleLoginSuccess}
-                  />
-                }
-              />
+              <Route path="/buy" element={<BuyPage />} />
+              <Route path="/sell" element={<SellPage />} />
+
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/property/:id" element={<PropertyDetails />} />
@@ -112,15 +80,12 @@ function App() {
 
         <Footer />
 
-        <LoginModal
-          show={showLoginModal}
-          onClose={handleLoginClose}
-          onLoginSuccess={handleLoginSuccess}
-        />
+        <LoginModal />
 
         <MouseFollower />
       </div>
     </Router>
+      </AuthProvider>
   );
 }
 

@@ -9,11 +9,16 @@ import {
   LogOut,
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
+import LoginModal from "./LoginModal"; // 👈 Make sure path is correct
 
-const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
+const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [userName, setUserName] = useState("Ali Khan");
+  const [showModal, setShowModal] = useState(false);
+
   const desktopDropdownRef = useRef();
   const mobileDropdownRef = useRef();
   const location = useLocation();
@@ -43,6 +48,19 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
     setDropdownOpen(false);
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserName("");
+    setDropdownOpen(false);
+    setShowModal(true); // 🔥 Trigger login modal again
+  };
+
+  const handleLoginSuccess = (name) => {
+    setUserName(name);
+    setIsLoggedIn(true);
+    setShowModal(false);
+  };
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -129,7 +147,7 @@ const Navbar = ({ onLoginClick, isLoggedIn, userName, onLogout }) => {
                       className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
                       onClick={() => {
                         setDropdownOpen(false);
-                        onLogout();
+                        handleLogout();
                       }}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
