@@ -1,38 +1,44 @@
-// "use client"
-
 import { useState, useEffect } from "react"
 import LoginModal from "./LoginModal"
-import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
+import { Home } from "lucide-react"
 import { motion } from "framer-motion"
 import FloatingElements from "./FloatingElements"
 
-
 const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLoginSuccess }) => {
-  const [formState, setFormState] = useState({ title: "", description: "" })
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    listingType: "rent",
+    location: "",
+    rent: "",
+  })
 
-  useEffect(() => {
-    if (isLoggedIn) setShowLoginModal(false)
-  }, [isLoggedIn])
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-  const handleInputChange = (e) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true)
-      onLoginClick("form")
-      return
-    }
-    setFormState({ ...formState, [e.target.name]: e.target.value })
-  }
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+}
 
-  const handleFormSubmit = (e) => {
+  
+
+  const handleSubmit = (e) => {
     e.preventDefault()
     if (!isLoggedIn) {
       setShowLoginModal(true)
-      onLoginClick("form")
+      onLoginClick("input")
       return
     }
-    setUserProperties((prev) => [...prev, formState])
-    setFormState({ title: "", description: "" })
+    setUserProperties((prev) => [...prev, formData])
+    setFormData({
+      title: "",
+      description: "",
+      listingType: "rent",
+      location: "",
+      rent: "",
+    })
   }
 
   const handleLoginClick = (source) => {
@@ -42,43 +48,50 @@ const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLog
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
-      <div className="pt-24 pb-16 px-4 container mx-auto max-w-6xl">
-        {/* Header Section */}
-         <div className="text-center mb-12">
-          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
-          */}
-             <motion.div
-          initial={{ opacity: 0, y: -15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="flex items-center pt-8 md:pt-20 justify-center mb-6 md:-mt-20"
+  <div className="pt-24 pb-16 px-4 container mx-auto max-w-6xl">
+    {/* Header Section */}
+    <div className="text-center mb-12 px-4 sm:px-6 lg:px-8"> {/* ✅ Add padding for smaller screens */}
+      <motion.div
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="flex items-center justify-center mb-6 pt-8 sm:pt-10 md:pt-20 -mt-4 sm:-mt-8 md:-mt-20"
+      >
+        <motion.div
+          animate={{
+            y: [0, -5, 0],
+            rotate: [0, 3, -3, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatType: "loop",
+          }}
+          className="bg-white p-3 sm:p-4 rounded-full shadow-lg"
         >
-          <motion.div
-            animate={{
-              y: [0, -5, 0],
-              rotate: [0, 3, -3, 0],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              repeatType: "loop",
-            }}
-            className="bg-white p-2 rounded-full shadow-lg"
-          >
-            <Home className=" h-17 w-18 m:h-20 m:w-22 text-emerald-600" />
-          </motion.div>
+          <Home className="h-14 w-14 sm:h-16 sm:w-16 md:h-20 md:w-20 text-emerald-600" /> {/* ✅ Scale icons per screen */}
         </motion.div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            List Your <span className="text-emerald-600">Property</span>
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Create a professional property listing in minutes. Reach thousands of potential buyers and tenants.
-          </p>
-        </div>
+      </motion.div>
 
-        <RentForm setUserProperties={setUserProperties} isLoggedIn={isLoggedIn} onLoginClick={handleLoginClick} />
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        List Your <span className="text-emerald-600">Property</span>
+      </h1>
 
-        <LoginModal show={showLoginModal} onClose={() => setShowLoginModal(false)} onLoginSuccess={onLoginSuccess} />
+      <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+        Create a professional property listing in minutes. Reach thousands of potential buyers and tenants.
+      </p>
+    </div>
+
+
+<RentForm
+  formData={formData}
+  handleChange={handleChange}
+  handleSubmit={handleSubmit}
+  isLoggedIn={isLoggedIn}
+  setUserProperties={setUserProperties}
+  onLoginClick={handleLoginClick}
+/>
+
       </div>
     </div>
   )
@@ -142,10 +155,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target
-    if (!isLoggedIn) {
-      onLoginClick("input")
-      return
-    }
+   
 
     if (name === "images") {
       const fileArray = Array.from(files)
@@ -345,34 +355,36 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-8">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold transition-all duration-300 ${
-                  currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {currentStep > step.id ? "✓" : step.icon}
-              </div>
-              <div className="ml-3 hidden sm:block">
-                <p className={`text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
-                  Step {step.id}
-                </p>
-                <p className={`text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-16 h-1 mx-4 rounded-full transition-all duration-300 ${
-                    currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
-                  }`}
-                />
-              )}
+    <div className="mb-8 sm:mb-12">
+<div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 text-center">
+        {steps.map((step, index) => (
+          <div key={step.id} className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-sm sm:text-lg font-bold transition-all duration-300 ${
+                currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
+              }`}
+            >
+              {currentStep > step.id ? "✓" : step.icon}
             </div>
-          ))}
-        </div>
+            <div className="ml-2 sm:ml-3 hidden xs:block">
+              <p className={`text-xs sm:text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
+                Step {step.id}
+              </p>
+              <p className={`text-[11px] sm:text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
+            </div>
+            {index < steps.length - 1 && (
+            
+              <div className={`h-1 w-8 sm:w-16 mx-auto sm:mx-4 my-2 sm:my-0 rounded-full transition-all duration-300 ${
+
+                  currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+                }`}
+              />
+            )}
+          </div>
+        ))}
       </div>
+    </div>
+    
 
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Step 1: Basic Details */}
@@ -502,7 +514,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   {errors.propertyType && <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Bedrooms</label>
                     <input
@@ -585,6 +597,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
             </div>
 
             <div className="space-y-8">
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Property Description *</label>
                 <textarea
@@ -766,6 +779,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
             </div>
 
             <div className="mt-8 space-y-6">
+              
               <h3 className="text-xl font-semibold text-gray-900">Nearby Facilities</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>

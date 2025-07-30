@@ -16,6 +16,8 @@ import { useContext, useState } from 'react'
 import { AuthContext } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import MyProfile from "./components/MyProfile";
+import ChangePasswordPage from "./components/ChangePasswordPage";
+
 
 
 
@@ -67,6 +69,8 @@ function App() {
                 }
               />
               <Route path="/buy" element={<BuyPage />} />
+              <Route path="/change-password" element={<ChangePasswordPage />} />
+
               <Route path="/sell" element={<SellPage />} />
               
              
