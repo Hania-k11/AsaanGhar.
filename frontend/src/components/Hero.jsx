@@ -1,8 +1,27 @@
 import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
 import { motion } from "framer-motion"
+import { useState } from "react";
+import axios from "axios";
+
 import FloatingElements from "./FloatingElements"
 
+
 const Hero = () => {
+  const [query, setQuery] = useState("");
+
+const handleSearch = async () => {
+  try {
+    const response = await axios.post("/api/search", { query });
+    console.log("Parsed NLP Response:", response.data);
+
+    // Example:
+    // const { intent, location, propertyType } = response.data;
+    // You can use this for filtering listings
+  } catch (error) {
+    console.error("NLP search error:", error);
+  }
+};
+
   return (
     <div className="relative pt-10 overflow-hidden font-sans ">
       
@@ -256,22 +275,28 @@ const Hero = () => {
                   </motion.div>
 
                   <input
-                    type="text"
-                    placeholder="Search for your desired property location..."
-                    className="relative z-10 w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
-                  />
+  type="text"
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  placeholder="Search for your desired property location..."
+  className="relative z-10 w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
+/>
+
                 </motion.div>
               </div>
-              
+            
+
               {/* Enhanced search button */}
               <motion.button
-                whileHover={{ 
-                  scale: 1.05,
-                  boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)"
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 group relative overflow-hidden"
-              >
+  onClick={handleSearch}
+  whileHover={{
+    scale: 1.05,
+    boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)"
+  }}
+  whileTap={{ scale: 0.95 }}
+  className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 group relative overflow-hidden"
+>
+
                 <span className="relative z-10">Search</span>
                 <Search className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                 {/* Button shine effect */}
