@@ -345,34 +345,34 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-8">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold transition-all duration-300 ${
-                  currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {currentStep > step.id ? "✓" : step.icon}
-              </div>
-              <div className="ml-3 hidden sm:block">
-                <p className={`text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
-                  Step {step.id}
-                </p>
-                <p className={`text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
-              </div>
-              {index < steps.length - 1 && (
-                <div
-                  className={`w-16 h-1 mx-4 rounded-full transition-all duration-300 ${
-                    currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
-                  }`}
-                />
-              )}
+    <div className="mb-8 sm:mb-12">
+      <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-2 sm:gap-x-4">
+        {steps.map((step, index) => (
+          <div key={step.id} className="flex items-center">
+            <div
+              className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-sm sm:text-lg font-bold transition-all duration-300 ${
+                currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
+              }`}
+            >
+              {currentStep > step.id ? "✓" : step.icon}
             </div>
-          ))}
-        </div>
+            <div className="ml-2 sm:ml-3 hidden xs:block">
+              <p className={`text-xs sm:text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
+                Step {step.id}
+              </p>
+              <p className={`text-[11px] sm:text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
+            </div>
+            {index < steps.length - 1 && (
+              <div
+                className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
+                  currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+                }`}
+              />
+            )}
+          </div>
+        ))}
       </div>
+    </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Step 1: Basic Details */}
