@@ -187,7 +187,7 @@ const ChangePasswordPage = () => {
             exit={{ opacity: 0, y: 50 }}
             className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-emerald-100 border border-emerald-200 text-emerald-700 font-medium px-6 py-3 rounded-xl shadow-lg z-50"
           >
-            ✅ Password updated successfully!
+            ✅ Password updated successfully!!
           </motion.div>
         )}
       </AnimatePresence>
