@@ -356,11 +356,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
     <div className="mb-8 sm:mb-12">
-<<<<<<< HEAD
 <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 text-center">
-=======
       <div className="flex flex-wrap items-center justify-center gap-y-4 gap-x-2 sm:gap-x-4">
->>>>>>> b382fe8e265e480acf2882ee80df7944f6a2da9d
         {steps.map((step, index) => (
           <div key={step.id} className="flex items-center">
             <div
@@ -376,27 +373,21 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
               </p>
               <p className={`text-[11px] sm:text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
             </div>
-            {index < steps.length - 1 && (
-<<<<<<< HEAD
-            
-              <div className={`h-1 w-8 sm:w-16 mx-auto sm:mx-4 my-2 sm:my-0 rounded-full transition-all duration-300 ${
+           {index < steps.length - 1 && (
+  <div
+    className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
+      currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+    }`}
+  />
+)}
 
-=======
-              <div
-                className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
->>>>>>> b382fe8e265e480acf2882ee80df7944f6a2da9d
-                  currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
-                }`}
-              />
-            )}
           </div>
         ))}
       </div>
     </div>
-<<<<<<< HEAD
-    
-=======
->>>>>>> b382fe8e265e480acf2882ee80df7944f6a2da9d
+        </div>
+
+
 
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
         {/* Step 1: Basic Details */}
@@ -1161,9 +1152,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
             </button>
           )}
         </div>
-      </form>
+            </form>
     </div>
-  )
-}
+  );
+};
 
-export default SellPage
+export default SellPage;
