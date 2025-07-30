@@ -15,6 +15,7 @@ import ReactDOM from "react-dom/client";
 import { useContext, useState } from 'react'
 import { AuthContext } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
+import MyProfile from "./components/MyProfile";
 
 
 
@@ -80,6 +81,7 @@ function App() {
                   </div>
                 }
               />
+              <Route path="/my-profile" element={<MyProfile />} />
             </Routes>
           </Suspense>
         </main>

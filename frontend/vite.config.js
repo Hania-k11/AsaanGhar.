@@ -9,4 +9,13 @@ export default defineConfig({
      react()
     
   ],
+
+ server: {
+    historyApiFallback: true,
+  },
+
+   build: {
+    outDir: 'dist',
+  }
+
 })

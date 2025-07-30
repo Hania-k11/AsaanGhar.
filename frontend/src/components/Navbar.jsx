@@ -7,10 +7,12 @@ import {
   User,
   ChevronDown,
   LogOut,
+  Settings, // New icon for 'Change Password' or 'Settings'
+  UserCircle, // New icon for 'My Profile'
 } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import LoginModal from "./LoginModal"; // 👈 Make sure path is correct
 
 const Navbar = () => {
@@ -18,10 +20,9 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  
+
   const { userDetails, logout } = useAuth();
   const { setShowLoginModal } = useAuth();
-
 
   const desktopDropdownRef = useRef();
   const mobileDropdownRef = useRef();
@@ -35,6 +36,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Check if click is outside desktop dropdown AND mobile dropdown
       if (
         desktopDropdownRef.current &&
         !desktopDropdownRef.current.contains(event.target) &&
@@ -53,10 +55,6 @@ const Navbar = () => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
- 
-
-
-
   const navItems = [
     { name: "Home", path: "/" },
     { name: "Buy", path: "/buy" },
@@ -65,13 +63,32 @@ const Navbar = () => {
     { name: "Contact", path: "/contact" },
   ];
 
+  // Framer Motion variants for dropdown items
+  const itemVariants = {
+    hidden: { y: -10, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+  };
+
+  // Framer Motion container variants for staggered animation
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.07,
+      },
+    },
+  };
+
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
       className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md py-2" : " bg-white md:bg-white/30 shadow-sm py-3"
+        isScrolled
+          ? "bg-white shadow-md py-2"
+          : " bg-white md:bg-white/30 shadow-sm py-3"
       }`}
     >
       <div className="container mx-auto px-4 flex justify-between items-center">
@@ -100,7 +117,10 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center space-x-4 relative" ref={desktopDropdownRef}>
+        <div
+          className="hidden md:flex items-center space-x-4 relative"
+          ref={desktopDropdownRef}
+        >
           {userDetails ? (
             <div className="relative">
               <div
@@ -113,32 +133,58 @@ const Navbar = () => {
                 >
                   <User className="w-5 h-5" />
                 </motion.div>
-                <span className="font-medium text-gray-800">{userDetails.name}</span>
-                <ChevronDown size={18} className="text-gray-600" />
+                <span className="font-medium text-gray-800">
+                  {userDetails.name}
+                </span>
+                <ChevronDown
+                  size={18}
+                  className={`text-gray-600 transition-transform duration-200 ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
               </div>
 
               <AnimatePresence>
                 {dropdownOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    variants={containerVariants}
                     transition={{ duration: 0.2 }}
-                    className="absolute top-full right-0 mt-2 w-52 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50"
+                    className="absolute top-full right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50 overflow-hidden" // Added overflow-hidden
                   >
-                    <div
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
-                      onClick={() => setDropdownOpen(false)}
+                    <motion.div
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "#f3f4f6", x: 3 }} // Hover effect
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/my-profile"); // Use navigate for internal routes
+                      }}
                     >
-                      My Account
-                    </div>
-                    <div
-                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
-                      onClick={() => setDropdownOpen(false)}
+                      <UserCircle className="w-4 h-4 mr-2 text-emerald-600" />
+                      My Profile
+                    </motion.div>
+
+                    <motion.div
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "#f3f4f6", x: 3 }} // Hover effect
+                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        navigate("/change-password"); // Assuming a route for change password
+                      }}
                     >
+                      <Settings className="w-4 h-4 mr-2 text-indigo-600" />
                       Change Password
-                    </div>
-                    <div
+                    </motion.div>
+
+                    <div className="border-t border-gray-100 my-2"></div>{" "}
+                    {/* Separator */}
+                    <motion.div
+                      variants={itemVariants}
+                      whileHover={{ backgroundColor: "#fee2e2", x: 3 }} // Hover effect for logout
                       className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
                       onClick={() => {
                         setDropdownOpen(false);
@@ -147,7 +193,7 @@ const Navbar = () => {
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout
-                    </div>
+                    </motion.div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -158,13 +204,16 @@ const Navbar = () => {
               whileTap={{ scale: 0.95 }}
               className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-6 py-3 rounded-2xl font-semibold shadow-md hover:shadow-xl transition-all duration-300"
               onClick={() => setShowLoginModal(true)} // ✅ OPEN MODAL
-    >
-      Login / Register
+            >
+              Login / Register
             </motion.button>
           )}
         </div>
 
-        <div className="md:hidden flex items-center space-x-3 relative" ref={mobileDropdownRef}>
+        <div
+          className="md:hidden flex items-center space-x-3 relative"
+          ref={mobileDropdownRef}
+        >
           {userDetails && (
             <div
               className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md cursor-pointer"
@@ -179,8 +228,8 @@ const Navbar = () => {
               whileTap={{ scale: 0.95 }}
               className="text-sm px-4 py-2 bg-emerald-600 text-white rounded-xl shadow"
               onClick={() => setShowLoginModal(true)} // ✅ OPEN MODAL
-    >
-      Login
+            >
+              Login
             </motion.button>
           )}
           <motion.button
@@ -216,14 +265,50 @@ const Navbar = () => {
           <AnimatePresence>
             {dropdownOpen && userDetails && (
               <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={containerVariants}
                 transition={{ duration: 0.2 }}
-                className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-xl py-2 text-sm z-50"
+                className="absolute top-14 right-0 w-48 bg-white rounded-lg shadow-xl py-2 text-sm z-50 overflow-hidden"
               >
-                <div className="px-4 py-2 text-gray-700 font-semibold">{userDetails.name}</div>
-                <div
+                <motion.div
+                  variants={itemVariants}
+                  className="px-4 py-2 text-gray-700 font-semibold"
+                >
+                  {userDetails.name}
+                </motion.div>
+                <div className="border-t border-gray-100 my-1"></div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ backgroundColor: "#f3f4f6", x: 3 }}
+                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    navigate("/my-profile");
+                  }}
+                >
+                  <UserCircle className="w-4 h-4 mr-2 text-emerald-600" />
+                  My Profile
+                </motion.div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ backgroundColor: "#f3f4f6", x: 3 }}
+                  className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setMobileMenuOpen(false);
+                    navigate("/change-password");
+                  }}
+                >
+                  <Settings className="w-4 h-4 mr-2 text-indigo-600" />
+                  Change Password
+                </motion.div>
+                <div className="border-t border-gray-100 my-1"></div>
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ backgroundColor: "#fee2e2", x: 3 }}
                   className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-all"
                   onClick={() => {
                     setDropdownOpen(false);
@@ -233,7 +318,7 @@ const Navbar = () => {
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
-                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -252,19 +337,19 @@ const Navbar = () => {
             <div className="container mx-auto px-6 py-6">
               <motion.div
                 className="flex flex-col space-y-2"
-                initial="closed"
-                animate="open"
+                initial="hidden"
+                animate="visible"
                 variants={{
-                  closed: { opacity: 0 },
-                  open: { opacity: 1, transition: { staggerChildren: 0.1 } },
+                  hidden: { opacity: 0 },
+                  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
                 }}
               >
                 {navItems.map((item) => (
                   <motion.div
                     key={item.name}
                     variants={{
-                      closed: { opacity: 0, x: -20 },
-                      open: { opacity: 1, x: 0 },
+                      hidden: { opacity: 0, x: -20 },
+                      visible: { opacity: 1, x: 0 },
                     }}
                   >
                     <NavLink
