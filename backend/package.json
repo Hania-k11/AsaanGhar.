@@ -20,5 +20,6 @@
   "description": "",
   "devDependencies": {
     "nodemon": "^3.1.10"
+    "openai": "^5.11.0"
   }
 }
