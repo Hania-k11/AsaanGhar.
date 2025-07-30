@@ -9,6 +9,10 @@ app.use(express.json());
 const userRoutes = require('./routes/users');
 app.use('/api/users', userRoutes);
 
+const searchRoutes = require('./routes/search');
+app.use('/api/search', searchRoutes);
+
+
 app.get('/', (req, res) => {
   res.send('FYP Backend working');
 });
