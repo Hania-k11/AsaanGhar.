@@ -167,19 +167,7 @@ const Navbar = () => {
                       My Profile
                     </motion.div>
 
-                    <motion.div
-                      variants={itemVariants}
-                      whileHover={{ backgroundColor: "#f3f4f6", x: 3 }} // Hover effect
-                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
-                      onClick={() => {
-                        setDropdownOpen(false);
-                        navigate("/change-password"); // Assuming a route for change password
-                      }}
-                    >
-                      <Settings className="w-4 h-4 mr-2 text-indigo-600" />
-                      Change Password
-                    </motion.div>
-
+                    
                     <div className="border-t border-gray-100 my-2"></div>{" "}
                     {/* Separator */}
                     <motion.div
