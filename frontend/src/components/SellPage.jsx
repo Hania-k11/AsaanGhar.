@@ -1,46 +1,37 @@
-import { useState, useEffect } from "react"
+
+import { useState, useEffect, useRef } from "react"
 import LoginModal from "./LoginModal"
 import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
 import { motion } from "framer-motion"
 import FloatingElements from "./FloatingElements"
+import { useAuth } from "../context/AuthContext";
 
 
-const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLoginSuccess }) => {
+const SellPage = () => {
   const [formState, setFormState] = useState({ title: "", description: "" })
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const { userDetails, logout, isLoggedIn, showLoginModal, setShowLoginModal } = useAuth();
+  const [userProperties, setUserProperties] = useState([])
+
+  // Handler to trigger login modal and optionally track source
+  const onLoginClick = (source) => {
+    setShowLoginModal(true)
+    // Optionally, you can log or track the source if needed
+  }
+
+  // Handler for successful login
+  const onLoginSuccess = () => {
+    setShowLoginModal(false)
+  }
 
   useEffect(() => {
     if (isLoggedIn) setShowLoginModal(false)
   }, [isLoggedIn])
 
-  const handleInputChange = (e) => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true)
-      onLoginClick("form")
-      return
-    }
-    setFormState({ ...formState, [e.target.name]: e.target.value })
-  }
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault()
-    if (!isLoggedIn) {
-      setShowLoginModal(true)
-      onLoginClick("form")
-      return
-    }
-    setUserProperties((prev) => [...prev, formState])
-    setFormState({ title: "", description: "" })
-  }
-
-  const handleLoginClick = (source) => {
-    setShowLoginModal(true)
-    onLoginClick(source)
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50">
-      <div className="pt-24 pb-16 px-4 container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 overflow-x-hidden">
+      <div className="pt-24 pb-16 px-2 sm:px-4 container mx-auto max-w-6xl">
         {/* Header Section */}
          <div className="text-center mb-12">
           {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-100 rounded-full mb-6">
@@ -74,15 +65,20 @@ const SellPage = ({ isLoggedIn, userName, setUserProperties, onLoginClick, onLog
           </p>
         </div>
 
-        <RentForm setUserProperties={setUserProperties} isLoggedIn={isLoggedIn} onLoginClick={handleLoginClick} />
-
+        <RentForm 
+          userProperties={userProperties}
+          setUserProperties={setUserProperties}
+          onLoginClick={onLoginClick}
+          onLoginSuccess={onLoginSuccess}
+          isLoggedIn={isLoggedIn}
+        />
         <LoginModal show={showLoginModal} onClose={() => setShowLoginModal(false)} onLoginSuccess={onLoginSuccess} />
       </div>
     </div>
   )
 }
 
-const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
+const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick, onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
@@ -138,9 +134,45 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     { id: 4, title: "Contact & Images", icon: "📸" },
   ]
 
+  const refs = {
+    title: useRef(),
+    location: useRef(),
+    rent: useRef(),
+    propertyType: useRef(),
+    area: useRef(),
+    description: useRef(),
+    furnishing: useRef(),
+    ownerName: useRef(),
+    ownerEmail: useRef(),
+    phoneNumber: useRef(),
+    whatsappNumber: useRef(),
+    images: useRef(),
+    contactPreferences: useRef(),
+  }
+
+ 
+  const scrollToFirstError = (errorObj) => {
+    const errorOrder = [
+      "title", "location", "rent", "propertyType", "area",
+      "description", "furnishing",
+      "ownerName", "ownerEmail", "phoneNumber", "whatsappNumber",
+      "images", "contactPreferences"
+    ];
+    for (const key of errorOrder) {
+      if (errorObj[key] && refs[key] && refs[key].current) {
+        refs[key].current.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (refs[key].current.focus) refs[key].current.focus();
+        break;
+      }
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target
-    
+    if (!isLoggedIn) {
+      onLoginClick("input")
+      return
+    }
 
     if (name === "images") {
       const fileArray = Array.from(files)
@@ -177,58 +209,62 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     }))
   }
 
-const validateStep = (step) => {
-    console.log(`validateStep called for step ${step}, isSubmitting: ${isSubmitting}`);
-    console.trace(); // Keep for debugging
-    const newErrors = {};
+  const validateStep = (step) => {
+      console.log(`validateStep called for step ${step}, 
+  
+    isSubmitting: ${ isSubmitting}` );
+  console.trace(); // Keep for debugging
+    const newErrors = {}
 
     if (step === 1) {
-        if (!formData.title) newErrors.title = "Property title is required";
-        if (!formData.location) newErrors.location = "Location is required";
-        if (!formData.rent) newErrors.rent = "Price is required";
-        if (!formData.propertyType) newErrors.propertyType = "Property type is required";
-        if (!formData.area) newErrors.area = "Area is required";
+      if (!formData.title) newErrors.title = "Property title is required"
+      if (!formData.location) newErrors.location = "Location is required"
+      if (!formData.rent) newErrors.rent = "Price is required"
+      if (!formData.propertyType) newErrors.propertyType = "Property type is required"
+      if (!formData.area) newErrors.area = "Area is required"
     }
 
     if (step === 2) {
-        if (!formData.description) newErrors.description = "Description is required";
-        if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required";
+      if (!formData.description) newErrors.description = "Description is required"
+      if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required"
     }
 
     if (step === 4) {
-        if (!formData.ownerName) newErrors.ownerName = "Owner name is required";
-        if (!formData.ownerEmail) newErrors.ownerEmail = "Email is required";
-        if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
-        if (formData.images.length === 0) newErrors.images = "At least one image is required";
+      if (!formData.ownerName) newErrors.ownerName = "Owner name is required"
+      if (!formData.ownerEmail) newErrors.ownerEmail = "Email is required"
+      if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required"
+      if (formData.images.length === 0) newErrors.images = "At least one image is required"
 
-        // Check if at least one contact preference is selected
-        const hasContactPreference = Object.values(formData.contactPreferences).some((pref) => pref);
-        if (!hasContactPreference) {
-            newErrors.contactPreferences = "Please select at least one contact method";
-        }
+      // Check if at least one contact preference is selected
+      const hasContactPreference = Object.values(formData.contactPreferences).some((pref) => pref)
+      if (!hasContactPreference) {
+        newErrors.contactPreferences = "Please select at least one contact method"
+      }
 
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) {
-            newErrors.ownerEmail = "Please enter a valid email address";
-        }
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) {
+        newErrors.ownerEmail = "Please enter a valid email address"
+      }
 
-        // Validate phone number format (basic validation)
-        const phoneRegex = /^[+]?[0-9\s\-]{10,}$/;
-        if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-            newErrors.phoneNumber = "Please enter a valid phone number";
-        }
+      // Validate phone number format (basic validation)
+      const phoneRegex = /^[+]?[0-9\s\-$$$$]{10,}$/
+      if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
+        newErrors.phoneNumber = "Please enter a valid phone number"
+      }
 
-        // Validate WhatsApp number if provided
-        if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber)) {
-            newErrors.whatsappNumber = "Please enter a valid WhatsApp number";
-        }
+      // Validate WhatsApp number if provided
+      if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber)) {
+        newErrors.whatsappNumber = "Please enter a valid WhatsApp number"
+      }
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-};
-
+    setErrors(newErrors)
+    if (Object.keys(newErrors).length > 0) {
+      scrollToFirstError(newErrors)
+    }
+    return Object.keys(newErrors).length === 0
+  }
 
   const nextStep = () => {
     if (validateStep(currentStep)) {
@@ -240,90 +276,86 @@ const validateStep = (step) => {
     setCurrentStep((prev) => Math.max(prev - 1, 1))
   }
 
- const handleSubmit = async (e) => {
-    console.log("handleSubmit triggered");
-    console.log("Form submission triggered", e);
-    e.preventDefault();
-    
+  const handleSubmit = async (e) => {
+     console.log("handleSubmit triggered");
+     console.log("Form submission triggered", e);
+    e.preventDefault()
     if (!isLoggedIn) {
-        onLoginClick("submit");
-        return;
+      onLoginClick("submit")
+      return
     }
 
-    // Validate the last step before submission
-    if (!validateStep(4)) {
-        return; // If validation fails, do not proceed
-    }
+    if (!validateStep(4)) return
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     try {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-        const newProperty = {
-            id: Date.now(),
-            ...formData,
-            images: formData.images.map((file) => URL.createObjectURL(file)),
-            createdAt: new Date().toISOString(),
-        };
+      const newProperty = {
+        id: Date.now(),
+        ...formData,
+        images: formData.images.map((file) => URL.createObjectURL(file)),
+        createdAt: new Date().toISOString(),
+      }
 
-        setUserProperties((prev) => [...prev, newProperty]);
+      setUserProperties((prev) => [...prev, newProperty])
 
-        // Success feedback
-        alert("Property listed successfully! 🎉");
+      // Success feedback
+      alert("Property listed successfully! 🎉")
 
-        // Reset form
-        setFormData({
-            title: "",
-            location: "",
-            rent: "",
-            propertyType: "",
-            bedrooms: "",
-            bathrooms: "",
-            area: "",
-            description: "",
-            ownerName: "",
-            ownerEmail: "",
-            phoneNumber: "",
-            whatsappNumber: "",
-            contactPreferences: {
-                email: false,
-                phone: false,
-                whatsapp: false,
-            },
-            furnishing: "",
-            floor: "",
-            leaseDuration: "",
-            availableFrom: "",
-            maintenance: "",
-            deposit: "",
-            images: [],
-            yearBuilt: "",
-            parking: false,
-            balcony: false,
-            petFriendly: false,
-            laundryInUnit: false,
-            dishwasher: false,
-            airConditioning: false,
-            heating: false,
-            swimmingPool: false,
-            gym: false,
-            security: false,
-            gatedCommunity: false,
-            nearbySchools: "",
-            nearbyHospitals: "",
-            nearbyShopping: "",
-            publicTransportAccess: false,
-            listingType: "rent",
-        });
-        setCurrentStep(1);
+      // Reset form
+      setFormData({
+        title: "",
+        location: "",
+        rent: "",
+        propertyType: "",
+        bedrooms: "",
+        bathrooms: "",
+        area: "",
+        description: "",
+        ownerName: "",
+        ownerEmail: "",
+        phoneNumber: "",
+        whatsappNumber: "",
+        contactPreferences: {
+          email: false,
+          phone: false,
+          whatsapp: false,
+        },
+        furnishing: "",
+        floor: "",
+        leaseDuration: "",
+        availableFrom: "",
+        maintenance: "",
+        deposit: "",
+        images: [],
+        yearBuilt: "",
+        parking: false,
+        balcony: false,
+        petFriendly: false,
+        laundryInUnit: false,
+        dishwasher: false,
+        airConditioning: false,
+        heating: false,
+        swimmingPool: false,
+        gym: false,
+        security: false,
+        gatedCommunity: false,
+        nearbySchools: "",
+        nearbyHospitals: "",
+        nearbyShopping: "",
+        publicTransportAccess: false,
+        listingType: "rent",
+      })
+      setCurrentStep(1)
     } catch (error) {
-        alert("Something went wrong. Please try again.");
+      alert("Something went wrong. Please try again.")
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-};
+  }
 
   const amenityIcons = {
     parking: "🚗",
@@ -344,31 +376,33 @@ const validateStep = (step) => {
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
       <div className="mb-12">
-        <div className="flex items-center justify-between mb-8">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`flex items-center justify-center w-12 h-12 rounded-full text-lg font-bold transition-all duration-300 ${
-                  currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {currentStep > step.id ? "✓" : step.icon}
-              </div>
-              <div className="ml-3 hidden sm:block">
-                <p className={`text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
-                  Step {step.id}
-                </p>
-                <p className={`text-xs ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
-              </div>
-              {index < steps.length - 1 && (
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-emerald-200 -mx-2 px-2">
+          <div className="flex items-center justify-between mb-8 min-w-[340px] sm:min-w-0">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-shrink-0 min-w-0">
                 <div
-                  className={`w-16 h-1 mx-4 rounded-full transition-all duration-300 ${
-                    currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-base sm:text-lg font-bold transition-all duration-300 ${
+                    currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {currentStep > step.id ? "✓" : step.icon}
+                </div>
+                <div className="ml-2 sm:ml-3 hidden xs:block min-w-0">
+                  <p className={`text-xs sm:text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
+                    Step {step.id}
+                  </p>
+                  <p className={`text-[10px] sm:text-xs truncate ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
+                </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
+                      currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -401,6 +435,7 @@ const validateStep = (step) => {
                 <div className="lg:col-span-2">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Property Title *</label>
                   <input
+                    ref={refs.title}
                     type="text"
                     name="title"
                     value={formData.title}
@@ -436,6 +471,7 @@ const validateStep = (step) => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
                   <input
+                    ref={refs.location}
                     type="text"
                     name="location"
                     value={formData.location}
@@ -457,6 +493,7 @@ const validateStep = (step) => {
                       PKR
                     </span>
                     <input
+                      ref={refs.rent}
                       type="number"
                       name="rent"
                       value={formData.rent}
@@ -475,6 +512,7 @@ const validateStep = (step) => {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Property Type *</label>
                   <div className="relative">
                     <select
+                      ref={refs.propertyType}
                       name="propertyType"
                       value={formData.propertyType}
                       onChange={handleChange}
@@ -500,7 +538,7 @@ const validateStep = (step) => {
                   {errors.propertyType && <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>}
                 </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Bedrooms</label>
                     <input
@@ -543,6 +581,7 @@ const validateStep = (step) => {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Area *</label>
                   <input
+                    ref={refs.area}
                     type="text"
                     name="area"
                     value={formData.area}
@@ -586,6 +625,7 @@ const validateStep = (step) => {
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Property Description *</label>
                 <textarea
+                  ref={refs.description}
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
@@ -598,11 +638,12 @@ const validateStep = (step) => {
                 {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
               </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Furnishing Status *</label>
                   <div className="relative">
                     <select
+                      ref={refs.furnishing}
                       name="furnishing"
                       value={formData.furnishing}
                       onChange={handleChange}
@@ -726,7 +767,7 @@ const validateStep = (step) => {
               <h2 className="text-3xl font-bold text-gray-900">Amenities & Features</h2>
             </div>
 
-<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {Object.keys(formData)
                 .filter((key) => typeof formData[key] === "boolean")
                 .map((key) => (
@@ -835,6 +876,7 @@ const validateStep = (step) => {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Owner/Agent Name *</label>
                     <input
+                      ref={refs.ownerName}
                       type="text"
                       name="ownerName"
                       value={formData.ownerName}
@@ -847,10 +889,10 @@ const validateStep = (step) => {
                     {errors.ownerName && <p className="text-red-500 text-sm mt-1">{errors.ownerName}</p>}
                   </div>
 
-
- <div>
+                  <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
                     <input
+                      ref={refs.ownerEmail}
                       type="email"
                       name="ownerEmail"
                       value={formData.ownerEmail}
@@ -866,6 +908,7 @@ const validateStep = (step) => {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
                     <input
+                      ref={refs.phoneNumber}
                       type="tel"
                       name="phoneNumber"
                       value={formData.phoneNumber}
@@ -881,6 +924,7 @@ const validateStep = (step) => {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
                     <input
+                      ref={refs.whatsappNumber}
                       type="tel"
                       name="whatsappNumber"
                       value={formData.whatsappNumber}
@@ -900,6 +944,7 @@ const validateStep = (step) => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">How do you want buyers to contact you? *</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <label
+                    ref={refs.contactPreferences}
                     className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
                       formData.contactPreferences.email
                         ? "border-emerald-500 bg-emerald-50 shadow-sm"
@@ -1007,6 +1052,7 @@ const validateStep = (step) => {
                   Property Images * (Max 5 images)
                 </label>
                 <div
+                  ref={refs.images}
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
                     errors.images
                       ? "border-red-300 bg-red-50"

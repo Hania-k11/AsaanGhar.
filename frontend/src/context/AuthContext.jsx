@@ -46,9 +46,12 @@ export const AuthProvider = ({ children }) => {
     setUserDetails(null);
     localStorage.removeItem('userDetails');
   };
+
+    const isLoggedIn = !!userDetails;
+
   return (
     <AuthContext.Provider value={{ user,  loading, userDetails, setUserDetails, clearUserDetails,
-      logout, showLoginModal, setShowLoginModal
+      logout, showLoginModal, setShowLoginModal, isLoggedIn
      }}>
       {children}
     </AuthContext.Provider>
