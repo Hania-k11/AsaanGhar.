@@ -6,16 +6,36 @@ import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
 import { motion } from "framer-motion"
 import FloatingElements from "./FloatingElements"
 import { useAuth } from "../context/AuthContext";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 
 const SellPage = () => {
   const [formState, setFormState] = useState({ title: "", description: "" })
   const { userDetails, logout, isLoggedIn, showLoginModal, setShowLoginModal } = useAuth();
   const [userProperties, setUserProperties] = useState([])
+  const [lastToastTime, setLastToastTime] = useState(0);
 
   // Handler to trigger login modal and optionally track source
   const onLoginClick = (source) => {
-    setShowLoginModal(true)
+    const now = Date.now();
+    // Only show toast if 3 seconds have passed since the last one
+    if (now - lastToastTime > 3000) {
+      toast.info('Please log in or sign up to post your property.', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: 'light',
+      });
+      setLastToastTime(now);
+    }
+    setShowLoginModal(true);
+    
     // Optionally can log or track the source if needed
   }
 
@@ -31,6 +51,7 @@ const SellPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-50 overflow-x-hidden">
+      <ToastContainer />
       <div className="pt-24 pb-16 px-2 sm:px-4 container mx-auto max-w-6xl">
         {/* Header Section */}
          <div className="text-center mb-12">
