@@ -15,14 +15,6 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mysql2": "^3.14.2",
-<<<<<<< HEAD
-    "natural": "^8.1.0"
-  },
-  "description": "",
-  "devDependencies": {
-    "nodemon": "^3.1.10",
-=======
->>>>>>> 45727986d9bfab344cddd3ba912d3e07c70bf88a
     "openai": "^5.11.0"
   }
 }
