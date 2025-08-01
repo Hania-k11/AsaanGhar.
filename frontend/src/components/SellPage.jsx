@@ -1,3 +1,4 @@
+//user details can be save here or con
 
 import { useState, useEffect, useRef } from "react"
 import LoginModal from "./LoginModal"
@@ -15,10 +16,9 @@ const SellPage = () => {
   // Handler to trigger login modal and optionally track source
   const onLoginClick = (source) => {
     setShowLoginModal(true)
-    // Optionally, you can log or track the source if needed
+    // Optionally can log or track the source if needed
   }
 
-  // Handler for successful login
   const onLoginSuccess = () => {
     setShowLoginModal(false)
   }
@@ -387,7 +387,7 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
                 >
                   {currentStep > step.id ? "✓" : step.icon}
                 </div>
-                <div className="ml-2 sm:ml-3 hidden xs:block min-w-0">
+                <div className="ml-2 sm:ml-3 hidden sm:block min-w-0">
                   <p className={`text-xs sm:text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
                     Step {step.id}
                   </p>
