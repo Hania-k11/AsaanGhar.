@@ -1131,7 +1131,7 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+            className={`px-4 py-3 md:px-6 md:py-3 rounded-xl font-semibold transition-all duration-200 ${
               currentStep === 1
                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                 : "bg-white text-gray-700 border-2 border-gray-200 hover:border-emerald-500 hover:text-emerald-600"
@@ -1155,7 +1155,7 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
             <button
               type="button"
               onClick={nextStep}
-              className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className=" px-3 py-3 md:px-6 md:py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Next Step
             </button>
