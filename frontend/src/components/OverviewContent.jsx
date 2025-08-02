@@ -9,14 +9,13 @@ import {
   Edit,
   Building,
   Clock,
+  ArrowRight,
 } from "lucide-react"
 
 // Mock data for demonstration
 const mockStats = {
   propertiesViewed: 127,
   savedProperties: 23,
-  searchesSaved: 8,
-  messagesReceived: 15,
   listingsCreated: 3,
   totalViews: 1240,
 }
@@ -28,137 +27,185 @@ const mockRecentActivity = [
   { id: 4, type: "search", property: "3BR Apartments under $900k", time: "2 days ago", price: null },
 ]
 
-const OverviewContent = ({ userDetails }) => {
-  const quickActions = [
-    { icon: Plus, label: "List Property", color: "bg-emerald-500 hover:bg-emerald-600" },
-    { icon: Search, label: "Search Property", color: "bg-blue-500 hover:bg-blue-600" },
-    { icon: Heart, label: "Liked Properties", color: "bg-red-400 hover:bg-orange-600" },
-    { icon: Edit, label: "Edit Profile", color: "bg-purple-500 hover:bg-purple-600" },
-  ]
+const quickActions = [
+  { icon: Plus, label: "List Property", color: "from-emerald-500 to-emerald-600", href: "#" },
+  { icon: Search, label: "Find Property", color: "from-blue-500 to-blue-600", href: "#" },
+  { icon: Heart, label: "Saved Listings", color: "from-rose-500 to-rose-600", href: "#" },
+  { icon: Edit, label: "Manage Profile", color: "from-purple-500 to-purple-600", href: "#" },
+]
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+}
+
+const StatCard = ({ icon: Icon, label, value, color, bg }) => (
+  <motion.div
+    variants={itemVariants}
+    className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300"
+  >
+    <div className={`w-12 h-12 ${bg} rounded-full flex items-center justify-center mb-4`}>
+      <Icon className={`w-6 h-6 ${color}`} strokeWidth={2} />
+    </div>
+    <p className="text-3xl font-bold text-gray-900 mb-1">{value.toLocaleString()}</p>
+    <p className="text-sm font-medium text-gray-600">{label}</p>
+  </motion.div>
+)
+
+const QuickActionCard = ({ icon: Icon, label, color, href }) => (
+  <motion.a
+    href={href}
+    variants={itemVariants}
+    whileHover={{ scale: 1.05, y: -5 }}
+    whileTap={{ scale: 0.95 }}
+    className={`relative group bg-gradient-to-br ${color} text-white p-6 rounded-2xl shadow-lg transition-all duration-300 flex flex-col items-start justify-between gap-4 overflow-hidden`}
+  >
+    <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+    <div className="flex items-center gap-4">
+      <Icon className="w-8 h-8" strokeWidth={2} />
+      <span className="text-lg font-semibold">{label}</span>
+    </div>
+    <ArrowRight className="w-6 h-6 self-end -translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-300" />
+  </motion.a>
+)
+
+const RecentActivityItem = ({ activity, index }) => {
+  const Icon = {
+    view: Eye,
+    save: Heart,
+    message: MessageSquare,
+    search: Search,
+  }[activity.type] || Clock
+
+  const iconColor = {
+    view: "text-blue-600",
+    save: "text-rose-600",
+    message: "text-emerald-600",
+    search: "text-purple-600",
+  }[activity.type]
+
+  const bgColor = {
+    view: "bg-blue-100",
+    save: "bg-rose-100",
+    message: "bg-emerald-100",
+    search: "bg-purple-100",
+  }[activity.type]
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <motion.div
+      variants={itemVariants}
+      className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+    >
+      <div className="flex items-center gap-4 min-w-0">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${bgColor}`}>
+          <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 truncate">{activity.property}</p>
+          <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+        </div>
+      </div>
+      {activity.price && (
+        <span className="text-sm font-bold text-emerald-600 flex-shrink-0">
+          {activity.price}
+        </span>
+      )}
+    </motion.div>
+  )
+}
+
+const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
+  return (
+    <motion.div
+      className="space-y-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       {/* Welcome Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-4 sm:p-6 border border-emerald-100"
+        variants={itemVariants}
+        className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-md"
       >
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
           Welcome back, {userDetails.name}! 👋
         </h1>
-        <p className="text-sm sm:text-base text-gray-600">
-          You've been actively searching for properties. Here's your latest activity overview.
+        <p className="text-base text-gray-600 max-w-2xl">
+          Your dashboard provides a quick overview of your real estate activity. Let's make your next property move!
         </p>
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        variants={containerVariants}
+      >
         {[
           {
             label: "Active Properties",
-            value: mockStats.propertiesViewed,
+            value: mockStats.listingsCreated,
             icon: Building,
             color: "text-blue-600",
-            bg: "bg-blue-50",
+            bg: "bg-blue-100",
           },
           {
             label: "Saved Properties",
             value: mockStats.savedProperties,
             icon: Heart,
-            color: "text-red-600",
-            bg: "bg-red-50",
+            color: "text-rose-600",
+            bg: "bg-rose-100",
           },
           {
-            label: "Sold Properties",
+            label: "Total Views",
             value: mockStats.totalViews,
             icon: TrendingUp,
             color: "text-purple-600",
-            bg: "bg-purple-50",
+            bg: "bg-purple-100",
           },
-        ].map((stat, index) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
-          >
-            <div className={`w-10 h-10 sm:w-12 sm:h-12 ${stat.bg} rounded-lg flex items-center justify-center mb-3 sm:mb-4`}>
-              <stat.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${stat.color}`} />
-            </div>
-            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stat.value.toLocaleString()}</p>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">{stat.label}</p>
-          </motion.div>
+        ].map((stat) => (
+          <StatCard key={stat.label} {...stat} />
         ))}
-      </div>
+      </motion.div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {quickActions.map((action, index) => (
-            <motion.button
-              key={action.label}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`${action.color} text-white p-3 sm:p-4 rounded-xl shadow-sm transition-all duration-200 flex flex-col items-center gap-2`}
-            >
-              <action.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="text-xs sm:text-sm font-medium text-center">{action.label}</span>
-            </motion.button>
+      <motion.div
+        className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100"
+        variants={itemVariants}
+      >
+        <h3 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {quickActions.map((action) => (
+            <QuickActionCard key={action.label} {...action} />
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Recent Activity */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Your Recent Activity</h3>
-          <Clock className="w-5 h-5 text-gray-400" />
+      <motion.div
+        className="bg-white rounded-3xl p-6 sm:p-8 shadow-lg border border-gray-100"
+        variants={itemVariants}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Your Recent Activity</h3>
+          <Clock className="w-6 h-6 text-gray-400" />
         </div>
-        <div className="space-y-3 sm:space-y-4">
+        <div className="space-y-4 sm:space-y-5">
           {mockRecentActivity.map((activity, index) => (
-            <motion.div
-              key={activity.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  activity.type === "view"
-                    ? "bg-blue-100"
-                    : activity.type === "save"
-                      ? "bg-red-100"
-                      : activity.type === "message"
-                        ? "bg-green-100"
-                        : "bg-purple-100"
-                }`}
-              >
-                {activity.type === "view" && <Eye className="w-4 h-4 text-blue-600" />}
-                {activity.type === "save" && <Heart className="w-4 h-4 text-red-600" />}
-                {activity.type === "message" && <MessageSquare className="w-4 h-4 text-green-600" />}
-                {activity.type === "search" && <Search className="w-4 h-4 text-purple-600" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{activity.property}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-gray-500">{activity.time}</p>
-                  {activity.price && (
-                    <span className="text-xs font-semibold text-emerald-600">{activity.price}</span>
-                  )}
-                </div>
-              </div>
-            </motion.div>
+            <RecentActivityItem key={activity.id} activity={activity} index={index} />
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
