@@ -31,7 +31,7 @@ const mockStats = {
   messagesReceived: 15,
 }
 
-const NAVBAR_HEIGHT = "4.5rem";
+const NAVBAR_HEIGHT = "3.7rem";
 const SIDEBAR_WIDTH = "20rem"; 
 
 const MyProfile = () => {
