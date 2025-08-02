@@ -1,278 +1,427 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Mail, Phone, MapPin, Calendar, Camera, Edit3, Trash2, Save, X, User } from "lucide-react"
+import { useState } from "react";
+import { Mail, Phone, MapPin, Calendar, Edit3, Save, X, User, Briefcase, Twitter, Linkedin, Github, Heart } from "lucide-react";
 
-const MyProfileTab = () => {
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [profileData, setProfileData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@email.com",
-    phone: "+1 (555) 123-4567",
-    location: "New York, NY",
-    bio: "Experienced real estate investor with over 10 years in the market. Specializing in residential and commercial properties with a focus on sustainable development and community growth.",
-    joinDate: "January 2020",
-    profileImage: "/placeholder.svg?height=120&width=120",
-  })
-
-  const [editData, setEditData] = useState(profileData)
-
-  const handleEdit = () => {
-    setEditData(profileData)
-    setShowEditModal(true)
-  }
-
-  const handleSave = () => {
-    setProfileData(editData)
-    setShowEditModal(false)
-  }
-
-  const handleCancel = () => {
-    setEditData(profileData)
-    setShowEditModal(false)
-  }
-
-  const handleInputChange = (field, value) => {
-    setEditData((prev) => ({ ...prev, [field]: value }));
-  }
+// Placeholder for profile image that generates an icon from initials
+const generatePlaceholderImage = (firstName, lastName) => {
+  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase();
+  // Updated colors to match the new theme
+  const colors = ["#0D9488", "#14B8A6", "#047857", "#065F46", "#2dd4bf"];
+  const color = colors[initials.charCodeAt(0) % colors.length];
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
-      {/* Profile Header */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-br from-emerald-800 via-emerald-700 to-slate-900 h-40 relative">
-          <div className="absolute inset-0 bg-emerald-200 bg-opacity-20"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent"></div>
-        </div>
-        <div className="relative px-8 pb-8">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:space-x-8 -mt-20">
-            <div className="relative">
-              <div className="w-40 h-40 rounded-2xl border-4 border-white shadow-xl bg-gray-100 overflow-hidden">
-                <img
-                  src={profileData.profileImage || "/placeholder.svg"}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+    <svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" className="w-full h-full rounded-full">
+      <rect x="0" y="0" width="120" height="120" fill={color} />
+      <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fontSize="48" fontWeight="bold" fill="#ffffff" fontFamily="Inter, sans-serif">
+        {initials}
+      </text>
+    </svg>
+  );
+};
+
+const MyProfileTab = () => {
+  // State to control the visibility of the edit modal
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Initial profile data with added fields for job title, gender, and social links
+  const [profileData, setProfileData] = useState({
+    firstName: "Jane",
+    lastName: "Doe",
+    jobTitle: "Senior Product Designer",
+    gender: "Female",
+    email: "jane.doe@email.com",
+    phone: "+1 (555) 987-6543",
+    location: "San Francisco, CA",
+    bio: "Passionate designer with a love for creating intuitive and beautiful user experiences. Specializing in UI/UX for SaaS platforms and mobile applications. Always learning new technologies and design trends.",
+    interests: "Design systems, typography, photography, hiking",
+    joinDate: "June 2022",
+    socialLinks: {
+      twitter: "https://twitter.com/janedoe",
+      linkedin: "https://linkedin.com/in/janedoe",
+      github: "https://github.com/janedoe",
+    },
+    profileImage: "", // Empty string to use the generated placeholder
+  });
+
+  // State to hold the data being edited in the modal, initialized with current profile data
+  const [editData, setEditData] = useState(profileData);
+
+  // Function to open the edit modal and set the edit data
+  const handleEdit = () => {
+    setEditData(profileData);
+    setShowEditModal(true);
+  };
+
+  // Function to save the changes from the modal to the main profile data
+  const handleSave = () => {
+    setProfileData(editData);
+    setShowEditModal(false);
+  };
+
+  // Function to cancel the edit and close the modal, reverting changes
+  const handleCancel = () => {
+    setEditData(profileData);
+    setShowEditModal(false);
+  };
+
+  // Function to handle input changes for various fields, including nested objects like social links
+  const handleInputChange = (field, value) => {
+    if (field.includes("socialLinks")) {
+      const socialField = field.split(".")[1];
+      setEditData((prev) => ({
+        ...prev,
+        socialLinks: {
+          ...prev.socialLinks,
+          [socialField]: value,
+        },
+      }));
+    } else {
+      setEditData((prev) => ({ ...prev, [field]: value }));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center font-sans p-6 md:p-10">
+      <div className="w-full max-w-6xl">
+        {/* Profile Header Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+          {/* Background banner with gradient */}
+          <div className="relative h-48 sm:h-56 bg-gradient-to-br from-emerald-500 to-teal-600">
+            <div className="absolute inset-0 bg-black opacity-20"></div>
+          </div>
+
+          {/* Profile Image and Info */}
+          <div className="relative z-10 -mt-24 sm:-mt-28 px-6 sm:px-10 pb-8">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end sm:space-x-8">
+              {/* Profile Image with animated border and shadow */}
+              <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-white dark:border-gray-800 transform transition-transform duration-300 hover:scale-105 shadow-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                {profileData.profileImage ? (
+                  <img
+                    src={profileData.profileImage}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  generatePlaceholderImage(profileData.firstName, profileData.lastName)
+                )}
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-slate-800 text-white p-3 rounded-xl shadow-lg">
-                <User className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex-1 mt-6 lg:mt-0">
-              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    {profileData.firstName} {profileData.lastName}
-                  </h1>
-                  <p className="text-gray-600 flex items-center text-lg">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Member since {profileData.joinDate}
-                  </p>
+
+              {/* Name, Title, and Edit Button */}
+              <div className="flex-1 mt-6 sm:mt-0 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100">
+                      {profileData.firstName} {profileData.lastName}
+                    </h1>
+                    <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 font-medium">{profileData.jobTitle}</p>
+                  </div>
+                  <button
+                    onClick={handleEdit}
+                    className="mt-4 sm:mt-0 w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 transform hover:-translate-y-1"
+                  >
+                    <Edit3 className="w-5 h-5" />
+                    <span>Edit Profile</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleEdit}
-                  className="mt-4 lg:mt-0 bg-emerald-700 hover:bg-slate-900 text-white px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-                >
-                  <Edit3 className="w-5 h-5" />
-                  <span className="font-medium">Edit Profile</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Profile Information Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Contact Information */}
-        <div className="xl:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-              <Mail className="w-4 h-4 text-slate-600" />
-            </div>
-            Contact Information
-          </h2>
-          <div className="space-y-6">
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Mail className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Email Address</p>
-                <p className="text-gray-900 font-medium">{profileData.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <Phone className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Phone Number</p>
-                <p className="text-gray-900 font-medium">{profileData.phone}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-xl">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <MapPin className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 font-medium">Location</p>
-                <p className="text-gray-900 font-medium">{profileData.location}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bio Section */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-            <div className="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center mr-3">
-              <User className="w-4 h-4 text-slate-600" />
+        {/* Main Content Grid */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* About Section */}
+          <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center space-x-3">
+              <User className="w-6 h-6 text-emerald-500" />
+              <span>About Me</span>
+            </h2>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-base md:text-lg">{profileData.bio}</p>
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Interests</h3>
+              <p className="text-gray-600 dark:text-gray-400">{profileData.interests}</p>
             </div>
-            About Me
-          </h2>
-          <p className="text-gray-700 leading-relaxed text-lg">{profileData.bio}</p>
-        </div>
-      </div>
+          </div>
 
-      {/* Danger Zone */}
-      <div className="bg-white rounded-2xl shadow-lg border border-red-200 p-8">
-        <h2 className="text-2xl font-bold text-red-600 mb-6 flex items-center">
-          <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center mr-3">
-            <Trash2 className="w-4 h-4 text-red-600" />
+          {/* Contact & Social Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 flex flex-col justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center space-x-3">
+                <Briefcase className="w-6 h-6 text-teal-500" />
+                <span>Details</span>
+              </h2>
+              {/* Contact and Join Date */}
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <Mail className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Email Address</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{profileData.email}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <Phone className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Phone Number</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{profileData.phone}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <MapPin className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Location</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{profileData.location}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <Calendar className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Member Since</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{profileData.joinDate}</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                    <Heart className="w-6 h-6 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Gender</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium">{profileData.gender}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Social Links Section */}
+            <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Find me on</h3>
+              <div className="flex flex-wrap gap-4">
+                {profileData.socialLinks.twitter && (
+                  <a href={profileData.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 transform hover:-translate-y-1">
+                    <Twitter className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  </a>
+                )}
+                {profileData.socialLinks.linkedin && (
+                  <a href={profileData.socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 transform hover:-translate-y-1">
+                    <Linkedin className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  </a>
+                )}
+                {profileData.socialLinks.github && (
+                  <a href={profileData.socialLinks.github} target="_blank" rel="noopener noreferrer" className="p-3 bg-gray-100 dark:bg-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 transform hover:-translate-y-1">
+                    <Github className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  </a>
+                )}
+              </div>
+            </div>
           </div>
-          Danger Zone
-        </h2>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-6 bg-red-50 rounded-xl border border-red-200">
-          <div className="space-y-2">
-            <h3 className="font-bold text-red-800 text-lg">Delete Account</h3>
-            <p className="text-red-600">
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="mt-4 lg:mt-0 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 shadow-lg hover:shadow-xl"
-          >
-            <Trash2 className="w-5 h-5" />
-            <span className="font-medium">Delete Account</span>
-          </button>
         </div>
       </div>
 
       {/* Edit Profile Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in-down text-gray-900 dark:text-gray-100">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-2xl font-bold text-gray-900">Edit Profile</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Profile</h3>
               <button
                 onClick={handleCancel}
-                className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             <div className="space-y-6">
-              {/* Profile Image */}
-              <div className="flex items-center space-x-6">
-                <div className="w-24 h-24 rounded-xl border-2 border-gray-200 bg-gray-100 overflow-hidden">
-                  <img
-                    src={editData.profileImage || "/placeholder.svg"}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
+              {/* Profile Image Change - Placeholder for now */}
+              <div className="flex items-center space-x-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
+                <div className="w-24 h-24 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  {editData.profileImage ? (
+                    <img
+                      src={editData.profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    generatePlaceholderImage(editData.firstName, editData.lastName)
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Photo URL</p>
+                  <input
+                    type="text"
+                    value={editData.profileImage}
+                    onChange={(e) => handleInputChange("profileImage", e.target.value)}
+                    className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="Enter image URL"
                   />
                 </div>
-                <button className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
-                  <Camera className="w-4 h-4" />
-                  <span>Change Photo</span>
-                </button>
               </div>
 
               {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label>
                   <input
                     type="text"
                     value={editData.firstName}
                     onChange={(e) => handleInputChange("firstName", e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="First Name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
                   <input
                     type="text"
                     value={editData.lastName}
                     onChange={(e) => handleInputChange("lastName", e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                     placeholder="Last Name"
                   />
                 </div>
               </div>
 
+              {/* Job Title and Gender */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Job Title</label>
+                  <input
+                    type="text"
+                    value={editData.jobTitle}
+                    onChange={(e) => handleInputChange("jobTitle", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="e.g. Senior Software Engineer"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gender</label>
+                  <select
+                    value={editData.gender}
+                    onChange={(e) => handleInputChange("gender", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Non-binary">Non-binary</option>
+                    <option value="Prefer not to say">Prefer not to say</option>
+                  </select>
+                </div>
+              </div>
+
               {/* Contact Fields */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={editData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
-                  placeholder="Email Address"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+                  <input
+                    type="email"
+                    value={editData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="Email Address"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={editData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="Phone Number"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  value={editData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
-                  placeholder="Phone Number"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
                 <input
                   type="text"
                   value={editData.location}
                   onChange={(e) => handleInputChange("location", e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all"
+                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                   placeholder="Location"
                 />
               </div>
 
+              {/* Bio and Interests */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bio</label>
                 <textarea
                   value={editData.bio}
                   onChange={(e) => handleInputChange("bio", e.target.value)}
                   rows={4}
-                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all resize-none"
+                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all resize-none"
                   placeholder="Tell us about yourself..."
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Interests (comma-separated)</label>
+                <input
+                  type="text"
+                  value={editData.interests}
+                  onChange={(e) => handleInputChange("interests", e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                  placeholder="e.g. Hiking, Coding, Photography"
+                />
+              </div>
+
+              {/* Social Links Section */}
+              <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Social Links</h4>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Twitter/X</label>
+                  <input
+                    type="text"
+                    value={editData.socialLinks.twitter}
+                    onChange={(e) => handleInputChange("socialLinks.twitter", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="https://twitter.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">LinkedIn</label>
+                  <input
+                    type="text"
+                    value={editData.socialLinks.linkedin}
+                    onChange={(e) => handleInputChange("socialLinks.linkedin", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">GitHub</label>
+                  <input
+                    type="text"
+                    value={editData.socialLinks.github}
+                    onChange={(e) => handleInputChange("socialLinks.github", e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                    placeholder="https://github.com/username"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Modal Actions */}
-            <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-200">
+            <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={handleCancel}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-xl font-medium transition-colors"
+                className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-3 px-6 rounded-full font-medium transition-colors transform hover:-translate-y-0.5"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-3 px-6 rounded-xl flex items-center justify-center space-x-2 font-medium transition-colors"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-6 rounded-full flex items-center justify-center space-x-2 font-medium transition-colors transform hover:-translate-y-0.5"
               >
                 <Save className="w-5 h-5" />
                 <span>Save Changes</span>
@@ -281,42 +430,8 @@ const MyProfileTab = () => {
           </div>
         </div>
       )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Account</h3>
-              <p className="text-gray-600 mb-8">
-                Are you sure you want to delete your account? This action cannot be undone and will permanently remove all your data.
-              </p>
-            </div>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 px-6 rounded-xl font-medium transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  // Handle account deletion
-                  setShowDeleteModal(false)
-                }}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-6 rounded-xl font-medium transition-colors"
-              >
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  )
-}
+  );
+};
 
-export default MyProfileTab
+export default MyProfileTab;

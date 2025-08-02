@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  Home, Heart, MessageSquare, Settings, User, LogOut, Calendar, CheckCircle, Menu, X
+  Home, Heart, MessageSquare, Settings, User, LogOut, Calendar, CheckCircle, Menu, X, LayoutDashboard
 } from "lucide-react"
 
 import MyListings from "./MyListings"
@@ -72,11 +72,11 @@ const handleLogout = async () => {
   }, [])
 
   const tabs = [
-    { id: "overview", label: "Overview", icon: User },
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "profile", label: "Profile", icon: User },
     { id: "listings", label: "My Listings", icon: Home },
     { id: "favorites", label: "Favorites", icon: Heart },
     { id: "messages", label: "Messages", icon: MessageSquare },
-    { id: "profile", label: "Profile", icon: User },
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
@@ -325,4 +325,4 @@ const handleLogout = async () => {
   )
 }
 
-export default MyProfile
+export default MyProfile;
