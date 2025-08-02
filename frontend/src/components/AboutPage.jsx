@@ -4,6 +4,7 @@ import { Fade } from "react-awesome-reveal";
 import { Home, MapPin, Mic } from "lucide-react";
 import { Link } from "react-router-dom";
 
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -52,61 +53,108 @@ const AboutPage = () => {
           >
             Revolutionizing property in Pakistan — smarter, transparent, and direct-to-owner.
           </motion.p>
-        </div>{/* TAGS */}
+        </div>
+        {/* TAGS */}
 <motion.div
-  initial={{ opacity: 0, y: 30 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6 }}
+  initial={{ opacity: 0, y: 50, scale: 0.9 }}
+  whileInView={{ opacity: 1, y: 0, scale: 1 }}
+  viewport={{ once: true, amount: 0.6 }}
+  transition={{
+    type: "spring",
+    stiffness: 80,
+    damping: 14,
+    duration: 0.9,
+    delay: 0.1,
+  }}
   className="mt-10 px-6"
 >
-  <div className="inline-flex flex-wrap items-center gap-6 px-6 py-3 bg-white border border-emerald-200 text-emerald-800 rounded-full text-sm font-medium shadow hover:shadow-lg transition duration-300 hover:bg-emerald-50 hover:border-emerald-300">
-    <span className="flex items-center gap-2">
+  <motion.div
+    className="inline-flex flex-wrap items-center gap-6 px-6 py-3 bg-white border border-emerald-200 text-emerald-800 rounded-full text-sm font-medium shadow hover:shadow-lg transition duration-300 hover:bg-emerald-50 hover:border-emerald-300"
+    variants={{
+      hidden: {},
+      visible: {
+        transition: {
+          staggerChildren: 0.15,
+        },
+      },
+    }}
+    initial="hidden"
+    animate="visible"
+  >
+    <motion.span
+      variants={{
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 },
+      }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex items-center gap-2"
+    >
       <Home size={16} /> Smart Homes
-    </span>
-    <span className="flex items-center gap-2">
+    </motion.span>
+
+    <motion.span
+      variants={{
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 },
+      }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex items-center gap-2"
+    >
       <MapPin size={16} /> Google Maps
-    </span>
-    <span className="flex items-center gap-2">
+    </motion.span>
+
+    <motion.span
+      variants={{
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0 },
+      }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="flex items-center gap-2"
+    >
       <Mic size={16} /> Voice Search
-    </span>
-  </div>
+    </motion.span>
+  </motion.div>
 </motion.div>
 
 </motion.section>
+{/* WHAT WE OFFER */}
+<motion.section
 
-      {/* WHAT WE OFFER */}
-      <motion.section
-        variants={fadeInUp}
-        className="bg-white py-20 px-6 md:px-20 lg:px-32"
-      >
-        <Fade cascade damping={0.1} triggerOnce>
-          <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-12">
-            What We Offer
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 text-left">
-            {[
-              ["🏘️", "Verified Listings", "Every property is double-checked and uploaded by real owners."],
-              ["📞", "Owner Contact", "Talk directly with owners — no middlemen, no commissions."],
-              ["📱", "Mobile First", "Use on any device, anywhere. 100% mobile optimized."],
-              ["🧠", "Smart Search", "Find your dream place with AI-powered and filter-based discovery."],
-              ["🌍", "Bilingual", "Urdu and English support for true accessibility."],
-              ["🗺️", "Map View", "Visualize properties using Google Maps for smarter location picking."],
-            ].map(([icon, title, desc], i) => (
-              <motion.div
-                key={i}
-                variants={fadeInUp}
-                className="p-6 bg-gray-50 rounded-2xl shadow hover:shadow-lg transition-all duration-300 hover:bg-emerald-100"
-              >
-                <div className="text-4xl mb-4 text-emerald-600 transition">{icon}</div>
-                <h3 className="font-semibold text-xl mb-2 text-emerald-800">{title}</h3>
-                <p className="text-gray-700">{desc}</p>
-              </motion.div>
-            ))}
+  variants={fadeInUp}
+  className="bg-white py-24 px-6 md:px-20 lg:px-32"
+>
+  <Fade cascade damping={0.1} triggerOnce>
+<h2 className="text-4xl font-bold text-center text-emerald-700 mb-16">
+      What We Offer
+    </h2>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+      {[
+        ["🏘️", "Verified Listings", "Every property is double-checked and uploaded by real owners."],
+        ["📞", "Owner Contact", "Talk directly with owners — no middlemen, no commissions."],
+        ["📱", "Mobile First", "Use on any device, anywhere. 100% mobile optimized."],
+        ["🧠", "Smart Search", "Find your dream place with AI-powered and filter-based discovery."],
+        ["🌍", "Bilingual Support", "Urdu and English support for true accessibility."],
+        ["🗺️", "Map View", "Visualize properties using Google Maps for smarter location picking."],
+      ].map(([icon, title, desc], i) => (
+        <motion.div
+          key={i}
+          variants={fadeInUp}
+          className="group p-8 bg-white rounded-3xl border border-gray-200 shadow-md hover:shadow-2xl transition-all duration-300 hover:bg-emerald-50"
+        >
+          <div className="text-5xl mb-5 text-emerald-600 group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(16,185,129,0.4)] transition-transform duration-300">
+            {icon}
           </div>
-        </Fade>
-      </motion.section>
+          <h3 className="text-xl font-semibold text-gray-800 mb-2 group-hover:text-emerald-700 group-hover:underline">
+            {title}
+          </h3>
+          <p className="text-gray-600 leading-relaxed">{desc}</p>
+        </motion.div>
+      ))}
+    </div>
+  </Fade>
+</motion.section>
 
-      {/* OUR MISSION */}
+       {/* OUR MISSION */}
       <motion.section
         variants={fadeInUp}
         className="bg-emerald-50 py-20 px-6 md:px-20 lg:px-32 text-center"
@@ -117,27 +165,72 @@ const AboutPage = () => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="text-3xl md:text-4xl font-bold text-emerald-700 mb-6">Our Mission</h2>
-          <p className="text-lg text-gray-700 max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-6">
             We aim to build Pakistan’s most trusted property platform — smart, secure and super easy.
             Whether you're a first-time buyer, a busy family, or someone looking to invest, we’re making
             real estate simpler, fairer, and more accessible. Our mission is rooted in innovation and
             inclusivity, with cutting-edge technology that respects your time and choices.
           </p>
-          <motion.img
-            src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80"
-            alt="A family in front of their new home"
-            className="mx-auto rounded-2xl shadow-lg max-w-4xl w-full"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 1 }}
-          />
+          <p className="text-lg text-gray-700 max-w-3xl mx-auto mb-6">
+            At Asaan Ghar, we believe homeownership shouldn't be complicated. We’re eliminating
+            outdated broker practices by connecting users directly with property owners—no commissions,
+            no surprises. Our platform ensures listings are verified, prices are transparent, and buyers
+            are empowered with all the tools they need.
+          </p>
+          <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+            We're also working to bridge digital literacy gaps by supporting Urdu language, voice search,
+            and mobile-first design—so every Pakistani, from Karachi to Khaplu, can buy and sell with ease.
+          </p>
         </motion.div>
       </motion.section>
+{/* ACHIEVEMENTS / METRICS */}
+<motion.section
+  variants={fadeInUp}
+  className="bg-white py-20 px-6 md:px-20 lg:px-32 text-center"
+>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6 }}
+  >
+    <h2 className="text-3xl md:text-4xl font-bold text-emerald-700 mb-10">
+      Why Thousands Trust Asaan Ghar
+    </h2>
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      {[
+        {
+          icon: "🏘️",
+          number: "10K+",
+          label: "Verified Listings",
+        },
+        {
+          icon: "👥",
+          number: "5K+",
+          label: "Verified Buyers",
+        },
+        {
+          icon: "🔒",
+          number: "100%",
+          label: "Secure Transactions",
+        },
+      ].map(({ icon, number, label }, i) => (
+        <motion.div
+          key={i}
+          className="bg-white p-6 rounded-2xl shadow transition-all duration-300 hover:shadow-emerald-300 hover:scale-105 border hover:border-emerald-400"
+        >
+          <div className="text-4xl mb-4">{icon}</div>
+          <h3 className="text-2xl font-bold text-emerald-800">{number}</h3>
+          <p className="text-gray-700 mt-1">{label}</p>
+        </motion.div>
+      ))}
+    </div>
+  </motion.div>
+</motion.section>
 
       {/* VISION 2025 */}
       <motion.section
         variants={fadeInUp}
-        className="bg-white py-20 px-6 md:px-20 lg:px-32 text-center border-t border-gray-200"
+ className="bg-emerald-50 py-20 px-6 md:px-20 lg:px-32 text-center border-t border-gray-200"
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -171,7 +264,7 @@ const AboutPage = () => {
       {/* FINAL CTA */}
       <motion.section
         variants={fadeInUp}
-        className="py-20 bg-emerald-50 text-center px-6 md:px-20 lg:px-32"
+className="py-20 bg-white text-center px-6 md:px-20 lg:px-32"
       >
         <motion.div
           initial={{ opacity: 0, y: 20 }}

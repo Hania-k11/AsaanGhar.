@@ -355,7 +355,8 @@ const MyListings = () => {
                     <div className="text-right ml-2 flex-shrink-0">
                       <p className="text-lg sm:text-2xl font-bold text-emerald-600">{property.price}</p>
                       <div className="flex items-center gap-1 mt-1 justify-end">
-                        <Star size={10} className="sm:w-3 sm:h-3" fill="currentColor" className="text-yellow-400" />
+                      <Star size={10} fill="currentColor" className="sm:w-3 sm:h-3 text-yellow-400" />
+
                         <span className="text-xs sm:text-sm text-gray-600">{property.rating}</span>
                       </div>
                     </div>
