@@ -177,6 +177,7 @@ const Navbar = () => {
                       onClick={() => {
                         setDropdownOpen(false);
                         logout();
+                         navigate('/');
                       }}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
@@ -280,7 +281,9 @@ const Navbar = () => {
                   <UserCircle className="w-4 h-4 mr-2 text-emerald-600" />
                   My Profile
                 </motion.div>
-                <motion.div
+
+
+                {/* <motion.div
                   variants={itemVariants}
                   whileHover={{ backgroundColor: "#f3f4f6", x: 3 }}
                   className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md transition-colors"
@@ -292,7 +295,9 @@ const Navbar = () => {
                 >
                   <Settings className="w-4 h-4 mr-2 text-indigo-600" />
                   Change Password
-                </motion.div>
+                </motion.div> */}
+
+
                 <div className="border-t border-gray-100 my-1"></div>
                 <motion.div
                   variants={itemVariants}
@@ -302,6 +307,7 @@ const Navbar = () => {
                     setDropdownOpen(false);
                     setMobileMenuOpen(false);
                     logout();
+                    navigate('/');
                   }}
                 >
                   <LogOut className="w-4 h-4 mr-2" />

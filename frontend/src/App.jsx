@@ -16,6 +16,10 @@ import { useContext, useState } from 'react'
 import { AuthContext } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
 import MyProfile from "./components/MyProfile";
+import { useLocation } from "react-router-dom";
+
+
+
 
 
 
@@ -32,6 +36,10 @@ const SellPage = lazy(() => import("./components/SellPage"));
 
 function App() {
 
+const location = useLocation();
+  const hideFooterRoutes = ["/my-profile"];
+  const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
+
 
  const state = useContext(AuthContext)
   // console.log("Contextyy", state)
@@ -45,7 +53,7 @@ function App() {
          
          
       
-    <Router>
+   
       <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
         <Navbar />
@@ -88,13 +96,13 @@ function App() {
           </Suspense>
         </main>
 
-        <Footer />
+      {!shouldHideFooter && <Footer />}
 
         <LoginModal />
 
         <MouseFollower />
       </div>
-    </Router>
+
       </AuthProvider>
   );
 }
