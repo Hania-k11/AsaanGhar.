@@ -159,12 +159,13 @@ const FeaturedProperties = () => {
               Premium Properties Collection
             </div>
 
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-black text-gray-900 mb-8 leading-tight">
-              Featured
-              <span className="block bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                Properties
-              </span>
-            </h2>
+           <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
+  Featured
+  <span className="block bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+    Properties
+  </span>
+</h2>
+
 
             <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-medium">
               Discover our meticulously curated collection of premium properties across Pakistan. Each listing

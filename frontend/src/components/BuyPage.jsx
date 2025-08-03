@@ -92,21 +92,23 @@ const BuyPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      {/* Hero Section with Enhanced Header */}
-      <div className="bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-24 pb-5 ">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-8"
-          >
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
-              Buy your Properties at Ease
-            </h1>
-            <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
-              Discover exceptional homes that match your lifestyle. From luxury penthouses to cozy apartments.
-            </p>
+     {/* Hero Section with Enhanced Header */}
+<div className="relative z-10 bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-36 pb-20 overflow-visible">
+  <div className="container mx-auto px-4">
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="text-center mb-8"
+    >
+      <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent leading-tight">
+        Buy your Properties at Ease
+      </h1>
+      <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
+        Discover exceptional homes that match your lifestyle. From luxury penthouses to cozy apartments.
+      </p>
+   
+
             
             {/* Advanced Search Bar */}
             <div className="max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">

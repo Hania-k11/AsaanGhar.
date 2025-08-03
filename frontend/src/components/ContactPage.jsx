@@ -200,9 +200,13 @@ const ContactPage = () => {
     >
       {/* Header */}
       <div className="relative text-center max-w-3xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
-        <motion.h1 variants={fadeInUp} className="text-5xl sm:text-6xl font-extrabold font-poppins text-emerald-900 mb-4 tracking-tight">
-          Get In Touch
-        </motion.h1>
+       <motion.h1
+  variants={fadeInUp}
+  className="text-5xl sm:text-6xl font-bold text-emerald-900 mb-4 text-center"
+>
+  Get In Touch
+</motion.h1>
+
         <motion.p variants={fadeInUp} className="text-xl text-gray-600 leading-relaxed">
           Whether you have a question, need assistance, or just want to give us feedback, our team is ready to help.
         </motion.p>

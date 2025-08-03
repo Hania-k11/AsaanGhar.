@@ -37,14 +37,15 @@ const AboutPage = () => {
         className="bg-gradient-to-b from-white to-emerald-50 pt-28 pb-16 text-center"
       >
         <div className="px-6 md:px-20 lg:px-32">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl md:text-5xl font-extrabold text-emerald-800 mb-4"
-          >
-            Verified Homes. No Agents. 100% Asaan.
-          </motion.h1>
+         <motion.h1
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
+  className="text-5xl font-bold mb-4 text-emerald-800 text-center"
+>
+  Verified Homes. No Agents. 100% Asaan.
+</motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

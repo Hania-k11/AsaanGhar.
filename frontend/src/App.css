@@ -131,6 +131,14 @@
   .animate-out {
     animation: exit 0.2s ease-in;
   }
+  .section-heading {
+  font-size: 2.25rem; /* equivalent to text-4xl */
+  font-weight: 700;
+  text-align: center;
+  color: var(--emerald-700); /* from your :root */
+  margin-bottom: 4rem;
+}
+
 }
 
 /* Additional configuration for content paths would now be handled by your build tool */
