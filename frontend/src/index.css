@@ -84,4 +84,7 @@ html {
 .wave-svg {
   animation: waveMove 8s linear infinite;
 }
+html, body {
+  overflow-x: hidden !important;
+}
 
