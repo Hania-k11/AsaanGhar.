@@ -66,7 +66,7 @@ const Footer = () => {
     try {
       await emailjs.sendForm(serviceId, templateId, form.current, publicKey);
 
-      setStatusMessage('Successfully subscribed! We will be in touch soon.');
+      setStatusMessage('Subscribed successfully! We will be in touch soon.');
       setEmail('');
     } catch (error) {
       console.error('FAILED...', error.text);
