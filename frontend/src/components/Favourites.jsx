@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
@@ -6,28 +6,24 @@ import {
   Filter,
   SortAsc,
   SortDesc,
-  LayoutGrid,
+  Grid3X3,
   List,
   ChevronDown,
   X,
   Star,
   RefreshCw,
+  LayoutGrid,
   SquareStack,
+  House,
   DollarSign,
   Building,
-  BedDouble,
-  ShowerHead,
-  MapPin,
-  Home,
-  Tags,
 } from "lucide-react";
-import PropertyGrid from "./PropertyGrid"; // This is assumed to be a robust component
+import PropertyGrid from "./PropertyGrid"; // Assuming this is a robust component
 
-// Mock data for all properties.
-// In a real application, this would be fetched from an API.
+// Mock data for all properties (in a real app, this would come from props or context)
 const mockAllProperties = [
   {
-    id: "prop1",
+    id: 1,
     title: "Modern Downtown Condo",
     price: 850000,
     priceLabel: "$850,000",
@@ -42,7 +38,7 @@ const mockAllProperties = [
     description: "Stunning modern condo with city views and premium amenities.",
   },
   {
-    id: "prop2",
+    id: 2,
     title: "Victorian House in Mission",
     price: 1200000,
     priceLabel: "$1,200,000",
@@ -57,7 +53,7 @@ const mockAllProperties = [
     description: "Charming Victorian home with original details and modern updates.",
   },
   {
-    id: "prop3",
+    id: 3,
     title: "Luxury Penthouse Downtown",
     price: 2100000,
     priceLabel: "$2,100,000",
@@ -72,7 +68,7 @@ const mockAllProperties = [
     description: "Exclusive penthouse with panoramic city views and luxury finishes.",
   },
   {
-    id: "prop4",
+    id: 4,
     title: "Cozy Studio Apartment",
     price: 2800,
     priceLabel: "$2,800/month",
@@ -87,7 +83,7 @@ const mockAllProperties = [
     description: "Perfect starter home in a vibrant neighborhood.",
   },
   {
-    id: "prop5",
+    id: 5,
     title: "Family Home with Garden",
     price: 980000,
     priceLabel: "$980,000",
@@ -102,7 +98,7 @@ const mockAllProperties = [
     description: "Spacious family home with beautiful garden and quiet neighborhood.",
   },
   {
-    id: "prop6",
+    id: 6,
     title: "Modern Loft Space",
     price: 3200,
     priceLabel: "$3,200/month",
@@ -116,40 +112,10 @@ const mockAllProperties = [
     yearBuilt: 2010,
     description: "Industrial-style loft with high ceilings and exposed brick.",
   },
-  {
-    id: "prop7",
-    title: "Charming Coastal Cottage",
-    price: 1500000,
-    priceLabel: "$1,500,000",
-    location: "101 Ocean Blvd, Half Moon Bay, CA",
-    beds: 3,
-    baths: 2,
-    area: 1450,
-    type: "sale",
-    image: "https://images.unsplash.com/photo-1598464350172-e1d51c3a647d?q=80&w=400",
-    rating: 4.9,
-    yearBuilt: 1998,
-    description: "A beautiful cottage steps from the beach.",
-  },
-  {
-    id: "prop8",
-    title: "Spacious Suburban Home",
-    price: 600000,
-    priceLabel: "$600,000",
-    location: "72 Maple St, Daly City, CA",
-    beds: 4,
-    baths: 2.5,
-    area: 2400,
-    type: "sale",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400",
-    rating: 4.5,
-    yearBuilt: 2008,
-    description: "Ideal family home with a large backyard.",
-  },
 ];
 
 // Reusable Filter/Sort Button Component
-const ActionButton = React.memo(({ icon: Icon, label, onClick, isActive, className = "" }) => (
+const ActionButton = ({ icon: Icon, label, onClick, isActive, className = "" }) => (
   <motion.button
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
@@ -163,41 +129,22 @@ const ActionButton = React.memo(({ icon: Icon, label, onClick, isActive, classNa
     <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
     <span>{label}</span>
   </motion.button>
-));
-
-// Reusable StatCard Component
-const StatCard = React.memo(({ label, value, icon: Icon, color }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.2 }}
-    className="text-center"
-  >
-    <div className={`text-2xl lg:text-3xl font-bold ${color} flex items-center justify-center gap-1`}>
-      {value}
-      {Icon && <Icon className="w-4 h-4 fill-current" />}
-    </div>
-    <div className="text-sm text-gray-600 mt-1">{label}</div>
-  </motion.div>
-));
+);
 
 const Favourites = ({
-  allProperties = mockAllProperties,
-  likedProperties = new Set(["prop1", "prop3", "prop5", "prop4"]), // Use string IDs
+  likedProperties = new Set([1, 3, 5, 4]),
   toggleLike,
+  navigate,
+  allProperties = mockAllProperties,
 }) => {
-  // State for all filters and sorting
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("rating");
   const [sortOrder, setSortOrder] = useState("desc");
   const [filterType, setFilterType] = useState("all");
-  const [beds, setBeds] = useState(0);
-  const [baths, setBaths] = useState(0);
   const [priceRange, setPriceRange] = useState([0, 2500000]);
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
 
-  // Constants for filter/sort options
   const sortOptions = [
     { value: "rating", label: "Rating", icon: Star },
     { value: "price", label: "Price", icon: DollarSign },
@@ -211,23 +158,20 @@ const Favourites = ({
     { value: "rent", label: "For Rent" },
   ];
 
-  // Memoize the liked properties to prevent re-filtering on every render
   const likedPropertiesData = useMemo(() => {
     return allProperties.filter((property) => likedProperties.has(property.id));
   }, [allProperties, likedProperties]);
 
-  // Memoize the final filtered and sorted list
   const filteredAndSortedProperties = useMemo(() => {
     let filtered = likedPropertiesData.filter((property) => {
       const matchesSearch =
         property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         property.location.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === "all" || property.type === filterType;
-      const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
-      const matchesBeds = beds === 0 || property.beds >= beds;
-      const matchesBaths = baths === 0 || property.baths >= baths;
+      const matchesPrice =
+        property.price >= priceRange[0] && property.price <= priceRange[1];
 
-      return matchesSearch && matchesType && matchesPrice && matchesBeds && matchesBaths;
+      return matchesSearch && matchesType && matchesPrice;
     });
 
     filtered.sort((a, b) => {
@@ -235,37 +179,34 @@ const Favourites = ({
       let bValue = b[sortBy];
 
       if (sortOrder === "asc") {
-        return aValue - bValue;
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
-        return bValue - aValue;
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
     });
 
     return filtered;
-  }, [likedPropertiesData, searchTerm, sortBy, sortOrder, filterType, priceRange, beds, baths]);
+  }, [likedPropertiesData, searchTerm, sortBy, sortOrder, filterType, priceRange]);
 
-  // Use useCallback to memoize callback functions
-  const clearFilters = useCallback(() => {
+  const clearFilters = () => {
     setSearchTerm("");
     setFilterType("all");
     setPriceRange([0, 2500000]);
-    setBeds(0);
-    setBaths(0);
-  }, []);
+    setSortBy("rating");
+    setSortOrder("desc");
+  };
 
-  const isFilterActive =
-    searchTerm !== "" ||
-    filterType !== "all" ||
-    priceRange[0] !== 0 ||
-    priceRange[1] !== 2500000 ||
-    beds !== 0 ||
-    baths !== 0;
+  const isFilterActive = searchTerm !== "" || filterType !== "all" || priceRange[0] !== 0 || priceRange[1] !== 2500000;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 p-4 sm:p-6 lg:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
           <div>
             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 flex items-center gap-4">
               <div className="p-3 lg:p-4 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl text-white shadow-xl shadow-red-200">
@@ -278,8 +219,20 @@ const Favourites = ({
             </p>
           </div>
           <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-lg border border-gray-100">
-            <ActionButton icon={LayoutGrid} onClick={() => setViewMode("grid")} isActive={viewMode === "grid"} label="Grid" className="px-3" />
-            <ActionButton icon={List} onClick={() => setViewMode("list")} isActive={viewMode === "list"} label="List" className="px-3" />
+            <ActionButton
+              icon={LayoutGrid}
+              onClick={() => setViewMode("grid")}
+              isActive={viewMode === "grid"}
+              label="Grid"
+              className="px-3"
+            />
+            <ActionButton
+              icon={List}
+              onClick={() => setViewMode("list")}
+              isActive={viewMode === "list"}
+              label="List"
+              className="px-3"
+            />
           </div>
         </motion.div>
 
@@ -299,7 +252,7 @@ const Favourites = ({
                 placeholder="Search by title, location, etc."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-gray-900 placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 text-gray-900 placeholder-gray-500"
               />
             </div>
 
@@ -309,7 +262,7 @@ const Favourites = ({
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 lg:py-4 pr-10 outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 w-full font-medium text-gray-700"
+                  className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 lg:py-4 pr-10 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200 w-full font-medium text-gray-700"
                 >
                   {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -346,78 +299,45 @@ const Favourites = ({
                 className="mt-6 pt-6 border-t border-gray-200 overflow-hidden"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Property Type Filter */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
-                    <div className="flex rounded-xl bg-gray-100 p-1">
-                      {propertyTypeOptions.map(({ value, label }) => (
-                        <button
-                          key={value}
-                          onClick={() => setFilterType(value)}
-                          className={`flex-1 text-sm py-2 px-4 rounded-lg transition-colors duration-200 font-medium ${
-                            filterType === value ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:bg-gray-200"
-                          }`}
-                        >
-                          {label}
-                        </button>
+                    <select
+                      value={filterType}
+                      onChange={(e) => setFilterType(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                      {propertyTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
                       ))}
-                    </div>
+                    </select>
                   </div>
-
-                  {/* Price Range Filter */}
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
-                        placeholder="Min Price"
-                        value={priceRange[0] === 0 ? "" : priceRange[0]}
+                        placeholder="Min"
+                        value={priceRange[0]}
                         onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       />
-                      <span className="text-gray-400">to</span>
+                      <span className="text-gray-400 px-2">to</span>
                       <input
                         type="number"
-                        placeholder="Max Price"
-                        value={priceRange[1] === 2500000 ? "" : priceRange[1]}
+                        placeholder="Max"
+                        value={priceRange[1]}
                         onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 2500000])}
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       />
                     </div>
                   </div>
-
-                  {/* Bed and Bath Filters */}
-                  <div className="flex gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Beds</label>
-                      <input
-                        type="number"
-                        placeholder="Any"
-                        value={beds === 0 ? "" : beds}
-                        onChange={(e) => setBeds(Math.max(0, parseInt(e.target.value) || 0))}
-                        min="0"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Baths</label>
-                      <input
-                        type="number"
-                        placeholder="Any"
-                        value={baths === 0 ? "" : baths}
-                        onChange={(e) => setBaths(Math.max(0, parseInt(e.target.value) || 0))}
-                        min="0"
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Clear Filters Button */}
                   <div className="flex items-end">
                     <ActionButton
-                      icon={RefreshCw}
+                      icon={X}
                       onClick={clearFilters}
-                      label="Reset Filters"
+                      label="Clear Filters"
                       className="w-full bg-red-100 text-red-600 border-red-200 hover:bg-red-200"
                     />
                   </div>
@@ -435,9 +355,15 @@ const Favourites = ({
               viewMode={viewMode}
               likedProperties={likedProperties}
               toggleLike={toggleLike}
+              navigate={navigate}
             />
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 lg:py-24">
+            /* Empty State */
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 lg:py-24"
+            >
               <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Heart className="w-12 h-12 lg:w-16 lg:h-16 text-red-400" />
               </div>
@@ -450,7 +376,12 @@ const Favourites = ({
                   : "Start exploring properties and save your favorites to see them here."}
               </p>
               {isFilterActive && (
-                <ActionButton icon={RefreshCw} onClick={clearFilters} label="Reset Filters" className="mx-auto" />
+                <ActionButton
+                  icon={RefreshCw}
+                  onClick={clearFilters}
+                  label="Reset Filters"
+                  className="mx-auto"
+                />
               )}
             </motion.div>
           )}
@@ -458,10 +389,19 @@ const Favourites = ({
 
         {/* Quick Stats */}
         {likedPropertiesData.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 lg:p-8 border border-emerald-100">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 lg:p-8 border border-emerald-100"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Favorites Summary</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard label="Total Saved" value={likedPropertiesData.length} color="text-emerald-600" />
+              <StatCard
+                label="Total Saved"
+                value={likedPropertiesData.length}
+                color="text-emerald-600"
+              />
               <StatCard
                 label="For Sale"
                 value={likedPropertiesData.filter((p) => p.type === "sale").length}
@@ -477,7 +417,8 @@ const Favourites = ({
                 value={
                   likedPropertiesData.length > 0
                     ? (
-                        likedPropertiesData.reduce((sum, p) => sum + p.rating, 0) / likedPropertiesData.length
+                        likedPropertiesData.reduce((sum, p) => sum + p.rating, 0) /
+                        likedPropertiesData.length
                       ).toFixed(1)
                     : 0
                 }
@@ -491,5 +432,16 @@ const Favourites = ({
     </div>
   );
 };
+
+// Reusable StatCard Component
+const StatCard = ({ label, value, icon: Icon, color }) => (
+  <div className="text-center">
+    <div className={`text-2xl lg:text-3xl font-bold ${color} flex items-center justify-center gap-1`}>
+      {value}
+      {Icon && <Icon className="w-4 h-4 fill-current" />}
+    </div>
+    <div className="text-sm text-gray-600 mt-1">{label}</div>
+  </div>
+);
 
 export default Favourites;

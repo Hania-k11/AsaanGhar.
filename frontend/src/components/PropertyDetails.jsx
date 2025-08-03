@@ -613,7 +613,21 @@ const PropertyDetails = () => {
   }`}>
     {property.type}
   </span>
-</div>    
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
           {/* Top-Right Action Icons */}
           <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button className="p-2 bg-white/90 rounded-full backdrop-blur-sm text-gray-700 hover:bg-red-100 hover:text-red-600 transition-colors">
