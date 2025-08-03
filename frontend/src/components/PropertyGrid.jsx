@@ -4,6 +4,30 @@ import { motion } from "framer-motion";
 import { MapPin, Bed, Bath, Square, ArrowRight, Heart, Share2, Calendar, Star } from "lucide-react";
 
 const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike, navigate }) => {
+
+  // Function to handle sharing
+  const handleShare = (e, property) => {
+    e.stopPropagation(); // Prevent triggering parent click events
+    const shareUrl = `${window.location.origin}/property/${property.id}`;
+
+    if (navigator.share) {
+      // Mobile or supported browsers
+      navigator
+        .share({
+          title: property.title,
+          text: property.description || "Check out this property!",
+          url: shareUrl,
+        })
+        .catch((err) => console.error("Share failed", err));
+    } else {
+      // Fallback: Copy link to clipboard
+      navigator.clipboard
+        .writeText(shareUrl)
+        .then(() => alert("Property link copied to clipboard!"))
+        .catch(() => alert("Failed to copy link"));
+    }
+  };
+
   return (
     <motion.div
       key={viewMode}
@@ -45,6 +69,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike, navig
             </div>
 
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {/* Like Button */}
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -61,9 +86,11 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike, navig
                 <Heart size={16} fill={likedProperties.has(property.id) ? "currentColor" : "none"} />
               </motion.button>
               
+              {/* Share Button */}
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
+                onClick={(e) => handleShare(e, property)}
                 className="p-2 bg-white/90 rounded-full backdrop-blur-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
               >
                 <Share2 size={16} />
