@@ -42,7 +42,7 @@ const MyProfile = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true) 
   const { userDetails,logout } = useAuth(); 
    const navigate = useNavigate();
- 
+  
   useEffect(() => {
     const handleResize = () => {
       
@@ -208,7 +208,7 @@ const handleLogout = async () => {
             {/* Close button for sidebar */}
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors duration-200"
+              className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors duration-200 lg:hidden"
               aria-label="Close sidebar"
             >
               <X size={20} className="text-white" />
@@ -238,6 +238,13 @@ const handleLogout = async () => {
                 <span>Member since {userDetails?.joinDate || mockUserDetails.joinDate}</span>
               </div>
             </div>
+            <button
+              onClick={handleLogout}
+              className="mt-4 w-full flex items-center justify-center gap-2 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors duration-200 lg:hidden"
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
           </div>
 
           {/* Navigation Tabs - Scrollable */}
@@ -269,7 +276,7 @@ const handleLogout = async () => {
           </nav>
 
           {/* Logout Button - Fixed at bottom */}
-      <div className="p-4 border-t border-gray-100 flex-shrink-0">
+          <div className="p-4 border-t border-gray-100 flex-shrink-0 hidden lg:block">
             <motion.button
               onClick={handleLogout}
               whileHover={{ scale: 1.02 }}
@@ -291,7 +298,7 @@ const handleLogout = async () => {
           initial={false}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-         
+          
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto">
