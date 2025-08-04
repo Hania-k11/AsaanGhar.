@@ -8,6 +8,12 @@ import {
   Droplet, Maximize, Sun, Moon, X, User, DollarSign as Dollar,
   Filter as FilterIcon, Check, ChevronDown
 } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import PropertyGrid from "./PropertyGrid";
+
+
+
+
 
 // Use a self-contained, stylish confirmation dialog instead of alert().
 const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
@@ -52,6 +58,7 @@ const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
     </motion.div>
   );
 };
+
 
 // Mock data for user listings
 const mockListings = [
@@ -294,8 +301,6 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 );
 
 const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
-  const [showActions, setShowActions] = useState(false);
-
   return (
     <motion.div
       key={property.id}
@@ -313,7 +318,7 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
+
         {/* Status Badge */}
         <div className="absolute top-4 left-4">
           <div className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm border ${getStatusColor(property.status)} flex items-center gap-2`}>
@@ -389,55 +394,27 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
             </div>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-5 relative">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex-1 bg-white dark:bg-gray-800 border-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl py-3 px-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
-          >
-            <BarChart3 size={16} />
-            <span className="hidden xs:inline">Analytics</span>
-          </motion.button>
+        <div className="flex gap-3 mt-5">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => onEdit(property)}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-4 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="flex-1 bg-white dark:bg-gray-800 border-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl py-3 px-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <Edit3 size={16} />
             <span className="hidden xs:inline">Edit</span>
           </motion.button>
-
-          {/* More actions dropdown */}
-          <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowActions(!showActions)}
-              className="p-3 bg-gray-100 dark:bg-gray-700 rounded-xl text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              <MoreVertical size={20} />
-            </motion.button>
-            <AnimatePresence>
-              {showActions && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                  className="absolute right-0 top-14 w-40 bg-white dark:bg-gray-700 rounded-xl shadow-xl z-20 overflow-hidden border border-gray-100 dark:border-gray-600"
-                >
-                  <button className="flex items-center gap-2 p-3 w-full text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                    <TrendingUp size={16} /> Promote
-                  </button>
-                  <button onClick={() => onDelete(property.id)} className="flex items-center gap-2 p-3 w-full text-left text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
-                    <Trash2 size={16} /> Delete
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => onDelete(property.id)}
+            className="flex-1 bg-red-600 text-white font-semibold rounded-xl py-3 px-4 shadow-lg shadow-red-200 dark:shadow-red-900/30 hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
+          >
+            <Trash2 size={16} />
+            <span className="hidden xs:inline">Delete</span>
+          </motion.button>
         </div>
       </div>
     </motion.div>
@@ -457,6 +434,23 @@ const MyListings = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [listings, setListings] = useState(mockListings);
 
+  const [likedProperties, setLikedProperties] = useState(new Set());
+
+  const navigate = useNavigate();
+  
+
+  // Toggle Like
+  const toggleLike = (id) => {
+    setLikedProperties((prev) => {
+      const updated = new Set(prev);
+      if (updated.has(id)) {
+        updated.delete(id);
+      } else {
+        updated.add(id);
+      }
+      return updated;
+    });
+  };
   // Filter state for advanced filters
   const [filters, setFilters] = useState({
     minBeds: '',
@@ -700,8 +694,8 @@ const FilterModal = () => {
         {/* Form Fields */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Each field */}
-          <div className="flex flex-col gap-1.5 sm:gap-2">
-            <label htmlFor="minBeds" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="minBeds" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               Min Beds
             </label>
             <input
@@ -714,9 +708,31 @@ const FilterModal = () => {
               className="px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
+          <div className="flex flex-col gap-2">
+              <label htmlFor="minBaths" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Baths</label>
+              <input type="number" id="minBaths" name="minBaths" value={tempFilters.minBaths} onChange={handleFilterChange} placeholder="e.g., 2" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="minArea" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Area (sq ft)</label>
+              <input type="number" id="minArea" name="minArea" value={tempFilters.minArea} onChange={handleFilterChange} placeholder="e.g., 1000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="listingType" className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
+              <select id="listingType" name="listingType" value={tempFilters.listingType} onChange={handleFilterChange} className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="">All</option>
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="minPrice" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Price</label>
+              <input type="number" id="minPrice" name="minPrice" value={tempFilters.minPrice} onChange={handleFilterChange} placeholder="e.g., 5000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="maxPrice" className="text-sm font-medium text-gray-700 dark:text-gray-300">Max Price</label>
+              <input type="number" id="maxPrice" name="maxPrice" value={tempFilters.maxPrice} onChange={handleFilterChange} placeholder="e.g., 50000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+            </div>
 
-          {/* Repeat similar changes for other inputs/selects */}
-          {/* ... */}
         </div>
 
         {/* Buttons */}
@@ -783,12 +799,12 @@ const FilterModal = () => {
           </motion.header>
 
          {/* Stats and Controls Panel */}
-<motion.div
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.6, delay: 0.2 }}
-  className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-100 dark:border-gray-700"
->
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: 0.2 }}
+    className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-100 dark:border-gray-700"
+  >
   {/* Stats Summary */}
   <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-100 dark:border-gray-700">
     <StatCard
@@ -843,7 +859,7 @@ const FilterModal = () => {
                 ))}
               </div>
 
-{/* yahan se resonsive hogi filter wali jagah */}
+              {/* yahan se resonsive hogi filter wali jagah */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-wrap w-full">
 
                 <div className="relative flex-1 sm:max-w-md">
@@ -898,28 +914,16 @@ const FilterModal = () => {
 
           {/* Properties Grid/List */}
           <AnimatePresence mode="wait">
-            {filteredAndSortedProperties.length > 0 ? (
-              <motion.div
-                key={`${viewMode}-${activeTab}-${sortOrder}-${JSON.stringify(filters)}`}
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                exit="hidden"
-                className={viewMode === "grid" 
-                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
-                  : "space-y-6 lg:space-y-8"
-                }
-              >
-                {filteredAndSortedProperties.map((property) => (
-                  <ListingCard
-                    key={property.id}
-                    property={property}
-                    viewMode={viewMode}
-                    onDelete={handleDeleteListing}
-                    onEdit={handleEditListing}
-                  />
-                ))}
-              </motion.div>
+             {filteredAndSortedProperties.length > 0 ? (
+               <PropertyGrid
+                 properties={filteredAndSortedProperties}
+                 viewMode={viewMode}
+                 likedProperties={likedProperties}
+                 toggleLike={toggleLike}
+                 navigate={navigate}
+                 onDelete={handleDeleteListing}
+                 onEdit={handleEditListing}
+               />
             ) : (
               <motion.div
                 key="empty-state"
