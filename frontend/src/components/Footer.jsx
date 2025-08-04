@@ -230,11 +230,10 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-xs sm:text-sm">
-          <p className="mb-4">© {new Date().getFullYear()} Asaan Ghar. All rights reserved.</p>
+<p className="mb-4">© {new Date().getFullYear()} AsaanGhar.com | Empowering Smarter Property Choices. All rights reserved.</p>
+
           <div className="flex flex-wrap justify-center gap-4">
-            <a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-emerald-400 transition-colors">Sitemap</a>
+           
           </div>
         </div>
       </div>
