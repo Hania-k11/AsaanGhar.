@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -5,6 +6,18 @@ require('dotenv').config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+  console.log(`🔥 Received ${req.method} on ${req.path}`);
+  next();
+});
+
+
+const geminiRoutes = require('./routes/gemininlp'); 
+app.use('/api/gemininlp', geminiRoutes);
+
+
+const cohereRoutes = require('./routes/cohere'); 
+app.use('/api/cohere', cohereRoutes);
 
 const userRoutes = require('./routes/users');
 app.use('/api/users', userRoutes);
