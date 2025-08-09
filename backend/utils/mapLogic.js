@@ -53,8 +53,11 @@ const isPropertyNearPlace = (propertyCoords, places, radiusKm) => {
   propertyCoords.lon,
   placeCoords.lat,
   placeCoords.lon
+
 );
-    
+
+    console.log(`🏡 Property @ (${propertyCoords.lat}, ${propertyCoords.lon}) → 🌳 Place @ (${placeCoords.lat}, ${placeCoords.lon}) = ${distance.toFixed(2)} km`);
+
     return distance <= radiusKm;
   });
 };

@@ -81,14 +81,14 @@ const LoginModal = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:3001/api/users/login", {
+      const res = await axios.post("http://localhost:3001/api/auth/login", {
         email: form.email,
         password: form.password,
       });
 
       const user = res.data.user;
       setUserDetails(user);
-      alert(`Welcome, ${user.name}`);
+      alert(`Welcome, ${user.first_name}`);
       setShow(false);
     } catch (err) {
       console.error(err);

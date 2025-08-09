@@ -22,6 +22,9 @@ app.use('/api/cohere', cohereRoutes);
 const userRoutes = require('./routes/users');
 app.use('/api/users', userRoutes);
 
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
 const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 

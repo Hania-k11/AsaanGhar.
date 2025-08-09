@@ -91,11 +91,15 @@ function postProcess(parsed) {
     }
 
     // Step 4: Radius extraction based on original query text
-    const radius = extractRadiusInKm(originalQuery);
-    if ((output.places_nearby || output.places_not_near) && radius !== null) {
-      output.radiusInKm = radius;
+    if (
+      (output.places_nearby || output.places_not_near) &&
+      (output.radiusInKm === undefined || output.radiusInKm === null)
+    ) {
+      const extracted = extractRadiusInKm(originalQuery);
+      if (extracted !== null) output.radiusInKm = extracted;
+      console.log(`🔍 Extracted radiusInKm: ${output.radiusInKm} from query "${originalQuery}"`);
     }
-
+    
     // Step 5: Fix misplaced amenities into nearby places
     if (Array.isArray(output.amenities)) {
       const possibleNearby = ['mosque', 'gym', 'school', 'hospital', 'park', 'market'];
