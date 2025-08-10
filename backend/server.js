@@ -25,6 +25,10 @@ app.use('/api/users', userRoutes);
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const propertiesRoutes = require('./routes/properties');
+app.use('/api/properties', propertiesRoutes);
+
+
 const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 
