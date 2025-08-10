@@ -81,7 +81,7 @@ const LoginModal = () => {
     }
 
     try {
-      const res = await axios.post("http://localhost:3001/api/auth/login", {
+      const res = await axios.post("/api/auth/login", {
         email: form.email,
         password: form.password,
       });

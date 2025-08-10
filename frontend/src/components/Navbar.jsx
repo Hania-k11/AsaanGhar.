@@ -134,7 +134,7 @@ const Navbar = () => {
                   <User className="w-5 h-5" />
                 </motion.div>
                 <span className="font-medium text-gray-800">
-                  {userDetails.name}
+                  {userDetails.first_name}
                 </span>
                 <ChevronDown
                   size={18}
@@ -265,7 +265,7 @@ const Navbar = () => {
                   variants={itemVariants}
                   className="px-4 py-2 text-gray-700 font-semibold"
                 >
-                  {userDetails.name}
+                  {userDetails.first_name}
                 </motion.div>
                 <div className="border-t border-gray-100 my-1"></div>
                 <motion.div

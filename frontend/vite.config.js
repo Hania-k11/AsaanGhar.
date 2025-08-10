@@ -9,10 +9,17 @@ export default defineConfig({
      react()
     
   ],
-
- server: {
+server: {
     historyApiFallback: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
+
 
    build: {
     outDir: 'dist',

@@ -1,24 +1,54 @@
-//user details can be save here or con
-
 import { useState, useEffect, useRef } from "react"
 import LoginModal from "./LoginModal"
-import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
+import { Home } from "lucide-react"
+import { useAuth } from "../context/AuthContext"
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import axios from 'axios'
 import { motion } from "framer-motion"
-import FloatingElements from "./FloatingElements"
-import { useAuth } from "../context/AuthContext";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import AddressAutocomplete from './AddressAutocomplete'
+import MapPicker from './MapPicker'
+import 'leaflet/dist/leaflet.css'
+
+// Mapping objects for API
+const listingTypeMap = {
+  'rent': 1,
+  'sell': 2
+};
+
+const propertyTypeMap = {
+  'Apartment': 1,
+  'House': 2,
+  'Room': 3,
+  'Commercial': 4,
+  'Office Space': 5,
+  'Shop': 6,
+  'Warehouse' : 7
+};
+
+const locationMap = {
+  'DHA': 1,
+  'Gulshan-e-Iqbal': 2,
+  'PECHS': 3,
+  'Scheme 33': 4,
+  'Gulistan-e-Johar': 5
+};
+
+const furnishingMap = {
+  'unfurnished': 1,
+  'semi-furnished': 2,
+  'fully-furnished': 3
+};
 
 
 
 const SellPage = () => {
-  const [formState, setFormState] = useState({ title: "", description: "" })
-  const { userDetails, logout, isLoggedIn, showLoginModal, setShowLoginModal } = useAuth();
-  const [userProperties, setUserProperties] = useState([])
+  const { isLoggedIn, showLoginModal, setShowLoginModal } = useAuth();
+  const [userProperties, setUserProperties] = useState([]);
   const [lastToastTime, setLastToastTime] = useState(0);
 
   // Handler to trigger login modal and optionally track source
-  const onLoginClick = (source) => {
+  const onLoginClick = () => {
     const now = Date.now();
     // Only show toast if 3 seconds have passed since the last one
     if (now - lastToastTime > 3000) {
@@ -35,8 +65,6 @@ const SellPage = () => {
       setLastToastTime(now);
     }
     setShowLoginModal(true);
-    
-    // Optionally can log or track the source if needed
   }
 
   const onLoginSuccess = () => {
@@ -44,8 +72,10 @@ const SellPage = () => {
   }
 
   useEffect(() => {
-    if (isLoggedIn) setShowLoginModal(false)
-  }, [isLoggedIn])
+    if (isLoggedIn) {
+      setShowLoginModal(false);
+    }
+  }, [isLoggedIn, setShowLoginModal]);
 
 
 
@@ -99,17 +129,14 @@ const SellPage = () => {
   )
 }
 
-const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick, onLoginSuccess }) => {
+const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
+  const { userDetails } = useAuth();
   const [formData, setFormData] = useState({
-    title: "",
-    location: "",
-    rent: "",
-    propertyType: "",
-    bedrooms: "",
-    bathrooms: "",
-    area: "",
-    description: "",
-    ownerName: "",
+    owner_id: userDetails.user_id, // from auth
+    title: '',
+    address: '',
+    description: '',
+     ownerName: "",
     ownerEmail: "",
     phoneNumber: "",
     whatsappNumber: "",
@@ -141,9 +168,28 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
     nearbyHospitals: "",
     nearbyShopping: "",
     publicTransportAccess: false,
-    listingType: "rent",
-  })
-
+    listing_type_id: '',
+    price: '',
+    street_address: '',
+    city: 'Karachi',
+    location_id: '',
+    listingType: 'rent', // Default to rent
+    propertyType: '',
+    bedrooms: '',
+    bathrooms: '',
+    area_sqft: '',
+    furnishing_status_id: '',
+    lease_duration: '',
+    available_from: '',
+    maintenance_fee: '',
+    year_built: '',
+    status: 'active',
+    is_featured: false,
+    created_by: userDetails.user_id,
+    latitude: null,
+    longitude: null,
+    display_name: ''
+  });
   const [currentStep, setCurrentStep] = useState(1)
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -157,6 +203,7 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
 
   const refs = {
     title: useRef(),
+    address: useRef(),
     location: useRef(),
     rent: useRef(),
     propertyType: useRef(),
@@ -174,7 +221,7 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
  
   const scrollToFirstError = (errorObj) => {
     const errorOrder = [
-      "title", "location", "rent", "propertyType", "area",
+      "title","address", "location", "rent", "propertyType", "area",
       "description", "furnishing",
       "ownerName", "ownerEmail", "phoneNumber", "whatsappNumber",
       "images", "contactPreferences"
@@ -239,6 +286,9 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
 
     if (step === 1) {
       if (!formData.title) newErrors.title = "Property title is required"
+      if (!formData.latitude || !formData.longitude) {
+        newErrors.address = "Please select a location from the map"
+      }
       if (!formData.location) newErrors.location = "Location is required"
       if (!formData.rent) newErrors.rent = "Price is required"
       if (!formData.propertyType) newErrors.propertyType = "Property type is required"
@@ -298,83 +348,137 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
   }
 
   const handleSubmit = async (e) => {
-     console.log("handleSubmit triggered");
-     console.log("Form submission triggered", e);
-    e.preventDefault()
+    e.preventDefault();
     if (!isLoggedIn) {
-      onLoginClick("submit")
-      return
+      onLoginClick("submit");
+      return;
     }
 
-    if (!validateStep(4)) return
+    if (!validateStep(4)) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      const newProperty = {
-        id: Date.now(),
-        ...formData,
-        images: formData.images.map((file) => URL.createObjectURL(file)),
-        createdAt: new Date().toISOString(),
+    //commit hania
+   try {
+    // We are not uploading images for now, so we'll just set imageUrls to an empty array.
+    const imageUrls = [];
+
+    // The code for uploading images is commented out for now.
+    // const formDataForUpload = new FormData();
+    // formData.images.forEach((image) => {
+    //   formDataForUpload.append('images', image);
+    // });
+    // const imageUploadResponse = await axios.post('/api/upload/images', formDataForUpload);
+    // const imageUrls = imageUploadResponse.data.urls;
+
+    //---------------------------------
+
+      // First upload images (commit hania)
+      // const imageUploadResponse = await axios.post('/api/upload/images', formDataForUpload);
+      // const imageUrls = imageUploadResponse.data.urls;
+
+      // Then create property listing
+      const response = await axios.post('/api/properties/post', {
+        owner_id: userDetails.user_id,
+        title: formData.title,
+        address: formData.address,
+        description: formData.description,
+        listing_type_id: listingTypeMap[formData.listingType],
+        price: formData.rent,
+        street_address: formData.address,
+        city: 'Karachi',
+        location_id: locationMap[formData.location],
+        property_type_id: propertyTypeMap[formData.propertyType],
+        bedrooms: formData.bedrooms || null,
+        bathrooms: formData.bathrooms || null,
+        area_sqft: formData.area,
+        furnishing_status_id: furnishingMap[formData.furnishing],
+        floor: formData.floor || null,
+        lease_duration: formData.leaseDuration || null,
+        available_from: formData.availableFrom || null,
+        maintenance_fee: formData.maintenance || null,
+        deposit: formData.deposit || null,
+        year_built: formData.yearBuilt || null,
+        status: 'active',
+        is_featured: false,
+        created_by: userDetails.user_id,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        images: imageUrls
+      });
+
+      if (response.status === 201 || response.status === 200) {
+        toast.success('Property listing created successfully!', {
+          position: 'top-right',
+          autoClose: 5000
+        });
+        
+        // Update user properties list
+        setUserProperties(prev => [...prev, response.data]);
+        
+        // Reset form and go back to step 1
+        setFormData({
+          title: "",
+          address: "",
+          location: "",
+          rent: "",
+          propertyType: "",
+          bedrooms: "",
+          bathrooms: "",
+          area: "",
+          description: "",
+          ownerName: "",
+          ownerEmail: "",
+          phoneNumber: "",
+          whatsappNumber: "",
+          contactPreferences: {
+            email: false,
+            phone: false,
+            whatsapp: false,
+          },
+          furnishing: "",
+          floor: "",
+          leaseDuration: "",
+          availableFrom: "",
+          maintenance: "",
+          deposit: "",
+          images: [],
+          yearBuilt: "",
+          parking: false,
+          balcony: false,
+          petFriendly: false,
+          laundryInUnit: false,
+          dishwasher: false,
+          airConditioning: false,
+          heating: false,
+          swimmingPool: false,
+          gym: false,
+          security: false,
+          gatedCommunity: false,
+          nearbySchools: "",
+          nearbyHospitals: "",
+          nearbyShopping: "",
+          publicTransportAccess: false,
+          listingType: "rent",
+          latitude: null,
+          longitude: null
+        });
+        setCurrentStep(1);
       }
-
-      setUserProperties((prev) => [...prev, newProperty])
-
-      // Success feedback
-      alert("Property listed successfully! 🎉")
-
-      // Reset form
-      setFormData({
-        title: "",
-        location: "",
-        rent: "",
-        propertyType: "",
-        bedrooms: "",
-        bathrooms: "",
-        area: "",
-        description: "",
-        ownerName: "",
-        ownerEmail: "",
-        phoneNumber: "",
-        whatsappNumber: "",
-        contactPreferences: {
-          email: false,
-          phone: false,
-          whatsapp: false,
-        },
-        furnishing: "",
-        floor: "",
-        leaseDuration: "",
-        availableFrom: "",
-        maintenance: "",
-        deposit: "",
-        images: [],
-        yearBuilt: "",
-        parking: false,
-        balcony: false,
-        petFriendly: false,
-        laundryInUnit: false,
-        dishwasher: false,
-        airConditioning: false,
-        heating: false,
-        swimmingPool: false,
-        gym: false,
-        security: false,
-        gatedCommunity: false,
-        nearbySchools: "",
-        nearbyHospitals: "",
-        nearbyShopping: "",
-        publicTransportAccess: false,
-        listingType: "rent",
-      })
-      setCurrentStep(1)
     } catch (error) {
-      alert("Something went wrong. Please try again.")
+      console.error('Error creating property listing:', error);
+  // Log the detailed error from the server response
+  console.error('Server error details:', error.response?.data);
+
+
+
+      toast.error(error.response?.data?.message || 'Error creating property listing. Please try again.', {
+        position: 'top-right',
+        autoClose: 5000
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -469,6 +573,56 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
                   {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                 </div>
 
+{/* Location Search with Map */}
+    <div className="lg:col-span-2">
+      <label className="block text-sm font-semibold text-gray-700 mb-2">Enter Complete Address *</label>
+      <div className="space-y-4">
+        <AddressAutocomplete
+          onSelect={({ lat, lon, displayName }) => {
+            setFormData(prev => ({
+              ...prev,
+              latitude: lat,
+              longitude: lon,
+              address: displayName,
+              display_name: displayName
+            }));
+          }}
+        />
+        {formData.latitude && formData.longitude && (
+          <MapPicker
+            lat={formData.latitude}
+            lon={formData.longitude}
+            onPositionChange={({ lat, lng }) => {
+              setFormData(prev => ({
+                ...prev,
+                latitude: lat,
+                longitude: lng
+              }));
+            }}
+          />
+        )}
+        {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+      </div>
+    </div>
+
+    <div className="lg:col-span-2">
+      <label className="block text-sm font-semibold text-gray-700 mb-2">Additional Address Details</label>
+      <textarea
+        ref={refs.address}
+        name="address"
+        value={formData.address}
+        onChange={handleChange}
+        placeholder="Add any additional address details (e.g., nearest landmark, specific directions)"
+        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+          errors.address ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+        }`}
+        rows={2}
+      />
+      <p className="text-sm text-gray-500 mt-1">
+        You can add specific details or directions to help locate the property easily.
+      </p>
+    </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Listing Type *</label>
                   <div className="relative">
@@ -491,17 +645,34 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
-                  <input
-                    ref={refs.location}
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    placeholder="e.g., DHA Phase 6, Karachi"
-                    className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                      errors.location ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                    }`}
-                  />
+                  <div className="relative">
+                    <select
+                      ref={refs.location}
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className={`w-full px-4 py-4 border-2 rounded-xl appearance-none bg-white transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+                        errors.location ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                      }`}
+                    >
+                      <option value="">Select Location</option>
+                      <optgroup label="We only deal in following areas of Karachi">
+                        <option value="DHA">DHA, Karachi</option>
+                        <option value="Gulshan-e-Iqbal">Gulshan-e-Iqbal, Karachi</option>
+                        
+                        <option value="PECHS">PECHS, Karachi</option>
+                        <option value="Scheme 33">Scheme 33, Karachi</option>
+                        <option value="Gulistan-e-Johar">Gulistan-e-Johar, Karachi</option>
+                      </optgroup>
+                      
+                     
+                    </select>
+                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
                   {errors.location && <p className="text-red-500 text-sm mt-1">{errors.location}</p>}
                 </div>
 
@@ -616,6 +787,10 @@ const RentForm = ({ userProperties, setUserProperties, isLoggedIn, onLoginClick,
                 </div>
               </div>
             </div>
+
+
+           
+
           </div>
         )}
 
