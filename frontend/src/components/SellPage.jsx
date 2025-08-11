@@ -287,7 +287,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     if (step === 1) {
       if (!formData.title) newErrors.title = "Property title is required"
       if (!formData.latitude || !formData.longitude) {
-        newErrors.address = "Please select a location from the map"
+        newErrors.address = "Please make sure you pin the right location on the map."
       }
       if (!formData.location) newErrors.location = "Location is required"
       if (!formData.rent) newErrors.rent = "Price is required"

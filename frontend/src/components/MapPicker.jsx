@@ -38,7 +38,7 @@ const MapPicker = ({ lat, lon, onPositionChange }) => {
     <MapContainer
       center={[lat, lon]}
       zoom={15}
-      className="h-[400px] w-full mt-3 rounded shadow"
+      className="h-[400px] z-10 w-full mt-3 rounded shadow"
     >
       <CenterUpdater center={[lat, lon]} />
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
