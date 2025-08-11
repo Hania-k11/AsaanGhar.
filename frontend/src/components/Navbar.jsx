@@ -91,7 +91,7 @@ const Navbar = () => {
           : " bg-white md:bg-white/30 shadow-sm py-3"
       }`}
     >
-      <div className="container mx-auto px-4 flex justify-between items-center">
+      <div className="z-[9999] container mx-auto px-4 flex justify-between items-center">
         <motion.div className="flex items-center" whileHover={{ scale: 1.05 }}>
           <Home className="h-8 w-8 text-emerald-600 mr-2" />
           <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">

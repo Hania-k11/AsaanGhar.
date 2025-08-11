@@ -22,12 +22,14 @@ const AddressAutocomplete = ({ onSelect }) => {
       let results = [];
       if (locationIqToken) {
         // Prefer LocationIQ direct API when token is available (supports CORS)
-        const url = `https://us1.locationiq.com/v1/autocomplete?key=${locationIqToken}&q=${encodeURIComponent(value)}&limit=5`;
+       const url = `https://us1.locationiq.com/v1/autocomplete?key=${locationIqToken}&q=${encodeURIComponent(value)}&limit=8&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1`;
+;
         const res = await axios.get(url);
         results = Array.isArray(res.data) ? res.data : [];
       } else {
         // Fallback to Nominatim if no token configured
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&q=${encodeURIComponent(value)}`;
+       const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1&q=${encodeURIComponent(value)}`;
+
         const res = await axios.get(url, {
           headers: { 'Accept-Language': 'en' },
         });
@@ -88,7 +90,10 @@ const AddressAutocomplete = ({ onSelect }) => {
         className="w-full p-2 border border-gray-300 rounded"
       />
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow">
+        <ul
+  className="absolute z-[450] w-full mt-1 bg-white border border-gray-300 rounded shadow"
+  style={{ maxHeight: '300px', overflowY: 'auto' }}
+>
           {suggestions.map((s, i) =>
             s.noResults ? (
               <li key={i} className="p-2 text-gray-500 italic">
@@ -107,7 +112,7 @@ const AddressAutocomplete = ({ onSelect }) => {
         </ul>
       )}
       {loading && (
-        <div className="absolute top-full mt-1 text-sm text-gray-500">Loading…</div>
+        <div className="z-10 absolute top-full mt-1 text-sm text-gray-500">Please wait, suggestion are appearing in a second…</div>
       )}
     </div>
   );

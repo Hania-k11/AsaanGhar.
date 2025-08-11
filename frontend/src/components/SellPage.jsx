@@ -575,7 +575,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
 {/* Location Search with Map */}
     <div className="lg:col-span-2">
-      <label className="block text-sm font-semibold text-gray-700 mb-2">Enter Complete Address *</label>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">Enter Address to Select from Map*</label>
       <div className="space-y-4">
         <AddressAutocomplete
           onSelect={({ lat, lon, displayName }) => {
