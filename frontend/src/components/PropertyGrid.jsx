@@ -100,7 +100,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike, navig
 
           {/* Details */}
           <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
-            <div className="flex justify-between items-start mb-3">
+            <div className="flex justify-between items-start mb-3" >
               <div>
                 <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-emerald-600 transition-colors">
                   {property.title}
