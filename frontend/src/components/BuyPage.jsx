@@ -54,7 +54,7 @@ const BuyPage = () => {
     limit: propertiesPerPage,
     filter,           // Pass current filter
     priceRange,       // Pass current priceRange
-    sortBy,           // Pass current sortBy
+    sort: sortBy,     // Pass current sortBy as 'sort' expected by hook
   });
 
   // Reset pages when queries or filters change
@@ -70,7 +70,7 @@ const BuyPage = () => {
 
   // Data and pagination selection
   const properties = isNlpActive
-    ? (nlpData?.properties?.map(p => p.property) || [])
+    ? (nlpData?.properties?.map(p => p?.property ?? p) || [])
     : (normalData?.data || []);
 
   const totalPages = isNlpActive
