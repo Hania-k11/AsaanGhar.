@@ -130,7 +130,7 @@ router.get('/getall', async (req, res) => {
 
     // Filter by search term (title or location LIKE %search%)
     if (search) {
-      baseQuery += ' AND (title LIKE ? OR location LIKE ?)';
+      baseQuery += ' AND (title LIKE ? OR city LIKE ?)'; //LOCATION TO CITY
       const likeSearch = `%${search}%`;
       params.push(likeSearch, likeSearch);
     }

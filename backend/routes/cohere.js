@@ -1,180 +1,198 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
 const parseUserQuery = require('../utils/parseSearchQuery');
 const postProcess = require('../utils/postProcessNLP');
-// const { geocodeLocation } = require('../utils/geocode'); // ⚠️ No longer needed for this workflow
 const { searchNearby } = require('../utils/places');
-const { isPropertyNearPlace } = require('../utils/mapLogic');
 const haversineDistance = require('../utils/haversineDistance');
+const { queryProperties } = require('../utils/propertyQueries');
 
 const fallbackLocations = ['Gulshan', 'DHA', 'Clifton', 'North Nazimabad', 'Bahadurabad'];
 
 router.post('/search', async (req, res) => {
   try {
-    const userQuery = req.body.query;
+    const {
+      query: userQuery,
+      sort = 'featured',
+      page = 1,
+      limit = 6,
+      filter = 'all',
+      priceRange, // [min, max]
+    } = req.body;
+
     if (!userQuery) {
       return res.status(400).json({ error: 'Missing query text' });
     }
-    console.log('🔥 Received user query:', userQuery);
 
-    // Step 1: Parse user query with NLP
+    // 1️⃣ NLP parsing
     const nlpOutput = await parseUserQuery(userQuery);
     if (!nlpOutput.parsed) {
-      console.warn('⚠️ NLP parsing failed or returned null');
       return res.status(400).json({ error: 'Failed to parse query' });
     }
 
-    // Step 2: Post-process parsed JSON to normalize, clean
     const clean = postProcess({ ...nlpOutput.parsed, query: userQuery });
-    console.log('🧠 NLP Constraints after postProcess:', clean);
 
-    // Step 3: Determine locations to search
-    const locationsToSearch = clean.location ? [clean.location] : fallbackLocations;
-    console.log('📍 Locations to search:', locationsToSearch);
+    // 2️⃣ Merge NLP + manual filters
 
-    // ⚠️ Step 4 & 5: Modified logic. We now query the database directly to get properties and their coordinates.
-    // Build base SQL query and params for static filters
-    let sql = 'SELECT * FROM properties WHERE 1=1'; // ⚠️ SELECT * to get lat/lon
-    const params = [];
+    const locationFilters = clean.location ? [clean.location] : fallbackLocations;
 
-    // Support multiple locations: We'll filter by LIKE any of them using OR clauses
-    if (locationsToSearch.length > 0) {
-      const likeConditions = locationsToSearch.map(() => 'location LIKE ?').join(' OR ');
-      sql += ` AND (${likeConditions})`;
-      locationsToSearch.forEach(loc => params.push(`%${loc}%`));
-    }
+    // Price precedence: manual filter overrides NLP
+    let priceMin = priceRange?.[0] ?? null;
+    let priceMax = priceRange?.[1] ?? null;
 
-    // Other filters if present
-    if (clean.bedrooms) {
-      sql += ' AND bedrooms = ?';
-      params.push(clean.bedrooms);
-    }
-    if (clean.bathrooms) {
-      sql += ' AND bathrooms = ?';
-      params.push(clean.bathrooms);
-    }
-    if (clean.property_type) {
-      sql += ' AND property_type = ?';
-      params.push(clean.property_type);
-    }
-    if (clean.listing_type) {
-      sql += ' AND listing_type = ?';
-      params.push(clean.listing_type);
-    }
-    // Add priceRange filters (monthly_rent or sale_price) if present
-    if (clean.monthly_rent) {
-      if (typeof clean.monthly_rent === 'object') {
-        if (clean.monthly_rent.min) {
-          sql += ' AND monthly_rent >= ?';
-          params.push(clean.monthly_rent.min);
-        }
-        if (clean.monthly_rent.max) {
-          sql += ' AND monthly_rent <= ?';
-          params.push(clean.monthly_rent.max);
-        }
+    if ((priceMin === null || priceMin === undefined) && (clean.monthly_rent || clean.sale_price)) {
+      const priceObj = clean.monthly_rent || clean.sale_price;
+      if (typeof priceObj === 'object') {
+        priceMin = priceObj.min;
+        priceMax = priceObj.max;
       } else {
-        sql += ' AND monthly_rent = ?';
-        params.push(clean.monthly_rent);
-      }
-    }
-    if (clean.sale_price) {
-      if (typeof clean.sale_price === 'object') {
-        if (clean.sale_price.min) {
-          sql += ' AND sale_price >= ?';
-          params.push(clean.sale_price.min);
-        }
-        if (clean.sale_price.max) {
-          sql += ' AND sale_price <= ?';
-          params.push(clean.sale_price.max);
-        }
-      } else {
-        sql += ' AND sale_price = ?';
-        params.push(clean.sale_price);
+        priceMin = priceMax = priceObj;
       }
     }
 
-    console.log('🗄️ SQL Query:', sql);
-    console.log('🔢 SQL Params:', params);
+    const listingTypeFinal = filter !== 'all' ? filter : clean.listing_type ?? undefined;
 
-    // Step 6: Query database
-    const [properties] = await pool.query(sql, params);
-    console.log(`🏘️ Found ${properties.length} properties matching static filters`);
+    // 3️⃣ Build base query params
+    const baseQueryParams = {
+      locationFilters,
+      rooms: clean.rooms,
+      bathrooms: clean.bathrooms,
+      property_type: clean.property_type,
+      listing_type: listingTypeFinal,
+      availability: clean.availability,
+      priceMin,
+      priceMax,
+      searchTerm: '',
+      sort,
+    };
 
-    // Step 7: If no places_nearby specified, return results early
- if (!clean.places_nearby || clean.places_nearby.length === 0) {
-  console.log('⚡ No places_nearby specified, returning empty results as per updated logic');
-  return res.json({ count: 0, properties: [] });
-}
-    // ⚠️ Step 8: Iterate over each property to find nearby places
-    const radiusKm = clean.radiusInKm || 5;
-
-    const filteredPropertiesWithPlaces = [];
-
-for (const property of properties) {
-  const nearbyPlacesFound = [];
-  
-  for (const placeType of clean.places_nearby) {
-    console.log(`🔍 Searching for "${placeType}" near property at ${property.id} (${property.latitude}, ${property.longitude})`);
-    const placesFound = await searchNearby(property.latitude, property.longitude, placeType, radiusKm * 1000);
-
-    if (placesFound.length > 0) {
-      // Filter places within radius and add their details
-      const nearbyPlaces = placesFound.filter(place => {
-        const distance = haversineDistance(
-          property.latitude,
-          property.longitude,
-          place.latitude,
-          place.longitude
-        );
-        return distance <= radiusKm;
+    // 4️⃣ No nearby filtering → simple query with pagination
+    if (!clean.places_nearby || clean.places_nearby.length === 0) {
+      const { data, totalCount, totalPages } = await queryProperties({
+        ...baseQueryParams,
+        page,
+        limit,
       });
 
-      if (nearbyPlaces.length > 0) {
-        nearbyPlacesFound.push({
+      return res.json({
+        count: totalCount,
+        totalPages,
+        page: Number(page),
+        limit: Number(limit),
+        properties: data.map(p => ({
+          id: p.id,
+          title: p.title,
+          location: `${p.location_sector}, ${p.location_area}, ${p.location_city}`,
+          price: p.price,
+          listing_type: p.listing_type_name,
+          property_type: p.property_type_name,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          coordinates: { latitude: p.latitude, longitude: p.longitude },
+        })),
+      });
+    }
+
+    // 5️⃣ Nearby filtering - get all filtered properties first (limit large)
+    const { data: allFilteredProperties } = await queryProperties({
+      ...baseQueryParams,
+      page: 1,
+      limit: 10000,
+    });
+
+    const radiusKm = clean.radiusInKm || 5;
+    const filteredPropertiesWithPlaces = [];
+
+    for (const property of allFilteredProperties) {
+      const nearbyPlacesFound = [];
+
+      for (const placeType of clean.places_nearby) {
+        const placesFound = await searchNearby(
+          property.latitude,
+          property.longitude,
           placeType,
-          places: nearbyPlaces.map(place => ({
-            name: place.name,
-            distance: (place.distance / 1000).toFixed(2), // Convert to km
-            coordinates: {
-              latitude: place.latitude,
-              longitude: place.longitude
-            }
-          }))
+          radiusKm * 1000
+        );
+
+        const nearbyPlaces = placesFound.filter(place => {
+          const distance = haversineDistance(
+            property.latitude,
+            property.longitude,
+            place.latitude,
+            place.longitude
+          );
+          return distance <= radiusKm;
+        });
+
+        if (nearbyPlaces.length > 0) {
+          nearbyPlacesFound.push({
+            placeType,
+            places: nearbyPlaces.map(place => ({
+              name: place.name,
+              distance: (place.distance / 1000).toFixed(2),
+              coordinates: { latitude: place.latitude, longitude: place.longitude },
+            })),
+          });
+        }
+      }
+
+      if (nearbyPlacesFound.length > 0) {
+        filteredPropertiesWithPlaces.push({
+          property: {
+            id: property.id,
+            title: property.title,
+            location: `${property.location_sector}, ${property.location_area}, ${property.location_city}`,
+            price: property.price,
+            listing_type: property.listing_type_name,
+            property_type: property.property_type_name,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            coordinates: { latitude: property.latitude, longitude: property.longitude },
+          },
+          nearby_places: nearbyPlacesFound,
         });
       }
     }
-  }
 
-  if (nearbyPlacesFound.length > 0) {
-    filteredPropertiesWithPlaces.push({
-      property: {
-        id: property.id,
-        title: property.title,
-        location: property.location,
-        price: property.sale_price || property.monthly_rent,
-        listing_type: property.listing_type,
-        property_type: property.property_type,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        coordinates: {
-          latitude: property.latitude,
-          longitude: property.longitude
-        }
-      },
-      nearby_places: nearbyPlacesFound
+    // 6️⃣ SORT filtered results **before** pagination
+    switch (sort) {
+      case 'price-low':
+        filteredPropertiesWithPlaces.sort(
+          (a, b) => a.property.price - b.property.price
+        );
+        break;
+      case 'price-high':
+        filteredPropertiesWithPlaces.sort(
+          (a, b) => b.property.price - a.property.price
+        );
+        break;
+      case 'newest':
+        filteredPropertiesWithPlaces.sort((a, b) =>
+          new Date(b.property.posted_at) - new Date(a.property.posted_at)
+        );
+        break;
+      default:
+        // featured or fallback
+        filteredPropertiesWithPlaces.sort((a, b) =>
+          b.property.is_featured - a.property.is_featured
+        );
+    }
+
+    // 7️⃣ Pagination after sorting
+    const totalCount = filteredPropertiesWithPlaces.length;
+    const totalPages = Math.ceil(totalCount / limit);
+    const startIndex = (page - 1) * limit;
+    const paginatedFilteredProperties = filteredPropertiesWithPlaces.slice(
+      startIndex,
+      startIndex + limit
+    );
+
+    return res.json({
+      count: totalCount,
+      totalPages,
+      page: Number(page),
+      limit: Number(limit),
+      properties: paginatedFilteredProperties,
     });
-  }
-}
-
-console.log(`🔎 Found ${filteredPropertiesWithPlaces.length} properties with nearby places`);
-
-// Update the response
-return res.json({
-  count: filteredPropertiesWithPlaces.length,
-  properties: filteredPropertiesWithPlaces
-});
-
   } catch (error) {
     console.error('❌ /search error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
