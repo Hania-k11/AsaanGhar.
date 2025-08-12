@@ -54,7 +54,7 @@ const BuyPage = () => {
     limit: propertiesPerPage,
     filter,           // Pass current filter
     priceRange,       // Pass current priceRange
-    sort: sortBy,     // Pass current sortBy as 'sort' expected by hook
+    sortBy,           // Pass current sortBy
   });
 
   // Reset pages when queries or filters change
@@ -70,7 +70,7 @@ const BuyPage = () => {
 
   // Data and pagination selection
   const properties = isNlpActive
-    ? (nlpData?.properties?.map(p => p?.property ?? p) || [])
+    ? (nlpData?.properties?.map(p => p.property) || [])
     : (normalData?.data || []);
 
   const totalPages = isNlpActive
@@ -94,9 +94,9 @@ const BuyPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+    <div className="min-h-screen  bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Hero Section */}
-      <div className="relative z-10 bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-36 pb-20 overflow-visible">
+      <div className="relative z-10 bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-18 pb-2 overflow-visible">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -108,14 +108,14 @@ const BuyPage = () => {
               Buy your Properties at Ease
             </h1>
             <p className="text-xl text-emerald-100 mb-8 max-w-2xl mx-auto">
-              Discover exceptional homes that match your lifestyle. From luxury penthouses to cozy apartments.
+              For the first time in Pakistan search your properties in natural language.
             </p>
 
             {/* NLP Search Bar with Search Button */}
             <div className="max-w-4xl mx-auto mb-8 flex gap-2">
               <input
                 type="text"
-                placeholder="Enter detailed natural language query here..."
+                placeholder="Enter to search for your dream property..."
                 value={nlpInput}
                 onChange={(e) => setNlpInput(e.target.value)}
                 className="flex-grow px-6 py-4 rounded-xl border border-white/30 bg-white/20 text-emerald-900 placeholder-emerald-800 focus:outline-none focus:ring-2 focus:ring-white/50"
@@ -138,8 +138,8 @@ const BuyPage = () => {
             <div
               className={`max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 transition-opacity`}
             >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-900" size={20} />
                   <input
                     type="text"
@@ -149,7 +149,7 @@ const BuyPage = () => {
                     className="w-full pl-10 pr-4 py-3 placeholder-emerald-800 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
                     // disabled={isNlpActive}
                   />
-                </div>
+                </div> */}
 
                 <select
                   value={filter}

@@ -9,7 +9,9 @@ const fetchNlpProperties = async ({ queryKey }) => {
       query,
       filter,     // "all", "sale", "rent"
       priceRange, // [min, max]
-      sort,       // e.g., "featured", "price-low", etc.
+      sort, 
+    page,
+    limit,      // e.g., "featured", "price-low", etc.
     }
   );
   return data;
