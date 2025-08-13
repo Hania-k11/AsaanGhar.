@@ -8,6 +8,7 @@ import axios from 'axios'
 import { motion } from "framer-motion"
 import AddressAutocomplete from './AddressAutocomplete'
 import MapPicker from './MapPicker'
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css'
 
 // Mapping objects for API
@@ -285,15 +286,41 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     const newErrors = {}
 
     if (step === 1) {
-      if (!formData.title) newErrors.title = "Property title is required"
-      if (!formData.latitude || !formData.longitude) {
-        newErrors.address = "Please make sure you pin the right location on the map."
-      }
-      if (!formData.location) newErrors.location = "Location is required"
-      if (!formData.rent) newErrors.rent = "Price is required"
-      if (!formData.propertyType) newErrors.propertyType = "Property type is required"
-      if (!formData.area) newErrors.area = "Area is required"
+  if (!formData.title) newErrors.title = "Property title is required";
+
+  if (!formData.latitude || !formData.longitude) {
+    newErrors.address = "Please make sure you pin the right location on the map.";
+  }
+
+  if (!formData.location) newErrors.location = "Location is required";
+
+  if (!formData.rent) newErrors.rent = "Price is required";
+
+  if (!formData.propertyType) newErrors.propertyType = "Property type is required";
+
+  if (!formData.area) newErrors.area = "Area is required";
+
+  // Additional address (plot/flat) validation:
+  const prefix = "Plot/Flat No: ";
+  const additional = formData.additionalAddress || "";
+  // Check if additionalAddress is empty or just equal to prefix + address (auto-filled)
+  if (
+    additional.trim() === "" || // empty
+    additional === prefix + (formData.address || "")
+  ) {
+    newErrors.additionalAddress = "Please enter your plot or flat details.";
+  }
+
+  // Optional: Check if the map address contains the selected location from dropdown
+  if (formData.location && formData.address) {
+    const selectedLocationLower = formData.location.toLowerCase();
+    const addressLower = formData.address.toLowerCase();
+
+    if (!addressLower.includes(selectedLocationLower)) {
+      newErrors.address = `Selected address does not match the chosen location area (${formData.location}).`;
     }
+  }
+}
 
     if (step === 2) {
       if (!formData.description) newErrors.description = "Description is required"
@@ -572,56 +599,106 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                   />
                   {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                 </div>
-
 {/* Location Search with Map */}
-    <div className="lg:col-span-2">
-      <label className="block text-sm font-semibold text-gray-700 mb-2">Enter Address to Select from Map*</label>
-      <div className="space-y-4">
-        <AddressAutocomplete
-          onSelect={({ lat, lon, displayName }) => {
-            setFormData(prev => ({
-              ...prev,
-              latitude: lat,
-              longitude: lon,
-              address: displayName,
-              display_name: displayName
-            }));
-          }}
-        />
-        {formData.latitude && formData.longitude && (
-          <MapPicker
-            lat={formData.latitude}
-            lon={formData.longitude}
-            onPositionChange={({ lat, lng }) => {
-              setFormData(prev => ({
-                ...prev,
-                latitude: lat,
-                longitude: lng
-              }));
-            }}
-          />
-        )}
-        {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-      </div>
-    </div>
+<div className="lg:col-span-2">
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Enter Address to Select from Map*
+  </label>
+  <div className="space-y-4">
+    <AddressAutocomplete
+      value={formData.address}
+      onSelect={(loc) => {
+        if (!loc) {
+          setFormData((prev) => ({
+            ...prev,
+            address: "",
+            latitude: null,
+            longitude: null,
+            additionalAddress: "", // clear additional if no location
+          }));
+          return;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          address: loc.displayName,
+          latitude: loc.lat,
+          longitude: loc.lon,
+          // Initialize additionalAddress with prefix + address on select
+          additionalAddress: `Plot/Flat No: ${loc.displayName}`,
+        }));
+      }}
+    />
 
-    <div className="lg:col-span-2">
-      <label className="block text-sm font-semibold text-gray-700 mb-2">Additional Address Details</label>
-      <textarea
-        ref={refs.address}
-        name="address"
-        value={formData.address}
-        onChange={handleChange}
-        placeholder="Add any additional address details (e.g., nearest landmark, specific directions)"
-        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-          errors.address ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-        }`}
-        rows={2}
-      />
-      <p className="text-sm text-gray-500 mt-1">
-        You can add specific details or directions to help locate the property easily.
-      </p>
-    </div>
+    <p className="text-sm text-gray-500">
+      If you can't find your exact location in the suggestions, drag the marker on the map to place it manually.
+    </p>
+
+    <MapPicker
+      lat={formData.latitude}
+      lon={formData.longitude}
+      onPositionChange={({ lat, lng, address }) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+          ...(address !== undefined && { address }),
+          display_name: address || prev.display_name,
+          // Update additionalAddress but keep prefix if missing
+          additionalAddress: address
+            ? `Plot/Flat No: ${address}`
+            : prev.additionalAddress,
+        }));
+      }}
+    />
+
+    {errors.address && (
+      <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+    )}
+  </div>
+</div>
+
+{/* Additional Address Details */}
+<div className="lg:col-span-2">
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Add Your Plot or Flat Details
+  </label>
+
+  <textarea
+    ref={refs.additionalAddress}
+    name="additionalAddress"
+    value={
+      // Strip prefix for displaying inside textarea so user doesn't edit prefix
+      formData.additionalAddress?.startsWith("Plot/Flat No: ")
+        ? formData.additionalAddress.slice("Plot/Flat No: ".length)
+        : formData.additionalAddress || ""
+    }
+    onChange={(e) => {
+      // On user input, update with prefix + value
+      const inputVal = e.target.value;
+      setFormData((prev) => ({
+        ...prev,
+        additionalAddress: `Plot/Flat No: ${inputVal}`,
+      }));
+      handleChange(e); // Call your existing handleChange if needed
+    }}
+    placeholder="Add any additional details like plot number, flat number, nearest landmark, or specific directions"
+    className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+      errors.additionalAddress
+        ? "border-red-300 bg-red-50"
+        : "border-gray-200 focus:border-emerald-500"
+    }`}
+    rows={2}
+  />
+  {errors.additionalAddress && (
+    <p className="text-red-500 text-sm mt-1">{errors.additionalAddress}</p>
+  )}
+
+  <p className="text-sm text-gray-500 mt-1">
+    You can add specific details or directions to help locate the property easily.
+  </p>
+</div>
+
+
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Listing Type *</label>

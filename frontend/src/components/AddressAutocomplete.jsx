@@ -3,18 +3,22 @@ import axios from 'axios';
 
 const DEBOUNCE_DELAY = 400;
 
-const AddressAutocomplete = ({ onSelect }) => {
-  const [query, setQuery] = useState('');
+const AddressAutocomplete = ({ value, onSelect }) => {
+  const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastSelected, setLastSelected] = useState(null);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState("");
   const containerRef = useRef(null);
   const debounceTimer = useRef(null);
   const locationIqToken = import.meta.env.VITE_LOCATIONIQ_TOKEN;
 
-  const fetchSuggestions = async (value) => {
-    if (!value.trim()) {
+  useEffect(() => {
+    setQuery(value || ""); // sync with parent
+  }, [value]);
+
+  const fetchSuggestions = async (input) => {
+    if (!input.trim()) {
       setSuggestions([]);
       return;
     }
@@ -22,12 +26,18 @@ const AddressAutocomplete = ({ onSelect }) => {
     try {
       let results = [];
       if (locationIqToken) {
-        const url = `https://us1.locationiq.com/v1/autocomplete?key=${locationIqToken}&q=${encodeURIComponent(value)}&limit=8&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1`;
+        const url = `https://us1.locationiq.com/v1/autocomplete?key=${locationIqToken}&q=${encodeURIComponent(
+          input
+        )}&limit=8&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1`;
         const res = await axios.get(url);
         results = Array.isArray(res.data) ? res.data : [];
       } else {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1&q=${encodeURIComponent(value)}`;
-        const res = await axios.get(url, { headers: { 'Accept-Language': 'en' } });
+        const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1&q=${encodeURIComponent(
+          input
+        )}`;
+        const res = await axios.get(url, {
+          headers: { "Accept-Language": "en" },
+        });
         results = (Array.isArray(res.data) ? res.data : []).map((r) => ({
           display_name: r.display_name,
           lat: r.lat,
@@ -36,7 +46,7 @@ const AddressAutocomplete = ({ onSelect }) => {
       }
       setSuggestions(results.length ? results : [{ noResults: true }]);
     } catch (error) {
-      console.error('Autocomplete error:', error);
+      console.error("Autocomplete error:", error);
       setSuggestions([{ noResults: true }]);
     } finally {
       setLoading(false);
@@ -44,12 +54,20 @@ const AddressAutocomplete = ({ onSelect }) => {
   };
 
   const handleChange = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    setLastSelected(null); // reset if user starts typing again
+    const val = e.target.value;
+    setQuery(val);
+    setLastSelected(null);
+
+    if (!val.trim()) {
+      setSuggestions([]);
+      setErrorMsg("");
+      onSelect(null); // clear in parent
+      return;
+    }
+
     clearTimeout(debounceTimer.current);
     debounceTimer.current = setTimeout(() => {
-      fetchSuggestions(value);
+      fetchSuggestions(val);
     }, DEBOUNCE_DELAY);
   };
 
@@ -57,8 +75,8 @@ const AddressAutocomplete = ({ onSelect }) => {
     if (suggestion.noResults) return;
     setQuery(suggestion.display_name);
     setSuggestions([]);
-    setLastSelected(suggestion); // store the chosen suggestion
-    setErrorMsg('');
+    setLastSelected(suggestion);
+    setErrorMsg("");
     onSelect({
       lat: parseFloat(suggestion.lat),
       lon: parseFloat(suggestion.lon),
@@ -66,11 +84,13 @@ const AddressAutocomplete = ({ onSelect }) => {
     });
   };
 
-  // Enforce selection from suggestions
   const handleBlur = () => {
     if (!lastSelected || query !== lastSelected.display_name) {
-      setQuery('');
-      setErrorMsg('Please select an address from autocomplete/suggestion list.');
+      setQuery("");
+      setErrorMsg(
+        "Please select an address from autocomplete/suggestion list."
+      );
+      onSelect(null); // clear in parent
     }
   };
 
@@ -80,8 +100,8 @@ const AddressAutocomplete = ({ onSelect }) => {
         setSuggestions([]);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
@@ -97,12 +117,18 @@ const AddressAutocomplete = ({ onSelect }) => {
       {suggestions.length > 0 && (
         <ul
           className="absolute z-[450] w-full mt-1 bg-white border border-gray-300 rounded shadow"
-          style={{ maxHeight: '300px', overflowY: 'auto' }}
+          style={{ maxHeight: "300px", overflowY: "auto" }}
         >
           {suggestions.map((s, i) =>
             s.noResults ? (
               <li key={i} className="p-2 text-gray-500 italic">
                 No results
+                <div className="mt-1 text-yellow-600 bg-yellow-50 p-2 rounded border border-yellow-200 text-sm">
+                  Can't find your exact location? Try typing the{" "}
+                  <strong>nearest landmark</strong>, your{" "}
+                  <strong>building name</strong>, or a{" "}
+                  <strong>main road nearby</strong>.
+                </div>
               </li>
             ) : (
               <li
@@ -127,5 +153,6 @@ const AddressAutocomplete = ({ onSelect }) => {
     </div>
   );
 };
+
 
 export default AddressAutocomplete;

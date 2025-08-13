@@ -64,36 +64,37 @@ const location = useLocation();
             fallback={<div className="text-center py-10">Loading...</div>}
           >
             <Routes>
-              <Route
-                path="/"
-                element={
-                  <>
-                    <Hero />
-                    <FeaturedProperties />
-                    <HowItWorks />
-                    <CallToAction />
-                    <StartJourney />
-                  </>
-                }
-              />
-              <Route path="/buy" element={<BuyPage />} />
+  <Route
+    path="/"
+    element={
+      <>
+        <Hero />
+        <FeaturedProperties />
+        <HowItWorks />
+        <CallToAction />
+        <StartJourney />
+      </>
+    }
+  />
+  <Route path="/buy" element={<BuyPage />} />
+  <Route path="/sell" element={<SellPage />} />
+  <Route path="/contact" element={<ContactPage />} />
+  <Route path="/about" element={<AboutPage />} />
+  <Route path="/property/:id" element={<PropertyDetails />} />
 
-              <Route path="/sell" element={<SellPage />} />
-              
-             
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/property/:id" element={<PropertyDetails />} />
-              <Route
-                path="*"
-                element={
-                  <div className="text-center py-20 text-xl font-semibold text-gray-700">
-                    404 - Page Not Found
-                  </div>
-                }
-              />
-              <Route path="/my-profile" element={<MyProfile />} />
-            </Routes>
+  {/* MyProfile with nested tab routes */}
+  <Route path="/my-profile/*" element={<MyProfile />} />
+
+  <Route
+    path="*"
+    element={
+      <div className="text-center py-20 text-xl font-semibold text-gray-700">
+        404 - Page Not Found
+      </div>
+    }
+  />
+</Routes>
+
           </Suspense>
         </main>
 

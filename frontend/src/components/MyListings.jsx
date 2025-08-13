@@ -13,8 +13,6 @@ import PropertyGrid from "./PropertyGrid";
 
 
 
-
-
 // Use a self-contained, stylish confirmation dialog instead of alert().
 const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
   return (
@@ -301,6 +299,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 );
 
 const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
+  const navigate = useNavigate();
   return (
     <motion.div
       key={property.id}
@@ -916,14 +915,14 @@ const FilterModal = () => {
           <AnimatePresence mode="wait">
              {filteredAndSortedProperties.length > 0 ? (
                <PropertyGrid
-                 properties={filteredAndSortedProperties}
-                 viewMode={viewMode}
-                 likedProperties={likedProperties}
-                 toggleLike={toggleLike}
-                 navigate={navigate}
-                 onDelete={handleDeleteListing}
-                 onEdit={handleEditListing}
-               />
+  properties={filteredAndSortedProperties}
+  viewMode={viewMode}
+  likedProperties={likedProperties}
+  toggleLike={toggleLike}
+  onDelete={handleDeleteListing}
+  onEdit={handleEditListing}
+/>
+
             ) : (
               <motion.div
                 key="empty-state"

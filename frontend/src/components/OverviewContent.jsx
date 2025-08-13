@@ -11,6 +11,7 @@ import {
   Clock,
   ArrowRight,
 } from "lucide-react"
+import { Link } from "react-router-dom" 
 
 // Mock data for demonstration
 const mockStats = {
@@ -27,12 +28,13 @@ const mockRecentActivity = [
   { id: 4, type: "search", property: "3BR Apartments under $900k", time: "2 days ago", price: null },
 ]
 
+
 const quickActions = [
-  { icon: Plus, label: "List Property", color: "from-emerald-500 to-emerald-600", href: "#" },
-  { icon: Search, label: "Find Property", color: "from-blue-500 to-blue-600", href: "#" },
-  { icon: Heart, label: "Saved Listings", color: "from-rose-500 to-rose-600", href: "#" },
-  { icon: Edit, label: "Manage Profile", color: "from-purple-500 to-purple-600", href: "#" },
-]
+  { icon: Plus, label: "List Property", color: "from-emerald-500 to-emerald-600", href: "/sell" },
+  { icon: Search, label: "Find Property", color: "from-blue-500 to-blue-600", href: "/buy" },
+  { icon: Heart, label: "Saved Listings", color: "from-rose-500 to-rose-600", href: "/my-profile?tab=favorites" },
+  { icon: Edit, label: "Manage Profile", color: "from-purple-500 to-purple-600", href: "/my-profile?tab=profile" },
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -62,21 +64,22 @@ const StatCard = ({ icon: Icon, label, value, color, bg }) => (
   </motion.div>
 )
 
+// QuickActionCard with React Router Link stays the same, no removals
 const QuickActionCard = ({ icon: Icon, label, color, href }) => (
-  <motion.a
-    href={href}
+  <motion.div
     variants={itemVariants}
     whileHover={{ scale: 1.05, y: -5 }}
     whileTap={{ scale: 0.95 }}
     className={`relative group bg-gradient-to-br ${color} text-white p-6 rounded-2xl shadow-lg transition-all duration-300 flex flex-col items-start justify-between gap-4 overflow-hidden`}
   >
+    <Link to={href} className="absolute inset-0 z-10" />
     <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-4 relative z-20">
       <Icon className="w-8 h-8" strokeWidth={2} />
       <span className="text-lg font-semibold">{label}</span>
     </div>
-    <ArrowRight className="w-6 h-6 self-end -translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-300" />
-  </motion.a>
+    <ArrowRight className="w-6 h-6 self-end -translate-x-2 translate-y-2 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform duration-300 relative z-20" />
+  </motion.div>
 )
 
 const RecentActivityItem = ({ activity, index }) => {
@@ -138,7 +141,7 @@ const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
         className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-md"
       >
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-          Welcome back, {userDetails.name}! 👋
+          Welcome back {userDetails.name}! 👋
         </h1>
         <p className="text-base text-gray-600 max-w-2xl">
           Your dashboard provides a quick overview of your real estate activity. Let's make your next property move!
