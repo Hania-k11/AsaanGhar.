@@ -96,4 +96,117 @@ router.post('/post', async (req, res) => {
   }
 });
 
+
+
+router.get('/getall', async (req, res) => {
+  try {
+    // Parse query params with sane defaults
+    const {
+      type = 'all',           // 'all', 'sale', 'rent'
+      search = '',            // search term in title or location
+      minPrice = 0,           // minimum price (in whatever unit)
+      maxPrice = 9999999999,  // max price large number by default
+      sort = 'featured',      // 'featured', 'price-low', 'price-high', 'newest', 'rating'
+      page = 1,               // current page
+      limit = 6               // items per page
+    } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Build base SQL query
+    let baseQuery = 'SELECT * FROM properties WHERE 1=1';
+    const params = [];
+
+   if (type !== 'all') {
+  let listing_type_id = null;
+  if (type === 'rent') listing_type_id = 1;
+  else if (type === 'sale') listing_type_id = 2;
+
+  if (listing_type_id !== null) {
+    baseQuery += ' AND listing_type_id = ?';
+    params.push(listing_type_id);
+  }
+}
+
+    // Filter by search term (title or location LIKE %search%)
+    if (search) {
+      baseQuery += ' AND (title LIKE ? OR city LIKE ?)'; //LOCATION TO CITY
+      const likeSearch = `%${search}%`;
+      params.push(likeSearch, likeSearch);
+    }
+
+    // Filter by price range
+    // You must store price as a number in DB or extract it properly before comparison.
+    // Assuming `price` column stores numeric price (remove currency formatting before storing!)
+    baseQuery += ' AND price BETWEEN ? AND ?';
+    params.push(minPrice, maxPrice);
+
+    // Sorting
+    let orderBy = '';
+switch (sort) {
+  case 'featured':
+    orderBy = ' ORDER BY is_featured DESC';
+    break;
+  case 'price-low':
+    orderBy = ' ORDER BY price ASC';
+    break;
+  case 'price-high':
+    orderBy = ' ORDER BY price DESC';
+    break;
+  case 'newest':
+    orderBy = ' ORDER BY year_built DESC';
+    break;
+  default:
+    orderBy = '';
+}
+
+
+    // Pagination
+    const limitOffset = ` LIMIT ? OFFSET ?`;
+    params.push(Number(limit), Number(offset));
+
+    // Final query
+    const finalQuery = baseQuery + orderBy + limitOffset;
+
+    // Execute query
+    const [rows] = await pool.query(finalQuery, params);
+
+    // Count total matching rows for pagination info
+    const countQuery = baseQuery.replace('SELECT *', 'SELECT COUNT(*) as count');
+    const [countRows] = await pool.query(countQuery, params.slice(0, params.length - 2));
+    const totalCount = countRows[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Return paginated data + meta
+    res.status(200).json({
+      data: rows,
+      pagination: {
+        total: totalCount,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages,
+      }
+    });
+  } catch (err) {
+    console.error('Error retrieving properties:', err);
+    res.status(500).json({ error: 'Failed to retrieve properties' });
+  }
+});
+
+
+router.get('/get', async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM properties');
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No properties found' });
+    }
+
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error('Error retrieving properties:', err);
+    res.status(500).json({ error: 'Failed to retrieve properties' });
+  }
+});
+
 module.exports = router;

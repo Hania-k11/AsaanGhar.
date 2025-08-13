@@ -43,7 +43,7 @@ JSON:
     const response = await cohere.generate({
       model: 'command-r-plus',
       prompt,
-      max_tokens: 100,
+      max_tokens: 1000,
       temperature: 0.3,
     });
 
