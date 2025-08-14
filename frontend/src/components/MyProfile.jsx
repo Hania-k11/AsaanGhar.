@@ -21,6 +21,7 @@ import MessagesTab from "./MessagesTab";
 import MyProfileTab from "./MyProfileTab";
 import SettingsTab from "./SettingsTab";
 import { useAuth } from "../context/AuthContext";
+import UserProfile from "./UserProfile";
 
 const mockUserDetails = {
   name: "Sarah Johnson",
@@ -280,7 +281,7 @@ const MyProfile = () => {
                   {activeTab === "listings" && <MyListings />}
                   {activeTab === "favorites" && <Favourites />}
                   {activeTab === "messages" && <MessagesTab />}
-                  {activeTab === "profile" && <MyProfileTab />}
+                  {activeTab === "profile" && <UserProfile />}
                   {activeTab === "settings" && <SettingsTab userData={userDetails || mockUserDetails} />}
                 </motion.div>
               </AnimatePresence>
