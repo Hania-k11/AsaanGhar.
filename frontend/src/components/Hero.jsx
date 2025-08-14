@@ -1,38 +1,53 @@
-import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react"
-import { motion } from "framer-motion"
-import { useState } from "react";
+import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
-import FloatingElements from "./FloatingElements"
 
+import FloatingElements from "./FloatingElements";
 
 const Hero = () => {
   const [query, setQuery] = useState("");
+  const [placeholder, setPlaceholder] = useState('Search for your desired property location...');
 
-const handleSearch = async () => {
-  try {
-    const response = await axios.post("/api/search", { query });
-    console.log("Parsed NLP Response:", response.data);
+useEffect(() => {
+    const updatePlaceholder = () => {
+      if (window.innerWidth < 640) {
+        setPlaceholder('Search for your property........');
+      } else {
+        setPlaceholder('Search for your desired property location...');
+      }
+    };
 
-    // Example:
-    // const { intent, location, propertyType } = response.data;
-    // You can use this for filtering listings
-  } catch (error) {
-    console.error("NLP search error:", error);
-  }
-};
+    // Set initial placeholder
+    updatePlaceholder();
+
+    // Add event listener for window resize
+    window.addEventListener('resize', updatePlaceholder);
+
+    // Cleanup listener on unmount
+    return () => window.removeEventListener('resize', updatePlaceholder);
+  }, []);
+
+  const handleSearch = async () => {
+    try {
+      const response = await axios.post("/api/search", { query });
+      console.log("Parsed NLP Response:", response.data);
+
+      // Example:
+      // const { intent, location, propertyType } = response.data;
+      // You can use this for filtering listings
+    } catch (error) {
+      console.error("NLP search error:", error);
+    }
+  };
 
   return (
     <div className="relative pt-10 overflow-hidden font-sans ">
-      
       {/* Background with parallax effect */}
       <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 z-10 bg-gradient-to-b from-gray-200/50 via-emerald-200/80 to-teal-800/60 backdrop-blur-sm shadow-[inset_0_-15px_30px_-10px_rgba(0,0,0,0.3)]"></div>
 
- 
-
-   <div className="absolute inset-0 z-10 bg-gradient-to-b from-gray-200/50 via-emerald-200/80 to-teal-800/60 backdrop-blur-sm shadow-[inset_0_-15px_30px_-10px_rgba(0,0,0,0.3)]"></div>
-        
-        
         <motion.div
           initial={{ scale: 1.1 }}
           animate={{
@@ -44,12 +59,10 @@ const handleSearch = async () => {
             y: { duration: 24, repeat: Infinity, repeatType: "reverse" },
           }}
           className="w-full h-full"
-        >
-          
-        </motion.div>
+        ></motion.div>
       </div>
 
-{/* Background with subtle gradient */}
+      {/* Background with subtle gradient */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-white/30 via-emerald-200/10 to-gray-100/40 backdrop-blur-sm"></div>
         <motion.div
@@ -59,13 +72,11 @@ const handleSearch = async () => {
             duration: 10,
             repeat: Infinity,
             repeatType: "reverse",
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
           className="w-full h-full bg-[url('/homebg.avif')] bg-cover bg-center opacity-30 md:opacity-40"
         />
       </div>
-
-      
 
       {/* Main content container */}
       <div className="container  mx-auto px-6 z-20 relative flex flex-col items-center justify-center h-screen text-center">
@@ -74,7 +85,7 @@ const handleSearch = async () => {
           initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="flex items-center justify-center mb-6 md:-mt-20"
+          className="flex items-center justify-center mt-10 mb-6 md:-mt-20"
         >
           <motion.div
             animate={{
@@ -99,7 +110,11 @@ const handleSearch = async () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-4xl md:text-6xl font-extrabold drop-shadow-[4px_4px_2px_white] text-cyan-950/90 mb-4   leading-tight"
         >
-          Find Your <span className="text-emerald-700 drop-shadow-[2px_2px_2px_white] ">Dream Place</span> With Ease
+          Find Your{" "}
+          <span className="text-emerald-700 drop-shadow-[2px_2px_2px_white] ">
+            Dream Place
+          </span>{" "}
+          With Ease
         </motion.h1>
 
         {/* Subheading */}
@@ -109,9 +124,9 @@ const handleSearch = async () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-lg md:text-xl text-gray-700 font-medium mb-8 max-w-2xl mx-auto"
         >
-          Asaan Ghar simplifies buying, selling, and renting properties. Your journey to the perfect home starts here.
+          Asaan Ghar simplifies buying, selling, and renting properties. Pakistan's first natural language searching for real state site.
         </motion.p>
-{/* Search card */}
+        {/* Search card */}
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -121,7 +136,7 @@ const handleSearch = async () => {
             type: "spring",
             stiffness: 100,
           }}
-          className="w-full max-w-4xl px-4 relative"
+          className="w-full  max-w-4xl px-4 relative"
         >
           {/* Outer magical glow - continuously looping */}
           {/* <motion.div
@@ -136,8 +151,6 @@ const handleSearch = async () => {
 
           {/* Secondary rotating glow */}
           <motion.div
-           
-          
             transition={{
               duration: 6,
               repeat: Number.POSITIVE_INFINITY,
@@ -275,39 +288,36 @@ const handleSearch = async () => {
                   </motion.div>
 
                   <input
-  type="text"
-  value={query}
-  onChange={(e) => setQuery(e.target.value)}
-  placeholder="Search for your desired property location..."
-  className="relative z-10 w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
-/>
-
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={placeholder}
+                    className="relative z-10 w-full pl-3 md:pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
+                  />
                 </motion.div>
               </div>
-            
 
               {/* Enhanced search button */}
               <motion.button
-  onClick={handleSearch}
-  whileHover={{
-    scale: 1.05,
-    boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)"
-  }}
-  whileTap={{ scale: 0.95 }}
-  className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 group relative overflow-hidden"
->
-
+                onClick={handleSearch}
+                whileHover={{
+                  scale: 1.05,
+                  boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
+                }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 group relative overflow-hidden"
+              >
                 <span className="relative z-10">Search</span>
                 <Search className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
                 {/* Button shine effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
               </motion.button>
-              
+
               {/* Enhanced mic button */}
               <motion.button
-                whileHover={{ 
+                whileHover={{
                   scale: 1.1,
-                  backgroundColor: "rgba(16, 185, 129, 0.1)"
+                  backgroundColor: "rgba(16, 185, 129, 0.1)",
                 }}
                 whileTap={{ scale: 0.9 }}
                 className="p-4 bg-gray-50 hover:bg-black rounded-xl transition-all duration-300 shadow-md border border-gray-200 hover:border-emerald-200 group relative"
@@ -317,18 +327,18 @@ const handleSearch = async () => {
                 <motion.div
                   animate={{
                     scale: [1, 1.2, 1],
-                    opacity: [0.5, 0, 0.5]
+                    opacity: [0.5, 0, 0.5],
                   }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
-                    repeatType: "loop"
+                    repeatType: "loop",
                   }}
                   className="absolute inset-0 rounded-xl bg-emerald-400/30 pointer-events-none"
                 />
               </motion.button>
             </div>
-            
+
             {/* Bottom accent line */}
             <motion.div
               initial={{ scaleX: 0 }}
@@ -344,13 +354,11 @@ const handleSearch = async () => {
           <p className="text-white font-medium">Trusted by:</p>
           {/* Logos or client icons can go here */}
         {/* </div> */}
-
       </div>
 
       {/* Wave separator */}
       <div className="absolute -bottom-1 left-0 w-full overflow-hidden">
         <motion.svg
-         
           transition={{
             duration: 4,
             repeat: Number.POSITIVE_INFINITY,
@@ -380,9 +388,7 @@ const handleSearch = async () => {
         </motion.svg>
       </div>
     </div>
+  );
+};
 
-   
-  )
-}
-
-export default Hero
+export default Hero;
