@@ -78,7 +78,7 @@ const AboutPage = () => {
             >
               {[
                 [<Home size={16} />, "Smart Homes"],
-                [<MapPin size={16} />, "Google Maps"],
+                [<MapPin size={16} />, "Maps"],
                 [<Mic size={16} />, "Voice Search"],
               ].map(([icon, text], i) => (
                 <motion.span
@@ -110,12 +110,12 @@ const AboutPage = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
               {[
-                ["🏘️", "Verified Listings", "Every property is double-checked and uploaded by real owners."],
+                ["🏘️", "Easy Listings", "First ever natural language processing site in real estate."],
                 ["📞", "Owner Contact", "Talk directly with owners — no middlemen, no commissions."],
                 ["📱", "Mobile First", "Use on any device, anywhere. 100% mobile optimized."],
                 ["🧠", "Smart Search", "Find your dream place with AI-powered and filter-based discovery."],
-                ["🌍", "Bilingual Support", "Urdu and English support for true accessibility."],
-                ["🗺️", "Map View", "Visualize properties using Google Maps for smarter location picking."],
+                ["🌍", "Bilingual Support", "Search your property in your comfortable language."],
+                ["🗺️", "Map View", "Visualize properties using Maps for smarter location picking."],
               ].map(([icon, title, desc], i) => (
                 <motion.div
                   key={i}
@@ -155,7 +155,7 @@ const AboutPage = () => {
               At Asaan Ghar, we believe homeownership shouldn't be complicated. We’re eliminating outdated broker practices by connecting users directly with property owners—no commissions, no surprises.
             </p>
             <p className="text-lg text-gray-700">
-              We're also working to bridge digital literacy gaps by supporting Urdu language, voice search, and mobile-first design—so every Pakistani, from Karachi to Khaplu, can buy and sell with ease.
+              We're also working to bridge digital literacy gaps by supporting Urdu language, voice search, and mobile-first design—so everyone can buy and sell with ease.
             </p>
           </motion.div>
         </div>
@@ -177,9 +177,9 @@ const AboutPage = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {[
-                { icon: "🏘️", number: "10K+", label: "Verified Listings" },
-                { icon: "👥", number: "5K+", label: "Verified Buyers" },
-                { icon: "🔒", number: "100%", label: "Secure Transactions" },
+                { icon: "🏘️", number: "10K+", label: "Listings" },
+                { icon: "👥", number: "5K+", label: "Buyers" },
+                { icon: "🔒", number: "100%", label: "Results" },
               ].map(({ icon, number, label }, i) => (
                 <motion.div
                   key={i}
@@ -212,10 +212,10 @@ const AboutPage = () => {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-left">
               {[
-                ["🤖", "AI-based Recommendations"],
+                ["🤖", "AI-based Searching"],
                 ["🎤", "Voice Search Support"],
-                ["🌐", "English + Urdu NLP"],
-                ["🗺️", "Built-in Google Maps"],
+                ["🌐", "English and Urdu Searching Support"],
+                ["🗺️", "Built-in Maps"],
               ].map(([icon, text], i) => (
                 <motion.div
                   key={i}
@@ -244,7 +244,7 @@ const AboutPage = () => {
           >
             <h2 className="text-3xl md:text-4xl font-bold text-emerald-700 mb-4">Start Your Journey Today</h2>
             <p className="text-lg text-gray-700 mb-8">
-              Find verified listings, chat directly with owners, and move commission-free.
+              Find your dream properties with no hurdles of complex filters and move Commission-Free. Making real estate easy for everyone.
             </p>
             <Link
               to="/buy"
