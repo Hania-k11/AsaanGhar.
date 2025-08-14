@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react"
 import { Search, Home, Key, DollarSign, Sparkles, ArrowRight } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 const HowItWorks = () => {
   const [visibleItems, setVisibleItems] = useState(new Set())
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const [activeStep, setActiveStep] = useState(0)
+  const navigate = useNavigate()
+
+const handleClick = () => {
+    navigate('/buy');
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -74,6 +80,8 @@ const HowItWorks = () => {
     },
   ]
 
+
+  
   return (
     <section className="relative py-24 bg-white overflow-hidden">
 
@@ -233,7 +241,7 @@ const HowItWorks = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="group relative bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden">
+                <button  onClick={handleClick} className="group relative bg-gradient-to-r from-emerald-600 to-teal-500 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden">
                   <span className="relative z-10 flex items-center gap-2">
                     Start Your Search
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

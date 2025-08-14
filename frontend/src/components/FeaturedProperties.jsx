@@ -8,7 +8,13 @@ import { motion, AnimatePresence } from "framer-motion"
 
 const FeaturedProperties = () => {
   const navigate = useNavigate()
+
   const [likedProperties, setLikedProperties] = useState(new Set())
+
+
+  const handleClick = () => {
+    navigate('/buy');
+  };
 
   const toggleLike = (propertyId) => {
     setLikedProperties((prev) => {
@@ -186,7 +192,7 @@ const FeaturedProperties = () => {
 
         {/* CTA */}
         <div className="text-center mt-20">
-          <button className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl shadow-xl group">
+          <button   onClick={handleClick}  className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl shadow-xl group">
             View All Properties
             <ArrowRight
               size={22}
