@@ -141,7 +141,7 @@ const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
         className="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-3xl p-6 sm:p-8 border border-gray-100 shadow-md"
       >
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
-          Welcome back {userDetails.name}! 👋
+          Welcome back {userDetails.first_name} {userDetails.last_name}! 👋
         </h1>
         <p className="text-base text-gray-600 max-w-2xl">
           Your dashboard provides a quick overview of your real estate activity. Let's make your next property move!
