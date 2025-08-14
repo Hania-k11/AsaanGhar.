@@ -1,3 +1,5 @@
+//src/components/Favourites.jsx
+
 import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -30,7 +32,7 @@ const mockAllProperties = [
   {
     id: "prop1",
     title: "Modern Downtown Condo",
-    price: 850000,
+    price: "850000",
     priceLabel: "$850,000",
     location: "123 Market St, San Francisco, CA",
     beds: 2,
@@ -45,7 +47,7 @@ const mockAllProperties = [
   {
     id: "prop2",
     title: "Victorian House in Mission",
-    price: 1200000,
+    price: "1200000",
     priceLabel: "$1,200,000",
     location: "456 Valencia St, San Francisco, CA",
     beds: 3,
@@ -60,7 +62,7 @@ const mockAllProperties = [
   {
     id: "prop3",
     title: "Luxury Penthouse Downtown",
-    price: 2100000,
+    price: "2100000",
     priceLabel: "$2,100,000",
     location: "789 Pine St, San Francisco, CA",
     beds: 4,
@@ -75,7 +77,7 @@ const mockAllProperties = [
   {
     id: "prop4",
     title: "Cozy Studio Apartment",
-    price: 2800,
+    price: "2800",
     priceLabel: "$2,800/month",
     location: "321 Folsom St, San Francisco, CA",
     beds: 1,
@@ -90,7 +92,7 @@ const mockAllProperties = [
   {
     id: "prop5",
     title: "Family Home with Garden",
-    price: 980000,
+    price: "980000",
     priceLabel: "$980,000",
     location: "654 Oak St, San Francisco, CA",
     beds: 3,
@@ -105,7 +107,7 @@ const mockAllProperties = [
   {
     id: "prop6",
     title: "Modern Loft Space",
-    price: 3200,
+    price: "3200",
     priceLabel: "$3,200/month",
     location: "987 Mission St, San Francisco, CA",
     beds: 2,
@@ -120,7 +122,7 @@ const mockAllProperties = [
   {
     id: "prop7",
     title: "Charming Coastal Cottage",
-    price: 1500000,
+    price: "1500000",
     priceLabel: "$1,500,000",
     location: "101 Ocean Blvd, Half Moon Bay, CA",
     beds: 3,
@@ -135,7 +137,7 @@ const mockAllProperties = [
   {
     id: "prop8",
     title: "Spacious Suburban Home",
-    price: 600000,
+    price: "600000",
     priceLabel: "$600,000",
     location: "72 Maple St, Daly City, CA",
     beds: 4,

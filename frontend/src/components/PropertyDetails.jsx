@@ -1,3 +1,5 @@
+//src/components/PropertyDetails.jsx
+
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
