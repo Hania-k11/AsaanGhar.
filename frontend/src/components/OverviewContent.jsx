@@ -169,7 +169,7 @@ const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
             bg: "bg-rose-100",
           },
           {
-            label: "Total Views",
+            label: "Sold Properties",
             value: mockStats.totalViews,
             icon: TrendingUp,
             color: "text-purple-600",
