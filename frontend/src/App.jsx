@@ -1,5 +1,5 @@
-import {  Suspense, lazy } from "react";
-import 'leaflet/dist/leaflet.css';
+import { Suspense, lazy } from "react";
+import "leaflet/dist/leaflet.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -13,17 +13,11 @@ import MouseFollower from "./components/MouseFollower";
 import StartJourney from "./components/StartJourney";
 import { AuthProvider } from "./context/AuthContext";
 import ReactDOM from "react-dom/client";
-import { useContext, useState } from 'react'
-import { AuthContext } from './context/AuthContext';
-import { useAuth } from './context/AuthContext';
+import { useContext, useState } from "react";
+import { AuthContext } from "./context/AuthContext";
+import { useAuth } from "./context/AuthContext";
 import MyProfile from "./components/MyProfile";
 import { useLocation } from "react-router-dom";
-
-
-
-
-
-
 
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() =>
@@ -36,25 +30,17 @@ const BuyPage = lazy(() => import("./components/BuyPage"));
 const SellPage = lazy(() => import("./components/SellPage"));
 
 function App() {
-
-const location = useLocation();
+  const location = useLocation();
   const hideFooterRoutes = ["/my-profile"];
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
 
-
- const state = useContext(AuthContext)
+  const state = useContext(AuthContext);
   // console.log("Contextyy", state)
-  const { userDetails } = useAuth();
-  console.log("User Details:", userDetails);
+  // const { userDetails } = useAuth();
+  // console.log("User Details:", userDetails);
 
   return (
-
-     <AuthProvider>
-        
-         
-         
-      
-   
+    <AuthProvider>
       <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
         <Navbar />
@@ -64,48 +50,46 @@ const location = useLocation();
             fallback={<div className="text-center py-10">Loading...</div>}
           >
             <Routes>
-  <Route
-    path="/"
-    element={
-      <>
-        <Hero />
-        <FeaturedProperties />
-        <HowItWorks />
-        <CallToAction />
-        <StartJourney />
-      </>
-    }
-  />
-  <Route path="/buy" element={<BuyPage />} />
-  <Route path="/sell" element={<SellPage />} />
-  <Route path="/contact" element={<ContactPage />} />
-  <Route path="/about" element={<AboutPage />} />
-  <Route path="/property/:id" element={<PropertyDetails />} />
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Hero />
+                    <FeaturedProperties />
+                    <HowItWorks />
+                    <CallToAction />
+                    <StartJourney />
+                  </>
+                }
+              />
+              <Route path="/buy" element={<BuyPage />} />
+              <Route path="/sell" element={<SellPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/property/:id" element={<PropertyDetails />} />
 
-  {/* MyProfile with nested tab routes */}
-  <Route path="/my-profile/*" element={<MyProfile />} />
+              {/* MyProfile with nested tab routes */}
+              <Route path="/my-profile/*" element={<MyProfile />} />
 
-  <Route
-    path="*"
-    element={
-      <div className="text-center py-20 text-xl font-semibold text-gray-700">
-        404 - Page Not Found
-      </div>
-    }
-  />
-</Routes>
-
+              <Route
+                path="*"
+                element={
+                  <div className="text-center py-20 text-xl font-semibold text-gray-700">
+                    404 - Page Not Found
+                  </div>
+                }
+              />
+            </Routes>
           </Suspense>
         </main>
 
-      {!shouldHideFooter && <Footer />}
+        {!shouldHideFooter && <Footer />}
 
         <LoginModal />
 
         <MouseFollower />
       </div>
-
-      </AuthProvider>
+    </AuthProvider>
   );
 }
 
