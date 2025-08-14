@@ -1,6 +1,9 @@
+// src/components/BuyPage.jsx
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import {motion, AnimatePresence } from "framer-motion";
+
 import PropertyGrid from "./PropertyGrid";
 import { Filter, Search, Grid3X3, List } from "lucide-react";
 
@@ -205,8 +208,8 @@ const BuyPage = () => {
             </span>
             <div className="h-6 w-px bg-gray-300"></div>
             <div className="flex gap-2">
-              {!isNlpActive &&
-                ["all", "sale", "rent"].map((type) => (
+             
+               { ["all", "sale", "rent"].map((type) => (
                   <motion.button
                     key={type}
                     whileTap={{ scale: 0.95 }}
