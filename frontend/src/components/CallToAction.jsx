@@ -1,10 +1,20 @@
 import { useState, useEffect, useRef } from "react"
 import { ArrowRight, Sparkles, Award, MapPin, Users } from "lucide-react"
 import { motion } from "framer-motion"
+import { useNavigate } from "react-router-dom"
 
 const CallToAction = () => {
   const [inView, setInView] = useState(false)
   const ref = useRef(null)
+  const navigate = useNavigate()
+
+  const handleClickExplore =()=>{
+navigate('/buy')
+  }
+
+    const handleClickList =()=>{
+navigate('/sell')
+  }
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -177,6 +187,7 @@ const CallToAction = () => {
             className="flex flex-col sm:flex-row gap-6 justify-center mb-16"
           >
             <motion.button
+            onClick={handleClickExplore}
               whileHover={{ 
                 scale: 1.02,
                 boxShadow: "0 20px 40px rgba(16, 185, 129, 0.3)"
@@ -192,6 +203,7 @@ const CallToAction = () => {
             </motion.button>
 
             <motion.button
+            onClick={handleClickList}
               whileHover={{ 
                 scale: 1.02,
                 backgroundColor: "rgba(221, 11, 11, 0.1)"

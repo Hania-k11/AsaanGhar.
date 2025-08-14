@@ -12,6 +12,11 @@ const handleClick = () => {
     navigate('/buy');
   }
 
+  const handleClickLearnMore = () => {
+    navigate('/about');
+  }
+
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -249,7 +254,7 @@ const handleClick = () => {
                   <div className="absolute inset-0 bg-gradient-to-r from-emerald-700 to-teal-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </button>
 
-                <button className="group bg-white text-gray-700 px-8 py-4 rounded-2xl font-semibold border-2 border-gray-200 hover:border-emerald-300 hover:text-emerald-600 transition-all duration-300 hover:scale-105">
+                <button onClick={handleClickLearnMore} className="group bg-white text-gray-700 px-8 py-4 rounded-2xl font-semibold border-2 border-gray-200 hover:border-emerald-300 hover:text-emerald-600 transition-all duration-300 hover:scale-105">
                   Learn More
                 </button>
               </div>
