@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
-
 import {
   Home,
   Heart,
@@ -12,7 +11,7 @@ import {
   Calendar,
   CheckCircle,
   Menu,
-  LayoutDashboard,
+  X,
 } from "lucide-react";
 
 import MyListings from "./MyListings";
@@ -43,20 +42,17 @@ const NAVBAR_HEIGHT = "3.7rem";
 const SIDEBAR_WIDTH = "20rem";
 
 const MyProfile = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const { userDetails, logout } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const initialTab = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 1024) setSidebarOpen(true);
-      else setSidebarOpen(false);
-    };
+    const handleResize = () => setSidebarOpen(true);
     window.addEventListener("resize", handleResize);
     handleResize();
     return () => window.removeEventListener("resize", handleResize);
@@ -67,11 +63,10 @@ const MyProfile = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Update activeTab if URL changes
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-    }
+    if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl);
   }, [searchParams]);
 
   const handleLogout = async () => {
@@ -79,18 +74,12 @@ const MyProfile = () => {
     navigate("/");
   };
 
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
-    navigate(`/my-profile?tab=${tabId}`);
-    if (window.innerWidth < 1024) setSidebarOpen(false);
-  };
-
   const tabs = [
-    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "overview", label: "Overview", icon: User },
     { id: "profile", label: "Profile", icon: User },
     { id: "listings", label: "My Listings", icon: Home },
     { id: "favorites", label: "Favorites", icon: Heart },
-    { id: "messages", label: "Messages", icon: MessageSquare },
+  //  { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
@@ -126,37 +115,43 @@ const MyProfile = () => {
     </div>
   );
 
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    navigate(`/my-profile?tab=${tabId}`);
+    if (window.innerWidth < 1024) setSidebarOpen(false);
+  };
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100" style={{ top: NAVBAR_HEIGHT }}>
-      {/* Hamburger Button - always visible */}
-<button
-  onClick={() => setSidebarOpen(!sidebarOpen)}
-  className={`fixed z-50 p-1 rounded-full text-white transition-all ${
-    sidebarOpen ? "top-16 left-70" : "top-16 left-2"
-  }`}
-  style={{
-    backgroundColor: "#2dd4bf",
-    border: "2px solid white",
-  }}
-  aria-label="Toggle sidebar"
->
-  <Menu size={20} fill="#ffffff" />
-</button>
-
-
-
-
-      {/* Overlay for small screens */}
+      {/* Hamburger Button */}
       <AnimatePresence>
-        {sidebarOpen && window.innerWidth < 1024 && (
+        {!sidebarOpen && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.2 }}
+            className="fixed z-50 left-4 p-2 rounded-full outline-2 outline-emerald-300 bg-emerald-600 shadow-lg hover:bg-emerald-800 transition-all duration-200 hover:shadow-xl"
+            style={{ top: `calc(${NAVBAR_HEIGHT} + 1rem)` }}
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <Menu size={24} className="text-white" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Overlay for mobile */}
+      <AnimatePresence>
+        {sidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -168,11 +163,18 @@ const MyProfile = () => {
           initial={false}
           animate={{ x: sidebarOpen ? 0 : "-100%" }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="fixed lg:relative z-30 h-full bg-white shadow-xl flex flex-col"
+          className="fixed lg:relative z-40 h-full bg-white shadow-xl flex flex-col"
           style={{ width: SIDEBAR_WIDTH }}
         >
           {/* Profile Header */}
           <div className="bg-gradient-to-r from-emerald-400 to-teal-400 p-6 text-white flex-shrink-0 relative">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors duration-200"
+              aria-label="Close sidebar"
+            >
+              <X size={20} className="text-white" />
+            </button>
             <div className="flex flex-col items-center text-center">
               <motion.div
                 className="relative"
@@ -197,14 +199,6 @@ const MyProfile = () => {
                 <span>Member since {userDetails?.joinDate || mockUserDetails.joinDate}</span>
               </div>
             </div>
-
-            <button
-              onClick={handleLogout}
-              className="mt-4 w-full flex items-center justify-center gap-2 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors duration-200 lg:hidden"
-            >
-              <LogOut size={16} />
-              Sign Out
-            </button>
           </div>
 
           {/* Navigation Tabs */}
@@ -223,7 +217,9 @@ const MyProfile = () => {
               >
                 <Icon
                   size={18}
-                  className={activeTab === id ? "text-white" : "text-gray-500 group-hover:text-emerald-500"}
+                  className={
+                    activeTab === id ? "text-white" : "text-gray-500 group-hover:text-emerald-500"
+                  }
                 />
                 {label}
                 {id === "messages" && mockStats.messagesReceived > 0 && (
@@ -233,9 +229,18 @@ const MyProfile = () => {
                 )}
               </motion.button>
             ))}
+
+            {/* MOBILE SIGN OUT */}
+            <button
+              onClick={handleLogout}
+              className="mt-28 w-full flex items-center justify-center gap-2 text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg font-medium hover:bg-red-100 transition-colors duration-200 lg:hidden"
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
           </nav>
 
-          {/* Desktop Logout */}
+          {/* Desktop Logout Button */}
           <div className="p-4 border-t border-gray-100 flex-shrink-0 hidden lg:block">
             <motion.button
               onClick={handleLogout}
@@ -269,7 +274,9 @@ const MyProfile = () => {
                   exit="exit"
                   className="min-h-full"
                 >
-                  {activeTab === "overview" && <OverviewContent userDetails={userDetails || mockUserDetails} />}
+                  {activeTab === "overview" && (
+                    <OverviewContent userDetails={userDetails || mockUserDetails} />
+                  )}
                   {activeTab === "listings" && <MyListings />}
                   {activeTab === "favorites" && <Favourites />}
                   {activeTab === "messages" && <MessagesTab />}

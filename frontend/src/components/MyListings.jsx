@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Bed, Bath, Square, ArrowRight, Heart, Share2, Calendar, Star,
@@ -6,12 +6,15 @@ import {
   DollarSign, BarChart3, Filter, Search, Grid, List, MoreVertical,
   Camera, Users, MessageSquare, AlertCircle, RefreshCw, Layers, SortDesc,
   Droplet, Maximize, Sun, Moon, X, User, DollarSign as Dollar,
-  Filter as FilterIcon, Check, ChevronDown
+  Filter as FilterIcon, Check, ChevronDown, ChevronsLeft, ChevronLeft,
+  ChevronRight, ChevronsRight
 } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import PropertyGrid from "./PropertyGrid";
 
-
+// Import the API hooks
+import usePropertiesApi from '../hooks/useProperties';
+import { useNlpProperties } from '../hooks/NlpProperties';
 
 // Use a self-contained, stylish confirmation dialog instead of alert().
 const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
@@ -57,180 +60,7 @@ const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
   );
 };
 
-
-// Mock data for user listings
-const mockListings = [
-  {
-    id: 1,
-    title: "Modern Downtown Apartment",
-    location: "Downtown, Karachi",
-    price: 8500000,
-    priceLabel: "Rs 8,500,000",
-    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=600",
-    beds: 3,
-    baths: 2,
-    area: 1200,
-    status: "active",
-    views: 142,
-    inquiries: 8,
-    daysListed: 12,
-    rating: 4.8,
-    type: "sale",
-    yearBuilt: 2020,
-    waterSupply: true,
-    powerBackup: false,
-    security: true
-  },
-  {
-    id: 2,
-    title: "Luxury Villa with Garden",
-    location: "Clifton, Karachi",
-    price: 25000000,
-    priceLabel: "Rs 25,000,000",
-    image: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=600",
-    beds: 5,
-    baths: 4,
-    area: 3500,
-    status: "sold",
-    views: 89,
-    inquiries: 15,
-    daysListed: 45,
-    soldDate: "2025-07-15",
-    rating: 4.9,
-    type: "sale",
-    yearBuilt: 2018,
-    waterSupply: true,
-    powerBackup: true,
-    security: true
-  },
-  {
-    id: 3,
-    title: "Cozy Studio Apartment",
-    location: "Gulshan-e-Iqbal, Karachi",
-    price: 35000,
-    priceLabel: "Rs 35,000/month",
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600",
-    beds: 1,
-    baths: 1,
-    area: 450,
-    status: "active",
-    views: 67,
-    inquiries: 4,
-    daysListed: 8,
-    rating: 4.5,
-    type: "rent",
-    yearBuilt: 2019,
-    waterSupply: true,
-    powerBackup: false,
-    security: false
-  },
-  {
-    id: 4,
-    title: "Commercial Office Space",
-    location: "I.I. Chundrigar Road, Karachi",
-    price: 12000000,
-    priceLabel: "Rs 12,000,000",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600",
-    beds: null,
-    baths: 3,
-    area: 2000,
-    status: "paused",
-    views: 234,
-    inquiries: 12,
-    daysListed: 30,
-    rating: 4.7,
-    type: "sale",
-    yearBuilt: 2017,
-    waterSupply: false,
-    powerBackup: true,
-    security: true
-  },
-  {
-    id: 5,
-    title: "Beachfront Penthouse",
-    location: "Sea View, Karachi",
-    price: 45000000,
-    priceLabel: "Rs 45,000,000",
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600",
-    beds: 4,
-    baths: 3,
-    area: 2800,
-    status: "sold",
-    views: 312,
-    inquiries: 28,
-    daysListed: 60,
-    soldDate: "2025-06-20",
-    rating: 5.0,
-    type: "sale",
-    yearBuilt: 2021,
-    waterSupply: true,
-    powerBackup: true,
-    security: true
-  },
-  {
-    id: 6,
-    title: "Spacious Family Home",
-    location: "DHA, Karachi",
-    price: 32000000,
-    priceLabel: "Rs 32,000,000",
-    image: "https://images.unsplash.com/photo-1570129477041-3832c3f84394?q=80&w=600",
-    beds: 6,
-    baths: 5,
-    area: 4000,
-    status: "active",
-    views: 250,
-    inquiries: 20,
-    daysListed: 7,
-    rating: 4.9,
-    type: "sale",
-    yearBuilt: 2015,
-    waterSupply: true,
-    powerBackup: true,
-    security: true
-  },
-  {
-    id: 7,
-    title: "Newly Built Townhouse",
-    location: "Gulistan-e-Jauhar, Karachi",
-    price: 65000,
-    priceLabel: "Rs 65,000/month",
-    image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b252?q=80&w=600",
-    beds: 3,
-    baths: 3,
-    area: 1500,
-    status: "active",
-    views: 110,
-    inquiries: 10,
-    daysListed: 15,
-    rating: 4.6,
-    type: "rent",
-    yearBuilt: 2023,
-    waterSupply: true,
-    powerBackup: true,
-    security: false
-  },
-  {
-    id: 8,
-    title: "Charming Cottage",
-    location: "Malir, Karachi",
-    price: 7000000,
-    priceLabel: "Rs 7,000,000",
-    image: "https://images.unsplash.com/photo-1588147575971-897d264a7c13?q=80&w=600",
-    beds: 2,
-    baths: 1,
-    area: 900,
-    status: "paused",
-    views: 95,
-    inquiries: 6,
-    daysListed: 25,
-    rating: 4.2,
-    type: "sale",
-    yearBuilt: 2005,
-    waterSupply: true,
-    powerBackup: false,
-    security: false
-  }
-];
+const propertiesPerPage = 4;
 
 const tabs = [
   { id: 'all', label: 'All', icon: Layers },
@@ -242,26 +72,11 @@ const tabs = [
 const sortOptions = [
   { id: 'newest', label: 'Newest First', icon: Calendar },
   { id: 'oldest', label: 'Oldest First', icon: Calendar },
-  { id: 'price_high', label: 'Price: High to Low', icon: Dollar },
-  { id: 'price_low', label: 'Price: Low to High', icon: Dollar },
+  { id: 'price_high', label: 'Price: High to Low', icon: DollarSign },
+  { id: 'price_low', label: 'Price: Low to High', icon: DollarSign },
   { id: 'views_high', label: 'Views: High to Low', icon: Eye },
   { id: 'rating_high', label: 'Rating: High to Low', icon: Star },
 ];
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
 
 const getStatusIcon = (status) => {
   switch (status) {
@@ -283,7 +98,6 @@ const getStatusColor = (status) => {
 
 const StatCard = ({ icon: Icon, label, value, color }) => (
   <motion.div
-    variants={itemVariants}
     className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700"
   >
     <div className={`flex items-center gap-4`}>
@@ -322,7 +136,7 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
         <div className="absolute top-4 left-4">
           <div className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm border ${getStatusColor(property.status)} flex items-center gap-2`}>
             {getStatusIcon(property.status)}
-            <span className="hidden xs:inline">{property.status.charAt(0).toUpperCase() + property.status.slice(1)}</span>
+            <span className="hidden xs:inline">{property.status?.charAt(0).toUpperCase() + property.status?.slice(1)}</span>
           </div>
         </div>
       </div>
@@ -365,10 +179,12 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
                 <span>{property.area} sq ft</span>
               </div>
             )}
-            <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
-              <Calendar size={16} className="text-emerald-500" />
-              <span>{property.yearBuilt}</span>
-            </div>
+            {property.yearBuilt && (
+                <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                  <Calendar size={16} className="text-emerald-500" />
+                  <span>{property.yearBuilt}</span>
+                </div>
+              )}
           </div>
 
           {/* Performance Stats */}
@@ -376,20 +192,20 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1.5">
                 <Eye size={14} />
-                <span>{property.views} views</span>
+                <span>{property.views || 0} views</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <MessageSquare size={14} />
-                <span>{property.inquiries} inquiries</span>
+                <span>{property.inquiries || 0} inquiries</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <Calendar size={14} />
-                <span>{property.daysListed} days</span>
+                <span>{property.daysListed || 0} days</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <Star size={14} fill="currentColor" className="text-yellow-400" />
-              <span>{property.rating}</span>
+              <span>{property.rating || 'N/A'}</span>
             </div>
           </div>
         </div>
@@ -420,304 +236,338 @@ const ListingCard = ({ property, viewMode, onDelete, onEdit }) => {
   );
 };
 
+/**
+ * Pagination Component
+ * @param {object} props - The component props.
+ * @param {number} props.currentPage - The current active page.
+ * @param {number} props.totalPages - The total number of pages.
+ * @param {function} props.onPageChange - Callback function to set the page.
+ * @param {number} props.totalItems - The total number of items across all pages.
+ * @param {number} props.itemsPerPage - The number of items displayed per page.
+ */
+const ElitePagination = ({ currentPage, totalPages, onPageChange, totalItems, itemsPerPage }) => {
+  // Don't render pagination if there's only one page or less
+  if (totalPages <= 1) {
+    return null;
+  }
+
+  // Calculate the range of items being shown
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+
+  // Generates the array of page numbers and ellipses to display
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      // If 7 or fewer pages, show all page numbers
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      // For more than 7 pages, use ellipses
+      if (currentPage <= 4) {
+        // If near the beginning
+        pages.push(1, 2, 3, 4, 5, '...', totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        // If near the end
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        // If in the middle
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  // Reusable button component for pagination controls
+  const PageButton = ({ children, onClick, disabled = false, isActive = false, isIcon = false }) => (
+    <motion.button
+      whileHover={{ scale: disabled ? 1 : 1.05, y: disabled ? 0 : -2 }}
+      whileTap={{ scale: disabled ? 1 : 0.95 }}
+      onClick={onClick}
+      disabled={disabled}
+      className={`relative flex items-center justify-center h-10 rounded-xl font-semibold text-sm transition-all duration-200
+        ${isIcon ? 'w-10' : 'px-4'}
+        ${disabled ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-400 dark:hover:text-emerald-400'}
+        ${isActive ? '!bg-emerald-600 !text-white !border-emerald-600 dark:!bg-emerald-500 dark:!border-emerald-500 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30' : ''}
+      `}
+    >
+      {children}
+    </motion.button>
+  );
+
+  const Ellipsis = () => (
+    <span className="flex items-center justify-center w-10 h-10 text-gray-500 dark:text-gray-400">...</span>
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col sm:flex-row items-center justify-between gap-4 py-6"
+    >
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        Showing <span className="font-bold text-gray-800 dark:text-gray-200">{startItem}</span> to <span className="font-bold text-gray-800 dark:text-gray-200">{endItem}</span> of <span className="font-bold text-gray-800 dark:text-gray-200">{totalItems}</span> results
+      </div>
+      <nav aria-label="Pagination" className="flex items-center gap-1.5">
+        <PageButton onClick={() => onPageChange(1)} disabled={currentPage === 1} isIcon>
+          <ChevronsLeft size={16} />
+        </PageButton>
+        <PageButton onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1} isIcon>
+          <ChevronLeft size={16} />
+        </PageButton>
+
+        {pageNumbers.map((page, index) =>
+          page === '...' ? (
+            <Ellipsis key={`ellipsis-${index}`} />
+          ) : (
+            <PageButton
+              key={page}
+              onClick={() => onPageChange(page)}
+              isActive={currentPage === page}
+            >
+              {page}
+            </PageButton>
+          )
+        )}
+
+        <PageButton onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages} isIcon>
+          <ChevronRight size={16} />
+        </PageButton>
+        <PageButton onClick={() => onPageChange(totalPages)} disabled={currentPage === totalPages} isIcon>
+          <ChevronsRight size={16} />
+        </PageButton>
+      </nav>
+    </motion.div>
+  );
+};
+
+
 // Main App Component
 const MyListings = () => {
-  // State for all dashboard settings
+  const navigate = useNavigate();
+
+  // New filter state vars (UI-driven)
+  const [minBeds, setMinBeds] = useState('');
+  const [minBaths, setMinBaths] = useState('');
+  const [minArea, setMinArea] = useState('');
+  const [listingType, setListingType] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+
+  // Core UI state
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const priceRangeValue = [minPrice ? Number(minPrice) : 0, maxPrice ? Number(maxPrice) : 150000000];
+  // Sorting
+  const [sortBy, setSortBy] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [nlpQuery, setNlpQuery] = useState('');
+
+  // Tab, view, modal states
   const [activeTab, setActiveTab] = useState('all');
   const [viewMode, setViewMode] = useState('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState('newest');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [listingToDelete, setListingToDelete] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
-  const [listings, setListings] = useState(mockListings);
-
+  const [listings, setListings] = useState([]); // Local cache for delete placeholder
   const [likedProperties, setLikedProperties] = useState(new Set());
 
-  const navigate = useNavigate();
-  
+  // NLP mode
+  const isNlpActive = nlpQuery.trim().length > 0;
 
-  // Toggle Like
-  const toggleLike = (id) => {
-    setLikedProperties((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) {
-        updated.delete(id);
-      } else {
-        updated.add(id);
-      }
-      return updated;
-    });
-  };
-  // Filter state for advanced filters
-  const [filters, setFilters] = useState({
-    minBeds: '',
-    minBaths: '',
-    minArea: '',
-    listingType: '',
-    minPrice: '',
-    maxPrice: ''
+  // API calls
+  const {
+    data: normalData,
+    isLoading: normalLoading,
+    error: normalError,
+  } = usePropertiesApi({
+    filter,
+    searchTerm,
+    priceRange: priceRangeValue,
+    sortBy: sortBy,
+    currentPage: page,
+    limit: propertiesPerPage,
+    minBeds,
+    minBaths,
+    minArea,
+    listingType,
+    minPrice,
+    maxPrice,
+    
   });
 
-  // Derived state from filters and search
-  const filteredAndSortedProperties = useMemo(() => {
-    let filtered = listings;
-    
-    // Step 1: Filter by Status Tab
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(prop => prop.status === activeTab);
-    }
-    
-    // Step 2: Filter by Search Query
-    if (searchQuery) {
-      filtered = filtered.filter(prop => 
-        prop.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        prop.location.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+  const {
+    data: nlpData,
+    isLoading: nlpLoading,
+    error: nlpError,
+  } = useNlpProperties({
+    query: nlpQuery,
+    page,
+    limit: propertiesPerPage,
+    filter,
+    priceRange: priceRangeValue,
+    sort: sortBy,
+  });
 
-    // Step 3: Apply Advanced Filters
-    if (filters.minBeds) {
-      filtered = filtered.filter(prop => (prop.beds || 0) >= parseInt(filters.minBeds));
-    }
-    if (filters.minBaths) {
-      filtered = filtered.filter(prop => (prop.baths || 0) >= parseInt(filters.minBaths));
-    }
-    if (filters.minArea) {
-      filtered = filtered.filter(prop => (prop.area || 0) >= parseInt(filters.minArea));
-    }
-    if (filters.listingType) {
-      filtered = filtered.filter(prop => prop.type === filters.listingType);
-    }
-    if (filters.minPrice) {
-      filtered = filtered.filter(prop => (prop.price || 0) >= parseInt(filters.minPrice));
-    }
-    if (filters.maxPrice) {
-      filtered = filtered.filter(prop => (prop.price || 0) <= parseInt(filters.maxPrice));
-    }
+  // UI data aggregation
+  const properties = isNlpActive
+    ? (nlpData?.properties?.map(p => p?.property ?? p) || [])
+    : (normalData?.data || []);
 
-    // Step 4: Sort the results
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortOrder) {
-        case 'newest':
-          return b.id - a.id;
-        case 'oldest':
-          return a.id - b.id;
-        case 'price_high':
-          return (b.price || 0) - (a.price || 0);
-        case 'price_low':
-          return (a.price || 0) - (b.price || 0);
-        case 'views_high':
-          return (b.views || 0) - (a.views || 0);
-        case 'rating_high':
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return b.id - a.id;
-      }
-    });
+  const totalListingsCount = isNlpActive
+    ? (nlpData?.count ?? 0)
+    : (normalData?.pagination?.total ?? 0);
 
-    return sorted;
-  }, [listings, activeTab, searchQuery, filters, sortOrder]);
+  // Sync tab to API filter
+  useEffect(() => {
+    if (activeTab === 'all') {
+      setFilter('all');
+    } else if (activeTab === 'active') {
+      setFilter('active');
+    } else if (activeTab === 'sold') {
+      setFilter('sold');
+    } else if (activeTab === 'paused') {
+      setFilter('paused');
+    }
+  }, [activeTab]);
 
-  // Handler for delete confirmation
+  // Handlers
   const handleDeleteListing = useCallback((id) => {
     setListingToDelete(id);
     setIsDeleteModalOpen(true);
   }, []);
 
   const confirmDelete = useCallback(() => {
-    setListings(listings.filter(listing => listing.id !== listingToDelete));
+    setListings(prev => prev.filter(listing => listing.id !== listingToDelete));
     setIsDeleteModalOpen(false);
     setListingToDelete(null);
-  }, [listings, listingToDelete]);
+  }, [listingToDelete]);
 
   const cancelDelete = useCallback(() => {
     setIsDeleteModalOpen(false);
     setListingToDelete(null);
   }, []);
 
-  // Handler for edit - currently a placeholder
   const handleEditListing = useCallback((property) => {
     alert(`Editing listing: ${property.title}`);
   }, []);
 
-  const totalListings = listings.length;
-  const activeListings = listings.filter(p => p.status === 'active').length;
-  const soldListings = listings.filter(p => p.status === 'sold').length;
-  const pausedListings = listings.filter(p => p.status === 'paused').length;
-
-  const getTabCount = (tabId) => {
-    switch (tabId) {
-      case 'all': return totalListings;
-      case 'active': return activeListings;
-      case 'sold': return soldListings;
-      case 'paused': return pausedListings;
-      default: return 0;
-    }
-  };
-
-  const handleResetFilters = useCallback(() => {
-    setSearchQuery('');
-    setActiveTab('all');
-    setFilters({
-      minBeds: '',
-      minBaths: '',
-      minArea: '',
-      listingType: '',
-      minPrice: '',
-      maxPrice: ''
-    });
-  }, []);
-  
-  // Custom dropdown for sorting
+  // Sorting dropdown
   const SortDropdown = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const selectedOption = sortOptions.find(opt => opt.id === sortOrder);
+    const [isOpen, setIsOpen] = useState(false);
+    const selectedOption = sortOptions.find(opt => opt.id === sortBy);
 
-  return (
-    <div className="relative">
-      {/* Sort Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-xs sm:text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-      >
-        <SortDesc size={16} className="sm:w-[18px] sm:h-[18px]" />
-        <span className="hidden sm:inline">Sort by:</span>
-        <span className="font-bold whitespace-nowrap">{selectedOption.label}</span>
-        <ChevronDown
-          size={14}
-          className={`transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`}
-        />
-      </motion.button>
+    return (
+      <div className="relative">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-xs sm:text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+        >
+          <SortDesc size={16} className="sm:w-[18px] sm:h-[18px]" />
+          <span className="hidden sm:inline">Sort by:</span>
+          <span className="font-bold whitespace-nowrap">{selectedOption?.label ?? ''}</span>
+          <ChevronDown
+            size={14}
+            className={`transition-transform ${isOpen ? 'rotate-180' : 'rotate-0'}`}
+          />
+        </motion.button>
 
-      {/* Dropdown Menu */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute right-0 mt-2 w-48 sm:w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700 overflow-hidden"
-          >
-            {sortOptions.map(option => (
-              <button
-                key={option.id}
-                onClick={() => { setSortOrder(option.id); setIsOpen(false); }}
-                className="flex items-center justify-between w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-              >
-                <span className="flex items-center gap-1.5 sm:gap-2">
-                  <option.icon size={14} className="sm:w-4 sm:h-4" />
-                  {option.label}
-                </span>
-                {sortOrder === option.id && <Check size={14} className="sm:w-4 sm:h-4 text-emerald-500" />}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-
-  // Advanced Filter Modal
-const FilterModal = () => {
-  const [tempFilters, setTempFilters] = useState(filters);
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setTempFilters(prev => ({ ...prev, [name]: value }));
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute right-0 mt-2 w-48 sm:w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700 overflow-hidden"
+            >
+              {sortOptions.map(option => {
+                const Icon = option.icon;
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => { setSortBy(option.id); setIsOpen(false); }}
+                    className="flex items-center justify-between w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                  >
+                    <span className="flex items-center gap-1.5 sm:gap-2">
+                      <Icon size={14} className="sm:w-4 sm:h-4" />
+                      {option.label}
+                    </span>
+                    {sortBy === option.id && <Check size={14} className="sm:w-4 sm:h-4 text-emerald-500" />}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   };
 
-  const handleApplyFilters = () => {
-    setFilters(tempFilters);
-    setIsFilterModalOpen(false);
-  };
-
-  const handleClearFilters = () => {
-    setTempFilters({
-      minBeds: '',
-      minBaths: '',
-      minArea: '',
-      listingType: '',
-      minPrice: '',
-      maxPrice: ''
-    });
-    setFilters({
-      minBeds: '',
-      minBaths: '',
-      minArea: '',
-      listingType: '',
-      minPrice: '',
-      maxPrice: ''
-    });
-    setIsFilterModalOpen(false);
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => setIsFilterModalOpen(false)}
-      ></div>
-
-      {/* Modal */}
+  // Filter Modal wired to main filter state
+  const FilterModal = () => {
+    return (
       <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center pb-4 mb-6 border-b border-gray-100 dark:border-gray-700">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-            Advanced Filters
-          </h3>
-          <button
-            onClick={() => setIsFilterModalOpen(false)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-          >
-            <X size={20} className="sm:w-6 sm:h-6" />
-          </button>
-        </div>
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+          onClick={() => setIsFilterModalOpen(false)}
+        ></div>
 
-        {/* Form Fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          {/* Each field */}
-          <div className="flex flex-col gap-2">
-            <label htmlFor="minBeds" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Min Beds
-            </label>
-            <input
-              type="number"
-              id="minBeds"
-              name="minBeds"
-              value={tempFilters.minBeds}
-              onChange={handleFilterChange}
-              placeholder="e.g., 2"
-              className="px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
+        {/* Modal content */}
+        <motion.div
+          initial={{ scale: 0.9, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.9, y: 20 }}
+          className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
+        >
+          <div className="flex justify-between items-center pb-4 mb-6 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+              Advanced Filters
+            </h3>
+            <button
+              onClick={() => setIsFilterModalOpen(false)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X size={20} className="sm:w-6 sm:h-6" />
+            </button>
           </div>
-          <div className="flex flex-col gap-2">
+
+          {/* Form Fields (wired to main state) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="minBeds" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Min Beds
+              </label>
+              <input
+                type="number"
+                id="minBeds"
+                value={minBeds}
+                onChange={(e) => setMinBeds(e.target.value)}
+                placeholder="e.g., 2"
+                className="px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+            <div className="flex flex-col gap-2">
               <label htmlFor="minBaths" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Baths</label>
-              <input type="number" id="minBaths" name="minBaths" value={tempFilters.minBaths} onChange={handleFilterChange} placeholder="e.g., 2" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="number" id="minBaths" value={minBaths} onChange={(e) => setMinBaths(e.target.value)} placeholder="e.g., 2" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="minArea" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Area (sq ft)</label>
-              <input type="number" id="minArea" name="minArea" value={tempFilters.minArea} onChange={handleFilterChange} placeholder="e.g., 1000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="number" id="minArea" value={minArea} onChange={(e) => setMinArea(e.target.value)} placeholder="e.g., 1000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="listingType" className="text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
-              <select id="listingType" name="listingType" value={tempFilters.listingType} onChange={handleFilterChange} className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <select id="listingType" value={listingType} onChange={(e) => setListingType(e.target.value)} className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="">All</option>
                 <option value="sale">For Sale</option>
                 <option value="rent">For Rent</option>
@@ -725,40 +575,74 @@ const FilterModal = () => {
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="minPrice" className="text-sm font-medium text-gray-700 dark:text-gray-300">Min Price</label>
-              <input type="number" id="minPrice" name="minPrice" value={tempFilters.minPrice} onChange={handleFilterChange} placeholder="e.g., 5000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="number" id="minPrice" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} placeholder="e.g., 5000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="maxPrice" className="text-sm font-medium text-gray-700 dark:text-gray-300">Max Price</label>
-              <input type="number" id="maxPrice" name="maxPrice" value={tempFilters.maxPrice} onChange={handleFilterChange} placeholder="e.g., 50000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
+              <input type="number" id="maxPrice" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="e.g., 50000000" className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
             </div>
+          </div>
 
-        </div>
-
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleClearFilters}
-            className="flex-1 px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm sm:text-base"
-          >
-            Clear Filters
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleApplyFilters}
-            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-2 sm:py-3 px-4 sm:px-6 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 text-sm sm:text-base"
-          >
-            Apply Filters
-          </motion.button>
-        </div>
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleClearFilters}
+              className="flex-1 px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm sm:text-base"
+            >
+              Clear Filters
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleApplyFilters}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-2 sm:py-3 px-4 sm:px-6 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 text-sm sm:text-base"
+            >
+              Apply Filters
+            </motion.button>
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
-  );
-};
+    );
+  };
 
-  
+  // Reset All Filters
+  const handleResetFilters = useCallback(() => {
+    setSearchTerm('');
+    setNlpQuery('');
+    setActiveTab('all');
+    setFilter('all');
+    setMinBeds('');
+    setMinBaths('');
+    setMinArea('');
+    setListingType('');
+    setMinPrice('');
+    setMaxPrice('');
+    setPage(1);
+    setSortBy('newest');
+  }, []);
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(totalListingsCount / propertiesPerPage));
+
+  // Derived actions
+  const handleApplyFilters = () => {
+    // Apply is reflected by bound state; reset to first page
+    setPage(1);
+    setIsFilterModalOpen(false);
+  };
+
+  const handleClearFilters = () => {
+    // Clear individual fields (FilterModal uses this too)
+    setMinBeds('');
+    setMinBaths('');
+    setMinArea('');
+    setListingType('');
+    setMinPrice('');
+    setMaxPrice('');
+  };
+
   // The main component renders the whole page
   return (
     <div className={`${darkMode ? 'dark' : ''} font-sans`}>
@@ -797,40 +681,40 @@ const FilterModal = () => {
             </div>
           </motion.header>
 
-         {/* Stats and Controls Panel */}
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6, delay: 0.2 }}
-    className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-100 dark:border-gray-700"
-  >
-  {/* Stats Summary */}
-  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-100 dark:border-gray-700">
-    <StatCard
-      icon={Layers}
-      label="Total Listings"
-      value={totalListings}
-      color={{ bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-600 dark:text-gray-300" }}
-    />
-    <StatCard
-      icon={Clock}
-      label="Active Listings"
-      value={activeListings}
-      color={{ bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-300" }}
-    />
-    <StatCard
-      icon={CheckCircle}
-      label="Sold Listings"
-      value={soldListings}
-      color={{ bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-300" }}
-    />
-    <StatCard
-      icon={PauseCircle}
-      label="Paused Listings"
-      value={pausedListings}
-      color={{ bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-600 dark:text-yellow-300" }}
-    />
-  </div>
+          {/* Stats and Controls Panel */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-100 dark:border-gray-700"
+          >
+            {/* Stats Summary */}
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-100 dark:border-gray-700">
+              <StatCard
+                icon={Layers}
+                label="Total Listings"
+                value={totalListingsCount}
+                color={{ bg: "bg-gray-100 dark:bg-gray-700", text: "text-gray-600 dark:text-gray-300" }}
+              />
+              <StatCard
+                icon={Clock}
+                label="Active Listings"
+                value={properties.filter(p => p.status === 'active').length}
+                color={{ bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-300" }}
+              />
+              <StatCard
+                icon={CheckCircle}
+                label="Sold Listings"
+                value={properties.filter(p => p.status === 'sold').length}
+                color={{ bg: "bg-green-100 dark:bg-green-900/30", text: "text-green-600 dark:text-green-300" }}
+              />
+              <StatCard
+                icon={PauseCircle}
+                label="Paused Listings"
+                value={properties.filter(p => p.status === 'paused').length}
+                color={{ bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-600 dark:text-yellow-300" }}
+              />
+            </div>
 
             {/* Filters, Search, and View Controls */}
             <div className="flex flex-col gap-3 sm:gap-4">
@@ -847,33 +731,28 @@ const FilterModal = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-300'
                     }`}
                   >
-                    <tab.icon size={16} />
+                    {(() => { const Icon = tab.icon; return <Icon size={16} />; })()}
                     <span className="whitespace-nowrap">{tab.label}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                      activeTab === tab.id ? 'bg-white/20 dark:bg-black/20' : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200'
-                    }`}>
-                      {getTabCount(tab.id)}
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${activeTab === tab.id ? 'bg-white/20 dark:bg-black/20' : 'bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200'}`}>
+                      {properties.filter(p => tab.id === 'all' || p.status === tab.id).length}
                     </span>
                   </motion.button>
                 ))}
               </div>
 
-              {/* yahan se resonsive hogi filter wali jagah */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-wrap w-full">
-
                 <div className="relative flex-1 sm:max-w-md">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     type="text"
                     placeholder="Search by title or location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
-                
-                <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
 
+                <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -883,15 +762,15 @@ const FilterModal = () => {
                     <FilterIcon size={18} />
                     Advanced Filters
                   </motion.button>
+
                   <SortDropdown />
+
                   <div className="flex items-center rounded-xl bg-gray-100 dark:bg-gray-700 p-1">
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === 'grid' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300' : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300' : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300'}`}
                     >
                       <Grid size={20} />
                     </motion.button>
@@ -899,30 +778,50 @@ const FilterModal = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === 'list' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300' : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300'
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300' : 'text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300'}`}
                     >
                       <List size={20} />
                     </motion.button>
                   </div>
                 </div>
               </div>
+
+              {/* Reset Filters Button in main controls */}
+              <div className="flex justify-end mt-2">
+                <button onClick={handleResetFilters} className="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm text-gray-700 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                  <RefreshCw size={16} />
+                  Reset Filters
+                </button>
+              </div>
+
             </div>
           </motion.div>
 
           {/* Properties Grid/List */}
           <AnimatePresence mode="wait">
-             {filteredAndSortedProperties.length > 0 ? (
-               <PropertyGrid
-  properties={filteredAndSortedProperties}
-  viewMode={viewMode}
-  likedProperties={likedProperties}
-  toggleLike={toggleLike}
-  onDelete={handleDeleteListing}
-  onEdit={handleEditListing}
-/>
-
+             {(normalLoading && !isNlpActive) || (nlpLoading && isNlpActive) ? (
+                <p className="text-center text-gray-500 py-20">Loading properties...</p>
+              ) : (normalError && !isNlpActive) || (nlpError && isNlpActive) ? (
+                <p className="text-center text-red-500 py-20">Error loading properties.</p>
+              ) : properties.length > 0 ? (
+                <>
+                   <PropertyGrid
+                     properties={properties}
+                     viewMode={viewMode}
+                     likedProperties={likedProperties}
+                     toggleLike={() => {}} // No like function for my listings
+                     onDelete={handleDeleteListing}
+                     onEdit={handleEditListing}
+                   />
+                   {/* NEW: Elite Pagination controls */}
+                   <ElitePagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                      totalItems={totalListingsCount}
+                      itemsPerPage={propertiesPerPage}
+                   />
+                </>
             ) : (
               <motion.div
                 key="empty-state"
@@ -953,6 +852,7 @@ const FilterModal = () => {
           </AnimatePresence>
         </div>
       </div>
+
       <AnimatePresence>
         {isFilterModalOpen && <FilterModal />}
         {isDeleteModalOpen && (
@@ -964,6 +864,7 @@ const FilterModal = () => {
           />
         )}
       </AnimatePresence>
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         .font-sans { font-family: 'Inter', sans-serif; }
