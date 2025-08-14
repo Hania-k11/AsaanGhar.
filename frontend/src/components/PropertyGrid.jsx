@@ -125,14 +125,14 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
               </div>
               <div className="text-right">
                 <p className="text-2xl font-bold text-emerald-600">{property.price}</p>
-                <div className="flex items-center gap-1 mt-1">
+                {/* <div className="flex items-center gap-1 mt-1">
                   <Star
                     size={12}
                     fill="currentColor"
                     className="text-yellow-400"
                   />
                   <span className="text-sm text-gray-600">{property.rating}</span>
-                </div>
+                </div> */}
               </div>
             </div>
 

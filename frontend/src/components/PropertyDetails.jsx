@@ -448,13 +448,13 @@ const PropertyDetails = () => {
     transition={{ delay: 0.6, duration: 0.4 }}
     className="pt-4 border-t border-gray-200"
   >
-    <button
+    {/* <button
       onClick={() => alert("Report submitted. Our team will review this property.")}
       className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 py-2.5 rounded-xl text-sm font-medium hover:bg-red-100 transition duration-300 shadow-sm"
     >
       <Info size={16} className="text-red-500" />
       Report this Property
-    </button>
+    </button> */}
   </motion.div>
 </motion.div>
 </div>
