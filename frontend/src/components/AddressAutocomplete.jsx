@@ -12,10 +12,18 @@ const AddressAutocomplete = ({ value, onSelect }) => {
   const containerRef = useRef(null);
   const debounceTimer = useRef(null);
   const locationIqToken = import.meta.env.VITE_LOCATIONIQ_TOKEN;
+  const errorRef = useRef(null); // New ref for error message
 
   useEffect(() => {
     setQuery(value || ""); // sync with parent
   }, [value]);
+
+  useEffect(() => {
+    // Scroll to error message when it appears
+    if (errorMsg && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [errorMsg]);
 
   const fetchSuggestions = async (input) => {
     if (!input.trim()) {

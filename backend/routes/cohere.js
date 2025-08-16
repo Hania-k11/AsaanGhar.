@@ -4,11 +4,17 @@ const parseUserQuery = require('../utils/parseSearchQuery');
 const postProcess = require('../utils/postProcessNLP');
 const { searchNearby } = require('../utils/places');
 const haversineDistance = require('../utils/haversineDistance');
-const { queryProperties } = require('../utils/propertyQueries');
+const pool = require('../db');
 
 const fallbackLocations = ['Gulshan', 'DHA', 'Clifton', 'North Nazimabad', 'Bahadurabad'];
 
-router.post('/search', async (req, res) => {
+router.post('/search/:user_id', async (req, res) => {
+  const user_id = parseInt(req.params.user_id, 10);
+
+  if (isNaN(user_id)) {
+    return res.status(400).json({ error: 'Invalid user ID' });
+  }
+
   try {
     const {
       query: userQuery,
@@ -16,8 +22,10 @@ router.post('/search', async (req, res) => {
       page = 1,
       limit = 6,
       filter = 'all',
-      priceRange, // [min, max]
+      priceRange,
     } = req.body;
+
+    const offset = (page - 1) * limit;
 
     if (!userQuery) {
       return res.status(400).json({ error: 'Missing query text' });
@@ -30,9 +38,9 @@ router.post('/search', async (req, res) => {
     }
 
     const clean = postProcess({ ...nlpOutput.parsed, query: userQuery });
+    console.log('Parsed and cleaned output:', clean);
 
     // 2️⃣ Merge NLP + manual filters
-
     const locationFilters = clean.location ? [clean.location] : fallbackLocations;
 
     // Price precedence: manual filter overrides NLP
@@ -51,58 +59,104 @@ router.post('/search', async (req, res) => {
 
     const listingTypeFinal = filter !== 'all' ? filter : clean.listing_type ?? undefined;
 
-    // 3️⃣ Build base query params
-    const baseQueryParams = {
-      locationFilters,
-      rooms: clean.rooms,
-      bathrooms: clean.bathrooms,
-      property_type: clean.property_type,
-      listing_type: listingTypeFinal,
-      availability: clean.availability,
-      priceMin,
-      priceMax,
-      searchTerm: '',
-      sort,
-    };
+    // 3️⃣ Fetch properties using stored procedure
+    const [rows] = await pool.query('CALL GetPropertiesExcludingUser(?)', [Number(user_id)]);
+    let properties = rows[0]; // Get the first result set
 
-    // 4️⃣ No nearby filtering → simple query with pagination
-    if (!clean.places_nearby || clean.places_nearby.length === 0) {
-      const { data, totalCount, totalPages } = await queryProperties({
-        ...baseQueryParams,
-        page,
-        limit,
+    console.log('Initial properties from stored procedure:', properties);
+
+    // 4️⃣ Apply filters in Node.js
+    if (locationFilters && locationFilters.length > 0) {
+      properties = properties.filter(p =>
+        locationFilters.some(loc =>
+          p.location_city?.toLowerCase().includes(loc.toLowerCase()) ||
+          p.location_name?.toLowerCase().includes(loc.toLowerCase())
+        )
+      );
+      console.log('After location filter:', properties);
+    }
+
+    if (clean.rooms) {
+      properties = properties.filter(p => p.bedrooms >= clean.rooms);
+      console.log('After rooms filter:', properties);
+    }
+
+    if (clean.bathrooms) {
+      properties = properties.filter(p => p.bathrooms >= clean.bathrooms);
+      console.log('After bathrooms filter:', properties);
+    }
+
+    if (clean.property_type) {
+      properties = properties.filter(p =>
+        p.property_type_name?.toLowerCase() === clean.property_type.toLowerCase()
+      );
+      console.log('After property type filter:', properties);
+    }
+
+    if (listingTypeFinal) {
+      const listingTypeMap = { rent: 1, sale: 2 };
+      const listingTypeId = listingTypeMap[listingTypeFinal.toLowerCase()];
+      if (listingTypeId) {
+        properties = properties.filter(p => p.listing_type_id === listingTypeId);
+        console.log('After listing type filter:', properties);
+      }
+    }
+
+    if (clean.availability) {
+      properties = properties.filter(p => {
+        const availableFrom = new Date(p.available_from);
+        return availableFrom <= new Date(clean.availability);
       });
+      console.log('After availability filter:', properties);
+    }
+
+    if (priceMin !== null && priceMin !== undefined && priceMax !== null && priceMax !== undefined) {
+      const minPriceNum = parseFloat(priceMin);
+      const maxPriceNum = parseFloat(priceMax);
+      properties = properties.filter(p => {
+        const priceNum = parseFloat(p.price);
+        return !isNaN(priceNum) && priceNum >= minPriceNum && priceNum <= maxPriceNum;
+      });
+      console.log('After price filter:', properties);
+    }
+
+    // 5️⃣ No nearby filtering → simple query with pagination
+    if (!clean.places_nearby || clean.places_nearby.length === 0) {
+      // Sorting
+      switch (sort) {
+        case 'price-low':
+          properties.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+          break;
+        case 'price-high':
+          properties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+          break;
+        case 'newest':
+          properties.sort((a, b) => new Date(b.posted_at) - new Date(a.posted_at));
+          break;
+        default:
+          properties.sort((a, b) => b.is_featured - a.is_featured);
+      }
+      console.log('After sorting:', properties);
+
+      // Pagination
+      const totalCount = properties.length;
+      const totalPages = Math.ceil(totalCount / limit);
+      const paginatedProperties = properties.slice(offset, offset + Number(limit));
 
       return res.json({
         count: totalCount,
         totalPages,
         page: Number(page),
         limit: Number(limit),
-        properties: data.map(p => ({
-          id: p.id,
-          title: p.title,
-          location: `${p.location_sector}, ${p.location_area}, ${p.location_city}`,
-          price: p.price,
-          listing_type: p.listing_type_name,
-          property_type: p.property_type_name,
-          bedrooms: p.bedrooms,
-          bathrooms: p.bathrooms,
-          coordinates: { latitude: p.latitude, longitude: p.longitude },
-        })),
+        properties: paginatedProperties, // Return full property objects
       });
     }
 
-    // 5️⃣ Nearby filtering - get all filtered properties first (limit large)
-    const { data: allFilteredProperties } = await queryProperties({
-      ...baseQueryParams,
-      page: 1,
-      limit: 10000,
-    });
-
+    // 6️⃣ Nearby filtering
     const radiusKm = clean.radiusInKm || 5;
     const filteredPropertiesWithPlaces = [];
 
-    for (const property of allFilteredProperties) {
+    for (const property of properties) {
       const nearbyPlacesFound = [];
 
       for (const placeType of clean.places_nearby) {
@@ -137,53 +191,41 @@ router.post('/search', async (req, res) => {
 
       if (nearbyPlacesFound.length > 0) {
         filteredPropertiesWithPlaces.push({
-          property: {
-            id: property.id,
-            title: property.title,
-            location: `${property.location_sector}, ${property.location_area}, ${property.location_city}`,
-            price: property.price,
-            listing_type: property.listing_type_name,
-            property_type: property.property_type_name,
-            bedrooms: property.bedrooms,
-            bathrooms: property.bathrooms,
-            coordinates: { latitude: property.latitude, longitude: property.longitude },
-          },
+          property, // Return full property object
           nearby_places: nearbyPlacesFound,
         });
       }
     }
 
-    // 6️⃣ SORT filtered results **before** pagination
+    // 7️⃣ Sort filtered results
     switch (sort) {
       case 'price-low':
         filteredPropertiesWithPlaces.sort(
-          (a, b) => a.property.price - b.property.price
+          (a, b) => parseFloat(a.property.price) - parseFloat(b.property.price)
         );
         break;
       case 'price-high':
         filteredPropertiesWithPlaces.sort(
-          (a, b) => b.property.price - a.property.price
+          (a, b) => parseFloat(b.property.price) - parseFloat(b.property.price)
         );
         break;
       case 'newest':
-        filteredPropertiesWithPlaces.sort((a, b) =>
-          new Date(b.property.posted_at) - new Date(a.property.posted_at)
+        filteredPropertiesWithPlaces.sort(
+          (a, b) => new Date(b.property.posted_at) - new Date(a.property.posted_at)
         );
         break;
       default:
-        // featured or fallback
-        filteredPropertiesWithPlaces.sort((a, b) =>
-          b.property.is_featured - a.property.is_featured
+        filteredPropertiesWithPlaces.sort(
+          (a, b) => b.property.is_featured - a.property.is_featured
         );
     }
 
-    // 7️⃣ Pagination after sorting
+    // 8️⃣ Pagination after sorting
     const totalCount = filteredPropertiesWithPlaces.length;
     const totalPages = Math.ceil(totalCount / limit);
-    const startIndex = (page - 1) * limit;
     const paginatedFilteredProperties = filteredPropertiesWithPlaces.slice(
-      startIndex,
-      startIndex + limit
+      offset,
+      offset + Number(limit)
     );
 
     return res.json({

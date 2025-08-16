@@ -10,7 +10,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
   // Function to handle sharing
   const handleShare = (e, property) => {
     e.stopPropagation(); // Prevent triggering parent click events
-    const shareUrl = `${window.location.origin}/property/${property.id}`;
+    const shareUrl = `${window.location.origin}/property/${property.property_id}`;
 
     if (navigator.share) {
       navigator
@@ -51,7 +51,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
             viewMode === "list" ? "flex gap-6" : ""
           }`}
           whileHover={{ y: -8 }}
-          onClick={() => navigate(`/property/${property.id}`, { state: { property } })}
+          onClick={() => navigate(`/property/${property.property_id}`, { state: { property } })}
         >
           {/* Image */}
           <div
@@ -69,12 +69,12 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
             <div className="absolute top-4 left-4">
               <div
                 className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
-                  property.type === "sale"
+                  property.listing_type_name === "sale"
                     ? "bg-emerald-500/90 text-white"
                     : "bg-blue-500/90 text-white"
                 }`}
               >
-                For {property.type === "sale" ? "Sale" : "Rent"}
+                For {property.listing_type_name === "sale" ? "Sale" : "Rent"}
               </div>
             </div>
 
@@ -85,17 +85,17 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
                 whileTap={{ scale: 0.9 }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleLike(property.id);
+                  toggleLike(property.property_id);
                 }}
                 className={`p-2 rounded-full backdrop-blur-sm transition-colors ${
-                  likedProperties.has(property.id)
+                  likedProperties.has(property.property_id)
                     ? "bg-red-500 text-white"
                     : "bg-white/90 text-gray-700 hover:bg-red-50 hover:text-red-500"
                 }`}
               >
                 <Heart
                   size={16}
-                  fill={likedProperties.has(property.id) ? "currentColor" : "none"}
+                  fill={likedProperties.has(property.property_id) ? "currentColor" : "none"}
                 />
               </motion.button>
 
@@ -120,7 +120,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
                 </h3>
                 <p className="flex items-center text-gray-600 text-sm">
                   <MapPin size={14} className="mr-1 text-emerald-500" />
-                  {property.location}
+                  {property.location_name}
                 </p>
               </div>
               <div className="text-right">
@@ -141,25 +141,25 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
                 {property.beds !== "N/A" && (
                   <div className="flex items-center gap-1">
                     <Bed size={16} className="text-emerald-500" />
-                    <span>{property.beds}</span>
+                    <span>{property.bedrooms}</span>
                   </div>
                 )}
                 {property.baths !== "N/A" && (
                   <div className="flex items-center gap-1">
                     <Bath size={16} className="text-emerald-500" />
-                    <span>{property.baths}</span>
+                    <span>{property.bathrooms}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1">
                   <Square size={16} className="text-emerald-500" />
-                  <span>{property.area}</span>
+                  <span>{property.area_sqft}</span>
                 </div>
               </div>
 
               {property.yearBuilt && property.yearBuilt !== "N/A" && (
                 <div className="flex items-center gap-1 text-sm text-gray-600">
                   <Calendar size={14} />
-                  <span>{property.yearBuilt}</span>
+                  <span>{property.year_built}</span>
                 </div>
               )}
             </div>
@@ -169,7 +169,7 @@ const PropertyGrid = ({ properties, viewMode, likedProperties, toggleLike }) => 
               whileTap={{ scale: 0.98 }}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/property/${property.id}`, { state: { property } });
+                navigate(`/property/${property.property_id}`, { state: { property } });
               }}
               className="mt-4 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-6 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
             >

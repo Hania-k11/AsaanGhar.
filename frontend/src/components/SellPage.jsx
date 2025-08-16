@@ -48,10 +48,10 @@ const SellPage = () => {
   const [userProperties, setUserProperties] = useState([]);
   const [lastToastTime, setLastToastTime] = useState(0);
 
-  // Handler to trigger login modal and optionally track source
+
   const onLoginClick = () => {
     const now = Date.now();
-    // Only show toast if 3 seconds have passed since the last one
+   
     if (now - lastToastTime > 3000) {
       toast.info('Please log in or sign up to post your property.', {
         position: 'top-right',
@@ -136,6 +136,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     owner_id: userDetails.user_id, // from auth
     title: '',
     address: '',
+    street_address: '',
     description: '',
      ownerName: "",
     ownerEmail: "",
@@ -162,16 +163,16 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     airConditioning: false,
     heating: false,
     swimmingPool: false,
-    gym: false,
+    Gym: false,
     security: false,
     gatedCommunity: false,
+    nearby_places: "",
     nearbySchools: "",
     nearbyHospitals: "",
     nearbyShopping: "",
     publicTransportAccess: false,
     listing_type_id: '',
     price: '',
-    street_address: '',
     city: 'Karachi',
     location_id: '',
     listingType: 'rent', // Default to rent
@@ -185,7 +186,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     maintenance_fee: '',
     year_built: '',
     status: 'active',
-    is_featured: false,
+    // is_featured: false,
     created_by: userDetails.user_id,
     latitude: null,
     longitude: null,
@@ -205,6 +206,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const refs = {
     title: useRef(),
     address: useRef(),
+    street_address: useRef(),
     location: useRef(),
     rent: useRef(),
     propertyType: useRef(),
@@ -222,7 +224,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
  
   const scrollToFirstError = (errorObj) => {
     const errorOrder = [
-      "title","address", "location", "rent", "propertyType", "area",
+      "title","address","street_address", "location", "rent", "propertyType", "area",
       "description", "furnishing",
       "ownerName", "ownerEmail", "phoneNumber", "whatsappNumber",
       "images", "contactPreferences"
@@ -300,26 +302,29 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   if (!formData.area) newErrors.area = "Area is required";
 
+    if (!formData.street_address) newErrors.street_address = "Street address is required";
+    
+
   // Additional address (plot/flat) validation:
-  const prefix = "Plot/Flat No: ";
-  const additional = formData.additionalAddress || "";
+  // const prefix = "Plot/Flat No: ";
+  // const additional = formData.additionalAddress || "";
   // Check if additionalAddress is empty or just equal to prefix + address (auto-filled)
-  if (
-    additional.trim() === "" || // empty
-    additional === prefix + (formData.address || "")
-  ) {
-    newErrors.additionalAddress = "Please enter your plot or flat details.";
-  }
+  // if (
+  //   additional.trim() === "" || // empty
+  //   additional === prefix + (formData.address || "")
+  // ) {
+  //   newErrors.additionalAddress = "Please enter your plot or flat details.";
+  // }
 
   // Optional: Check if the map address contains the selected location from dropdown
-  if (formData.location && formData.address) {
-    const selectedLocationLower = formData.location.toLowerCase();
-    const addressLower = formData.address.toLowerCase();
+  // if (formData.location && formData.address) {
+  //   const selectedLocationLower = formData.location.toLowerCase();
+  //   const addressLower = formData.address.toLowerCase();
 
-    if (!addressLower.includes(selectedLocationLower)) {
-      newErrors.address = `Selected address does not match the chosen location area (${formData.location}).`;
-    }
-  }
+  //   if (!addressLower.includes(selectedLocationLower)) {
+  //     newErrors.address = `Selected address does not match the chosen location area (${formData.location}).`;
+  //   }
+  // }
 }
 
     if (step === 2) {
@@ -386,7 +391,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     setIsSubmitting(true);
 
 
-    //commit hania
+    //commENT hania
    try {
     // We are not uploading images for now, so we'll just set imageUrls to an empty array.
     const imageUrls = [];
@@ -405,36 +410,58 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       // const imageUploadResponse = await axios.post('/api/upload/images', formDataForUpload);
       // const imageUrls = imageUploadResponse.data.urls;
 
+
+
+const amenitiesList = Object.keys(formData.amenities || {})
+  .filter((key) => formData.amenities[key]) // only true ones
+  .map((key) =>
+    key
+      .replace(/([A-Z])/g, " $1") // convert camelCase → words
+      .replace(/^./, (str) => str.toUpperCase()) // capitalize first letter
+  )
+  .join(",");
+
       // Then create property listing
-      const response = await axios.post('/api/properties/post', {
+      const response = await axios.post('/api/property/insert', {
         owner_id: userDetails.user_id,
         title: formData.title,
-        address: formData.address,
         description: formData.description,
-        listing_type_id: listingTypeMap[formData.listingType],
+        listing_type_name: formData.listingType,
         price: formData.rent,
-        street_address: formData.address,
-        city: 'Karachi',
-        location_id: locationMap[formData.location],
-        property_type_id: propertyTypeMap[formData.propertyType],
+        address: formData.address,
+        street_address: formData.street_address,
+        location_area: formData.location,
+        location_city: 'Karachi',
+        property_type_name: formData.propertyType,
         bedrooms: formData.bedrooms || null,
         bathrooms: formData.bathrooms || null,
         area_sqft: formData.area,
-        furnishing_status_id: furnishingMap[formData.furnishing],
+        furnishing_status_name: formData.furnishing,
         floor: formData.floor || null,
         lease_duration: formData.leaseDuration || null,
         available_from: formData.availableFrom || null,
         maintenance_fee: formData.maintenance || null,
         deposit: formData.deposit || null,
         year_built: formData.yearBuilt || null,
-        status: 'active',
-        is_featured: false,
-        created_by: userDetails.user_id,
+        nearby_places: formData.nearby_places || null,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        images: imageUrls
+        contact_name: formData.ownerName,
+        contact_email: formData.ownerEmail,
+        contact_phone: formData.phoneNumber,
+        contact_whatsapp: formData.whatsappNumber,
+         pref_email: formData.contactPreferences.email ? 1 : 0,
+        pref_phone: formData.contactPreferences.phone ? 1 : 0,
+        pref_whatsapp: formData.contactPreferences.whatsapp ? 1 : 0,
+        amenities: amenitiesList,
+      
+        
       });
+        //  status: 'active',
+//  is_featured: false,
+//         created_by: userDetails.user_id,
 
+//         images: imageUrls
       if (response.status === 201 || response.status === 200) {
         toast.success('Property listing created successfully!', {
           position: 'top-right',
@@ -480,9 +507,10 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
           airConditioning: false,
           heating: false,
           swimmingPool: false,
-          gym: false,
+          Gym: false,
           security: false,
           gatedCommunity: false,
+          nearby_places: "",
           nearbySchools: "",
           nearbyHospitals: "",
           nearbyShopping: "",
@@ -518,7 +546,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     airConditioning: "❄️",
     heating: "🔥",
     swimmingPool: "🏊‍♂️",
-    gym: "💪",
+    Gym: "💪",
     security: "🔒",
     gatedCommunity: "🏘️",
     publicTransportAccess: "🚌",
@@ -614,7 +642,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
             address: "",
             latitude: null,
             longitude: null,
-            additionalAddress: "", // clear additional if no location
+            
           }));
           return;
         }
@@ -623,8 +651,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
           address: loc.displayName,
           latitude: loc.lat,
           longitude: loc.lon,
-          // Initialize additionalAddress with prefix + address on select
-          additionalAddress: `Plot/Flat No: ${loc.displayName}`,
+         
+         
         }));
       }}
     />
@@ -643,10 +671,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
           longitude: lng,
           ...(address !== undefined && { address }),
           display_name: address || prev.display_name,
-          // Update additionalAddress but keep prefix if missing
-          additionalAddress: address
-            ? `Plot/Flat No: ${address}`
-            : prev.additionalAddress,
+        
+         
         }));
       }}
     />
@@ -660,41 +686,37 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 {/* Additional Address Details */}
 <div className="lg:col-span-2">
   <label className="block text-sm font-semibold text-gray-700 mb-2">
-    Add Your Plot or Flat Details
+    Add Your Street Address*
   </label>
 
   <textarea
-    ref={refs.additionalAddress}
-    name="additionalAddress"
-    value={
-      // Strip prefix for displaying inside textarea so user doesn't edit prefix
-      formData.additionalAddress?.startsWith("Plot/Flat No: ")
-        ? formData.additionalAddress.slice("Plot/Flat No: ".length)
-        : formData.additionalAddress || ""
-    }
+    ref={refs.street_address}
+    name="street_address"
+    value={formData.street_address}
+    
     onChange={(e) => {
       // On user input, update with prefix + value
       const inputVal = e.target.value;
       setFormData((prev) => ({
         ...prev,
-        additionalAddress: `Plot/Flat No: ${inputVal}`,
+        street_address: inputVal,
       }));
       handleChange(e); // Call your existing handleChange if needed
     }}
     placeholder="Add any additional details like plot number, flat number, nearest landmark, or specific directions"
     className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-      errors.additionalAddress
+      errors.street_address
         ? "border-red-300 bg-red-50"
         : "border-gray-200 focus:border-emerald-500"
     }`}
     rows={2}
   />
-  {errors.additionalAddress && (
-    <p className="text-red-500 text-sm mt-1">{errors.additionalAddress}</p>
+  {errors.street_address && (
+    <p className="text-red-500 text-sm mt-1">{errors.street_address}</p>
   )}
 
   <p className="text-sm text-gray-500 mt-1">
-    You can add specific details or directions to help locate the property easily.
+    You can add specific details, plot number, block number, sector number.
   </p>
 </div>
 
@@ -710,7 +732,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                       className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl appearance-none bg-white focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                     >
                       <option value="rent">For Rent</option>
-                      <option value="sell">For Sale</option>
+                      <option value="sale">For Sale</option>
                     </select>
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -790,13 +812,13 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                       }`}
                     >
                       <option value="">Select Property Type</option>
-                      <option value="House">House</option>
-                      <option value="Apartment">Apartment</option>
-                      <option value="Room">Room</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="Office">Office Space</option>
-                      <option value="Shop">Shop</option>
-                      <option value="Warehouse">Warehouse</option>
+                      <option value="HOUSE">House</option>
+                      <option value="APARTMENT">Apartment</option>
+                      <option value="ROOM">Room</option>
+                      <option value="COMMERCIAL">Commercial</option>
+                      <option value="OFFICE">Office Space</option>
+                      <option value="SHOP">Shop</option>
+                      <option value="WAREHOUSE">Warehouse</option>
                     </select>
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -925,9 +947,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                       }`}
                     >
                       <option value="">Select Furnishing Status</option>
-                      <option value="Furnished">Fully Furnished</option>
-                      <option value="Semi-Furnished">Semi-Furnished</option>
-                      <option value="Unfurnished">Unfurnished</option>
+                      <option value="fully-furnished">Furnished</option>
+                      <option value="semi-furnished">Semi-furnished</option>
+                      <option value="unfurnished">Unfurnished</option>
                     </select>
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1079,19 +1101,20 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
             <div className="mt-8 space-y-6">
               <h3 className="text-xl font-semibold text-gray-900">Nearby Facilities</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nearby Schools</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Nearby Places</label>
                   <input
                     type="text"
-                    name="nearbySchools"
-                    value={formData.nearbySchools}
+                    name="nearby_places"
+                    value={formData.nearby_places}
                     onChange={handleChange}
-                    placeholder="e.g., City School, Beaconhouse"
+                    placeholder="e.g.. Beaconhouse School, Aladin Park, Fitness Gym etc"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                   />
+                   <p className="text-sm mt-3 text-gray-500 mt-2">Please add each place separated by a comma.</p>
                 </div>
-                <div>
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Nearby Hospitals</label>
                   <input
                     type="text"
@@ -1112,7 +1135,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                     placeholder="e.g., Dolmen Mall, Lucky One"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -1170,7 +1193,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
                       name="ownerEmail"
                       value={formData.ownerEmail}
                       onChange={handleChange}
-                      placeholder="your.email@example.com"
+                      placeholder="your.email@gmail.com"
                       className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
                         errors.ownerEmail ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
                       }`}

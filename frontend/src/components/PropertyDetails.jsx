@@ -29,6 +29,14 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
+
+const DetailItem = ({ label, value }) => (
+  <div className="flex flex-col">
+    <span className="text-sm text-gray-500">{label}</span>
+    <span className="text-gray-800 font-medium">{value}</span>
+  </div>
+);
+
 const PropertyDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -79,17 +87,17 @@ const PropertyDetails = () => {
     id: 2,
     title: "Luxury Apartment",
     price: "PKR 85 Lac",
-    location: "Bahria Town, Islamabad",
+    location_name: "Bahria Town, Islamabad",
     latitude: 33.4574,
     longitude: 72.9845,
-    type: "For Rent",
-    beds: "3 Beds",
-    baths: "2 Baths",
-    area: "1800 sq ft",
+    listing_type_name: "For Rent",
+    bedrooms: "3 Beds",
+    bathrooms: "2 Baths",
+    area_sqft: "1800 sq ft",
     image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop&crop=center",
     views: 1785,
     rating: 4.4,
-    yearBuilt: 2021
+    year_built: 2021
   },
   {
     id: 4,
@@ -98,14 +106,14 @@ const PropertyDetails = () => {
     location: "Gulberg, Lahore",
     latitude: 31.5204,
     longitude: 74.3587,
-    type: "For Rent",
-    beds: "1 Bed",
-    baths: "1 Bath",
-    area: "850 sq ft",
+    listing_type_name: "For Rent",
+    bedrooms: "1 Bed",
+    bathrooms: "1 Bath",
+    area_sqft: "850 sq ft",
     image: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&h=400&fit=crop&crop=center",
     views: 960,
     rating: 4.2,
-    yearBuilt: 2019
+    year_built: 2019
   },
   {
     id: 5,
@@ -114,14 +122,14 @@ const PropertyDetails = () => {
     location: "DHA Phase 6, Karachi",
     latitude: 24.8121,
     longitude: 67.0789,
-    type: "For Sale",
-    beds: "4 Beds",
-    baths: "3 Baths",
-    area: "2400 sq ft",
+    listing_type_name: "For Sale",
+    bedrooms: "4 Beds",
+    bathrooms: "3 Baths",
+    area_sqft: "2400 sq ft",
     image: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600&h=400&fit=crop&crop=center",
     views: 2100,
     rating: 4.8,
-    yearBuilt: 2022
+    year_built: 2022
   }
 ];
 
@@ -164,7 +172,7 @@ const PropertyDetails = () => {
           <img src={img} alt="Property" className="w-full h-[500px] object-cover rounded-t-3xl" />
           <div className="absolute top-4 left-4 z-10">
             {(() => {
-              const isRent = property.type?.toLowerCase().includes("rent");
+              const isRent = property.listing_type_name?.toLowerCase().includes("rent");
               const displayType = isRent ? "For Rent" : "For Sale";
               const badgeColor = isRent ? "bg-blue-600" : "bg-emerald-600";
 
@@ -199,7 +207,7 @@ const PropertyDetails = () => {
     </div>
     <p className="text-gray-600 text-base flex items-center gap-2">
       <MapPin size={18} className="text-emerald-600" />
-      {property.location}, {property.city}
+      {property.location_name}, {property.location_city}
     </p>
   </motion.div>
 
@@ -211,127 +219,169 @@ const PropertyDetails = () => {
   >
     <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
       <Bed size={20} className="text-emerald-600" />
-      <span className="text-gray-800 font-medium">{property.beds}</span>
+      <span className="text-gray-800 font-medium">{property.bedrooms}</span>
     </div>
     <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
       <Bath size={20} className="text-emerald-600" />
-      <span className="text-gray-800 font-medium">{property.baths}</span>
+      <span className="text-gray-800 font-medium">{property.bathrooms}</span>
     </div>
     <div className="flex items-center gap-3 p-4 bg-gray-100 rounded-xl hover:shadow-md transition">
       <Square size={20} className="text-emerald-600" />
-      <span className="text-gray-800 font-medium">{property.area}</span>
+      <span className="text-gray-800 font-medium">{property.area_sqft}</span>
     </div>
   </motion.div>
 
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.2, duration: 0.5 }}
-    className="space-y-4"
-  >
-    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-      <Info size={20} className="text-emerald-600" /> Description
-    </h3>
-    <p className="text-gray-700 leading-relaxed text-base">
-      {property.description || "This beautifully designed property offers modern amenities and ample space ideal for families or professionals. Close to schools, parks, and shopping centers."}
-    </p>
-  </motion.div>
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="space-y-6"
+            >
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <Info size={20} className="text-emerald-600" />
+                </div>
+                Description
+              </h3>
+              <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100">
+                <p className="text-gray-700 leading-relaxed text-base">
+                  {property.description ||
+                    "This beautifully designed property offers modern amenities and ample space ideal for families or professionals. Close to schools, parks, and shopping centers."}
+                </p>
+              </div>
+            </motion.div>
 
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="space-y-6"
+            >
+              {property.amenities && property.amenities.trim() !== "" && (
+                <>
+                  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <ListChecks size={20} className="text-emerald-600" />
+                    </div>
+                    Amenities
+                  </h3>
+                  <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base text-gray-700">
+                      {property.amenities
+                        .split(",")
+                        .map((a) => a.trim())
+                        .map((item, i) => (
+                          <div
+                            key={i}
+                            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:shadow-sm transition-all duration-200"
+                          >
+                            <div className="w-2 h-2 bg-emerald-600 rounded-full" />
+                            <span className="font-medium">{item}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="space-y-6"
+            >
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 rounded-lg">
+                  <Landmark size={22} className="text-emerald-600" />
+                </div>
+                Property Details
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <DetailItem label="Property Type" value={property.property_type_name || "Apartment"} />
+                <DetailItem label="Built Year" value={property.built_year || "2021"} />
+                <DetailItem label="Furnishing" value={property.furnishing_status_name || "Fully Furnished"} />
+                <DetailItem label="Floor" value={property.floor || "2"} />
+                <DetailItem
+                  label="Available From"
+                  value={
+                    property.available_from
+                      ? new Date(property.available_from).toLocaleDateString("en-GB")
+                      : "30/03/2025"
+                  }
+                />
+                <DetailItem
+                  label="Security Deposit"
+                  value={property.deposit ? `PKR ${property.deposit.toLocaleString()}` : "PKR 100,000"}
+                />
+                {property.listing_type_name?.toLowerCase().includes("rent") && (
+                  <DetailItem
+                    label="Monthly Maintenance"
+                    value={property.maintenance_fee ? `PKR ${property.maintenance_fee.toLocaleString()}` : "PKR 5,000"}
+                  />
+                )}
+              </div>
+            </motion.div>
+
+         {property.nearby_places && property.nearby_places.trim() !== "" && (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.3, duration: 0.5 }}
-    className="space-y-4"
+    transition={{ delay: 0.45, duration: 0.5 }}
+    className="space-y-6"
   >
-    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-      <ListChecks size={20} className="text-emerald-600" /> Amenities
+    <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+      <span className="text-2xl">🏥</span>
+      Nearby Places
     </h3>
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
-      {(property.amenities || [
-        "Car Parking",
-        "Gated Community",
-        "Air Conditioning",
-        "Balcony",
-        "24/7 Security",
-        "Pet Friendly"
-      ]).map((item, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-600 rounded-full" />
-          {item}
-        </div>
-      ))}
-    </div>
-  </motion.div>
-
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.4, duration: 0.5 }}
-    className="space-y-4"
-  >
-    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-      <Landmark size={20} className="text-emerald-600" /> Property Details
-    </h3>
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
-      <p><span className="font-medium">Property Type:</span> Apartment</p>
-      <p><span className="font-medium">Built Year:</span> {property.builtYear || "2021"}</p>
-      <p><span className="font-medium">Furnishing:</span> {property.furnishing || "Fully Furnished"}</p>
-      <p><span className="font-medium">Floor:</span> 2</p>
-      <p><span className="font-medium">Available From:</span> {property.availableFrom ? new Date(property.availableFrom).toLocaleDateString() : "30/03/2025"}</p>
-      <p><span className="font-medium">Security Deposit:</span> {property.securityDeposit ? `PKR ${property.securityDeposit}` : "PKR 100,000"}</p>
-      {property.type?.toLowerCase().includes("rent") && (
-        <p><span className="font-medium">Monthly Maintenance:</span> {property.maintenance ? `PKR ${property.maintenance}` : "PKR 5,000"}</p>
-      )}
-    </div>
-  </motion.div>
-
-  {property.nearbyFacilities && (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.45, duration: 0.5 }}
-      className="space-y-4"
-    >
-      <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">🏥 Nearby Facilities</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-base text-gray-700">
-        {(property.nearbyFacilities || [
-          "Hospitals",
-          "Schools",
-          "Shopping Centres"
-        ]).map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-emerald-600 rounded-full" /> {item}
+    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-2xl border border-gray-100">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-base text-gray-700">
+        {(property.nearby_places
+          ? property.nearby_places.split(",").map(p => p.trim())
+          : ["Hospitals", "Schools", "Shopping Centres"]
+        ).map((item, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:shadow-sm transition-all duration-200"
+          >
+            <div className="w-2 h-2 bg-emerald-600 rounded-full" />
+            <span className="font-medium">{item}</span>
           </div>
         ))}
       </div>
-    </motion.div>
-  )}
-
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.5, duration: 0.5 }}
-    className="pt-6"
-  >
-    <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2 mb-3">
-      🗺️ Location
-    </h3>
-    <div className="relative rounded-2xl overflow-hidden shadow-md">
-      <iframe
-        title="Property Location"
-        className="w-full h-[320px] md:h-[360px] rounded-2xl"
-        frameBorder="0"
-        loading="lazy"
-        allowFullScreen
-        src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&hl=en&z=18&output=embed`}
-      ></iframe>
-      <div className="absolute top-3 left-3 bg-white bg-opacity-90 text-gray-800 text-sm font-semibold px-3 py-1 rounded-full shadow-sm">
-        {property.location}, {property.city}
-      </div>
     </div>
   </motion.div>
-</div>
-</div>
+)}
+
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="space-y-6"
+            >
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <span className="text-2xl">🗺️</span>
+                Location
+              </h3>
+              <div className="relative rounded-3xl overflow-hidden shadow-xl border border-gray-200">
+                <iframe
+                  title="Property Location"
+                  className="w-full h-[400px] md:h-[450px]"
+                  frameBorder="0"
+                  loading="lazy"
+                  allowFullScreen
+                  src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&hl=en&z=18&output=embed`}
+                ></iframe>
+                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-full shadow-lg border border-gray-200">
+                  {property.location_name}, {property.location_city}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
 
 <motion.div
   initial={{ opacity: 0, y: 40 }}
@@ -358,7 +408,7 @@ const PropertyDetails = () => {
     <div>
       <p className="text-sm font-semibold text-gray-800">Zainab Rauf</p>
       <p className="text-xs text-emerald-600 font-normal flex items-center gap-1">
-        <BadgeCheck size={14} /> Verified Owner
+        {/* <BadgeCheck size={14} /> Verified Owner */}
       </p>
     </div>
   </div>
@@ -413,11 +463,11 @@ const PropertyDetails = () => {
         ))}
       </div>
     </div>
-
+{/* 
     <label className="flex gap-2 text-sm text-gray-700">
       <input type="checkbox" className="accent-emerald-600" />
       Keep me informed about similar properties.
-    </label>
+    </label> */}
 
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -507,7 +557,7 @@ const PropertyDetails = () => {
       <div>
         <p className="text-sm font-semibold text-gray-800">Zainab Rauf</p>
         <p className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-          <BadgeCheck size={14} /> Verified Owner
+          {/* <BadgeCheck size={14} /> Verified Owner */}
         </p>
       </div>
     </div>
@@ -551,10 +601,10 @@ const PropertyDetails = () => {
         </div>
       </div>
 
-      <label className="flex gap-2 text-sm text-gray-700">
+      {/* <label className="flex gap-2 text-sm text-gray-700">
         <input type="checkbox" className="accent-emerald-600" />
         Keep me informed about similar properties.
-      </label>
+      </label> */}
 
       <div className="flex flex-col gap-2 pt-2">
         <div className="flex gap-2">
@@ -609,11 +659,11 @@ const PropertyDetails = () => {
             {/* Top-Left Badge */}
 <div className="absolute top-4 left-4">
   <span className={`text-xs font-semibold px-3 py-1 rounded-full shadow-sm ${
-    property.type?.toLowerCase().includes("rent")
+    property.listing_type_name?.toLowerCase().includes("Rent")
       ? "bg-blue-100 text-blue-700"
       : "bg-green-100 text-green-700"
   }`}>
-    {property.type}
+    {property.listing_type_name}
   </span>
 </div>
 
@@ -649,7 +699,7 @@ const PropertyDetails = () => {
               </h3>
               <p className="flex items-center text-gray-600 text-sm">
                 <MapPin size={14} className="mr-1 text-emerald-500" />
-                {property.location}
+                {property.location_name}
               </p>
             </div>
             <div className="text-right">
@@ -661,24 +711,24 @@ const PropertyDetails = () => {
               {property.beds !== "N/A" && (
                 <div className="flex items-center gap-1">
                   <Bed size={16} className="text-emerald-500" />
-                  <span>{property.beds}</span>
+                  <span>{property.bedrooms}</span>
                 </div>
               )}
               {property.baths !== "N/A" && (
                 <div className="flex items-center gap-1">
                   <Bath size={16} className="text-emerald-500" />
-                  <span>{property.baths}</span>
+                  <span>{property.bathrooms}</span>
                 </div>
               )}
               <div className="flex items-center gap-1">
                 <Square size={16} className="text-emerald-500" />
-                <span>{property.area}</span>
+                <span>{property.area_sqft}</span>
               </div>
             </div>
             {property.yearBuilt && property.yearBuilt !== "N/A" && (
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Calendar size={14} />
-                <span>{property.yearBuilt}</span>
+                <span>{property.year_built}</span>
               </div>
             )}
           </div>
@@ -686,7 +736,7 @@ const PropertyDetails = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/property/${property.id}`, { state: { property } })}
+            onClick={() => navigate(`/property/${property.property_id}`, { state: { property } })}
             className="mt-4 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-6 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
           >
             View Details

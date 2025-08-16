@@ -29,6 +29,9 @@ const propertiesRoutes = require('./routes/properties');
 app.use('/api/properties', propertiesRoutes);
 
 
+const propertyRoutes = require('./routes/property');
+app.use('/api/property', propertyRoutes);
+
 const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 

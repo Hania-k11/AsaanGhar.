@@ -21,7 +21,6 @@ async function queryProperties({
       p.*,
       l.city AS location_city,
       l.area AS location_area,
-      l.sector AS location_sector,
       pt.name AS property_type_name,
       lt.name AS listing_type_name,
       fs.name AS furnishing_status_name
