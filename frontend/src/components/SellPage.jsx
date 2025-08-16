@@ -11,36 +11,6 @@ import MapPicker from './MapPicker'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css'
 
-// Mapping objects for API
-const listingTypeMap = {
-  'rent': 1,
-  'sell': 2
-};
-
-const propertyTypeMap = {
-  'Apartment': 1,
-  'House': 2,
-  'Room': 3,
-  'Commercial': 4,
-  'Office Space': 5,
-  'Shop': 6,
-  'Warehouse' : 7
-};
-
-const locationMap = {
-  'DHA': 1,
-  'Gulshan-e-Iqbal': 2,
-  'PECHS': 3,
-  'Scheme 33': 4,
-  'Gulistan-e-Johar': 5
-};
-
-const furnishingMap = {
-  'unfurnished': 1,
-  'semi-furnished': 2,
-  'fully-furnished': 3
-};
-
 
 
 const SellPage = () => {
