@@ -155,17 +155,20 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     deposit: "",
     images: [],
     yearBuilt: "",
-    parking: false,
-    balcony: false,
-    petFriendly: false,
-    laundryInUnit: false,
-    dishwasher: false,
-    airConditioning: false,
-    heating: false,
-    swimmingPool: false,
+   amenities: {
+    Parking: false,
+    Balcony: false,
+    PetFriendly: false,
+    LaundryInUnit: false,
+    Dishwasher: false,
+    AirConditioning: false,
+    Heating: false,
+    SwimmingPool: false,
     Gym: false,
-    security: false,
-    gatedCommunity: false,
+    Security: false,
+    GatedCommunity: false,
+    publicTransportAccess: false,
+  },
     nearby_places: "",
     nearbySchools: "",
     nearbyHospitals: "",
@@ -394,7 +397,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     //commENT hania
    try {
     // We are not uploading images for now, so we'll just set imageUrls to an empty array.
-    const imageUrls = [];
+    // const imageUrls = [];
 
     // The code for uploading images is commented out for now.
     // const formDataForUpload = new FormData();
@@ -416,10 +419,13 @@ const amenitiesList = Object.keys(formData.amenities || {})
   .filter((key) => formData.amenities[key]) // only true ones
   .map((key) =>
     key
-      .replace(/([A-Z])/g, " $1") // convert camelCase → words
-      .replace(/^./, (str) => str.toUpperCase()) // capitalize first letter
+    
+      
   )
-  .join(",");
+  .join(","); 
+
+
+  console.log("Amenities List:", amenitiesList);
 
       // Then create property listing
       const response = await axios.post('/api/property/insert', {
@@ -454,6 +460,7 @@ const amenitiesList = Object.keys(formData.amenities || {})
         pref_phone: formData.contactPreferences.phone ? 1 : 0,
         pref_whatsapp: formData.contactPreferences.whatsapp ? 1 : 0,
         amenities: amenitiesList,
+        
       
         
       });
@@ -462,6 +469,7 @@ const amenitiesList = Object.keys(formData.amenities || {})
 //         created_by: userDetails.user_id,
 
 //         images: imageUrls
+console.log(amenitiesList)
       if (response.status === 201 || response.status === 200) {
         toast.success('Property listing created successfully!', {
           position: 'top-right',
@@ -499,17 +507,20 @@ const amenitiesList = Object.keys(formData.amenities || {})
           deposit: "",
           images: [],
           yearBuilt: "",
-          parking: false,
-          balcony: false,
-          petFriendly: false,
-          laundryInUnit: false,
-          dishwasher: false,
-          airConditioning: false,
-          heating: false,
-          swimmingPool: false,
-          Gym: false,
-          security: false,
-          gatedCommunity: false,
+         amenities: {
+    Parking: false,
+    Balcony: false,
+    PetFriendly: false,
+    LaundryInUnit: false,
+    Dishwasher: false,
+    AirConditioning: false,
+    Heating: false,
+    SwimmingPool: false,
+    Gym: false,
+    Security: false,
+    GatedCommunity: false,
+    publicTransportAccess: false,
+  },
           nearby_places: "",
           nearbySchools: "",
           nearbyHospitals: "",
@@ -538,17 +549,17 @@ const amenitiesList = Object.keys(formData.amenities || {})
   }
 
   const amenityIcons = {
-    parking: "🚗",
-    balcony: "🌿",
-    petFriendly: "🐕",
-    laundryInUnit: "🧺",
-    dishwasher: "🍽️",
-    airConditioning: "❄️",
-    heating: "🔥",
-    swimmingPool: "🏊‍♂️",
+    Parking: "🚗",
+    Balcony: "🌿",
+    PetFriendly: "🐕",
+    LaundryInUnit: "🧺",
+    Dishwasher: "🍽️",
+    AirConditioning: "❄️",
+    Heating: "🔥",
+    SwimmingPool: "🏊‍♂️",
     Gym: "💪",
-    security: "🔒",
-    gatedCommunity: "🏘️",
+    Security: "🔒",
+    GatedCommunity: "🏘️",
     publicTransportAccess: "🚌",
   }
 
@@ -873,11 +884,11 @@ const amenitiesList = Object.keys(formData.amenities || {})
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Area *</label>
                   <input
                     ref={refs.area}
-                    type="text"
+                    type="number"
                     name="area"
                     value={formData.area}
                     onChange={handleChange}
-                    placeholder="e.g., 1200 sq ft or 10 Marla"
+                    placeholder="Enter area in sqft, e.g., 1200"
                     className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
                       errors.area ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
                     }`}
@@ -1063,34 +1074,40 @@ const amenitiesList = Object.keys(formData.amenities || {})
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Object.keys(formData)
-                .filter((key) => typeof formData[key] === "boolean")
-                .map((key) => (
+             {Object.keys(formData.amenities).map((key) => (
                   <label
                     key={key}
                     className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      formData[key]
+                      formData.amenities[key]
                         ? "border-emerald-500 bg-emerald-50 shadow-sm"
                         : "border-gray-200 hover:border-emerald-300"
                     }`}
                   >
-                    <input
-                      type="checkbox"
-                      name={key}
-                      checked={formData[key]}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
+                   <input
+        type="checkbox"
+        name={key}
+        checked={formData.amenities[key]}
+        onChange={(e) =>
+          setFormData((prev) => ({
+            ...prev,
+            amenities: {
+              ...prev.amenities,
+              [key]: e.target.checked,
+            },
+          }))
+        }
+        className="sr-only"
+      />
                     <div
                       className={`flex items-center justify-center w-8 h-8 rounded-lg mr-3 transition-all duration-200 ${
-                        formData[key] ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-400"
+                        formData.amenities[key] ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-400"
                       }`}
                     >
-                      {formData[key] ? "✓" : amenityIcons[key] || "•"}
+                      {formData.amenities[key] ? "✓" : amenityIcons[key] || "•"}
                     </div>
                     <span
                       className={`text-sm font-medium transition-colors duration-200 ${
-                        formData[key] ? "text-emerald-700" : "text-gray-700"
+                        formData.amenities[key] ? "text-emerald-700" : "text-gray-700"
                       }`}
                     >
                       {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}

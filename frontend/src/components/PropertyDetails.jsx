@@ -1,6 +1,6 @@
 //src/components/PropertyDetails.jsx
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -36,6 +36,9 @@ const DetailItem = ({ label, value }) => (
     <span className="text-gray-800 font-medium">{value}</span>
   </div>
 );
+
+console.log("PropertyDetails component loaded");
+
 
 const PropertyDetails = () => {
   const location = useLocation();
@@ -79,6 +82,8 @@ const PropertyDetails = () => {
       </div>
     );
   }
+
+  
 
   const images = [property.image, property.image, property.image];
 
@@ -375,7 +380,7 @@ const PropertyDetails = () => {
                   src={`https://maps.google.com/maps?q=${property.latitude},${property.longitude}&hl=en&z=18&output=embed`}
                 ></iframe>
                 <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm text-gray-800 text-sm font-semibold px-4 py-2 rounded-full shadow-lg border border-gray-200">
-                  {property.location_name}, {property.location_city}
+                  {property.location_name}, {property.location_city || "Karachi"}
                 </div>
               </div>
             </motion.div>
@@ -699,7 +704,7 @@ const PropertyDetails = () => {
               </h3>
               <p className="flex items-center text-gray-600 text-sm">
                 <MapPin size={14} className="mr-1 text-emerald-500" />
-                {property.location_name}
+                {property.location_name}, {property.location_city}
               </p>
             </div>
             <div className="text-right">
