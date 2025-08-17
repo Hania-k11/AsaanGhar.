@@ -30,7 +30,7 @@ const popularKarachiLocalities = [
   { name: "Scheme 33", href: "#" },
   { name: "Gulshan-e-Iqbal", href: "#" },
   { name: "PECHS", href: "#" },
-  { name: "Malir", href: "#" },
+  { name: "Gulistan-e-Johar", href: "#" },
   { name: "DHA Karachi", href: "#" },
 ];
 

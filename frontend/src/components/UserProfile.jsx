@@ -1,5 +1,3 @@
-
-
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mail, Phone, Calendar, Edit3, Save, X, User, Hash } from "lucide-react"
@@ -8,9 +6,11 @@ import { format } from "date-fns"
 
 // Placeholder for profile image that generates an icon from initials
 const generatePlaceholderImage = (firstName, lastName) => {
-  const initials = `${firstName[0]}${lastName[0]}`.toUpperCase()
-  const colors = ["#0D9488", "#14B8A6", "#047857", "#065F46", "#2dd4bf"]
-  const color = colors[initials.charCodeAt(0) % colors.length]
+  const safeFirstName = firstName || "U"; // Fallback to "U" if undefined
+  const safeLastName = lastName || "U"; // Fallback to "U" if undefined
+  const initials = `${safeFirstName[0]}${safeLastName[0]}`.toUpperCase();
+  const colors = ["#0D9488", "#14B8A6", "#047857", "#065F46", "#2dd4bf"];
+  const color = colors[initials.charCodeAt(0) % colors.length];
 
   return (
     <svg
@@ -34,34 +34,65 @@ const generatePlaceholderImage = (firstName, lastName) => {
         {initials}
       </text>
     </svg>
-  )
-}
+  );
+};
 
 const UserProfile = () => {
-  const [showEditModal, setShowEditModal] = useState(false)
-  const { userDetails } = useAuth()
+  const [showEditModal, setShowEditModal] = useState(false);
+  const { userDetails, updateUserDetails } = useAuth(); // Assuming updateUserDetails is provided by AuthContext
 
-  
-
-  const [editData, setEditData] = useState(userDetails)
+  // Initialize editData with safe defaults
+  const [editData, setEditData] = useState({
+    first_name: userDetails?.first_name || "",
+    last_name: userDetails?.last_name || "",
+    email: userDetails?.email || "",
+    phone_number: userDetails?.phone_number || "",
+    age: userDetails?.age || 0,
+    gender: userDetails?.gender || "",
+    profileImage: userDetails?.profileImage || "",
+    created_at: userDetails?.created_at || new Date().toISOString(),
+  });
 
   const handleEdit = () => {
-    setEditData(userDetails)
-    setShowEditModal(true)
-  }
+    setEditData({
+      first_name: userDetails?.first_name || "",
+      last_name: userDetails?.last_name || "",
+      email: userDetails?.email || "",
+      phone_number: userDetails?.phone_number || "",
+      age: userDetails?.age || 0,
+      gender: userDetails?.gender || "",
+      profileImage: userDetails?.profileImage || "",
+      created_at: userDetails?.created_at || new Date().toISOString(),
+    });
+    setShowEditModal(true);
+  };
 
   const handleSave = () => {
-    // setProfileData(editData)
-    setShowEditModal(false)
-  }
+    updateUserDetails(editData); // Update userDetails in context or via API (implement based on your setup)
+    setShowEditModal(false);
+  };
 
   const handleCancel = () => {
-    setEditData(userDetails)
-    setShowEditModal(false)
-  }
+    setEditData({
+      first_name: userDetails?.first_name || "",
+      last_name: userDetails?.last_name || "",
+      email: userDetails?.email || "",
+      phone_number: userDetails?.phone_number || "",
+      age: userDetails?.age || "",
+      gender: userDetails?.gender || "",
+      profileImage: userDetails?.profileImage || "",
+      created_at: userDetails?.created_at || new Date().toISOString(),
+    });
+    setShowEditModal(false);
+  };
 
   const handleInputChange = (field, value) => {
-    setEditData((prev) => ({ ...prev, [field]: value }))
+    setEditData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Handle loading state if userDetails is not yet available
+  if (!userDetails) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   return (
@@ -98,8 +129,7 @@ const UserProfile = () => {
                       {userDetails.first_name} {userDetails.last_name}
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
-                      Member since{format(new Date(userDetails?.created_at), " yyyy")}
-
+                      Member since {format(new Date(userDetails?.created_at), " yyyy")}
                     </p>
                   </div>
                   <button
@@ -135,43 +165,43 @@ const UserProfile = () => {
             </div>
 
             {/* Phone */}
-                {userDetails.phone_number &&(
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                <Phone className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            {userDetails.phone_number && (
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                  <Phone className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Phone Number</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.phone_number}</p>
+                </div>
               </div>
-
-            
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Phone Number</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.phone_number}</p>
-              </div>
-             
-            </div> )}
+            )}
 
             {/* Age */}
             {userDetails.age && (
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                <Hash className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                  <Hash className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Age</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.age} years old</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Age</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.age} years old</p>
-              </div>
-            </div>)}
+            )}
 
             {/* Gender */}
-             {userDetails.gender && (
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
-                <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            {userDetails.gender && (
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
+                  <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Gender</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.gender}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Gender</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.gender}</p>
-              </div>
-            </div>)}
+            )}
 
             {/* Member Since - spans full width */}
             <div className="md:col-span-2 flex items-start space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -224,7 +254,7 @@ const UserProfile = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      generatePlaceholderImage(editData.firstName, editData.lastName)
+                      generatePlaceholderImage(editData.first_name, editData.last_name)
                     )}
                   </div>
                   <div className="flex-1">
@@ -248,7 +278,7 @@ const UserProfile = () => {
                     <input
                       type="text"
                       value={editData.first_name}
-                      onChange={(e) => handleInputChange("firstName", e.target.value)}
+                      onChange={(e) => handleInputChange("first_name", e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="First Name"
                     />
@@ -258,7 +288,7 @@ const UserProfile = () => {
                     <input
                       type="text"
                       value={editData.last_name}
-                      onChange={(e) => handleInputChange("lastName", e.target.value)}
+                      onChange={(e) => handleInputChange("last_name", e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="Last Name"
                     />
@@ -286,7 +316,7 @@ const UserProfile = () => {
                     <input
                       type="tel"
                       value={editData.phone_number}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
+                      onChange={(e) => handleInputChange("phone_number", e.target.value)}
                       className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
                       placeholder="Phone Number"
                     />
@@ -345,7 +375,7 @@ const UserProfile = () => {
         )}
       </AnimatePresence>
     </div>
-  )
-}
+  );
+};
 
-export default UserProfile
+export default UserProfile;
