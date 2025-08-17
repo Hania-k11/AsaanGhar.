@@ -326,7 +326,7 @@ const SettingsTab = () => {
             description="Control who can see your profile."
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SettingSelect
+            {/* <SettingSelect
               label="Profile Visibility"
               description="Who can see your profile."
               value={privacySettings.profileVisibility}
@@ -341,7 +341,7 @@ const SettingsTab = () => {
                   profileVisibility: e.target.value,
                 }))
               }
-            />
+            /> */}
             <SettingToggle
               label="Show Contact Information"
               description="Display your contact details."
@@ -364,7 +364,7 @@ const SettingsTab = () => {
                 }))
               }
             />
-            <SettingToggle
+            {/* <SettingToggle
               label="Allow Messages"
               description="Let other users message you."
               checked={privacySettings.allowMessages}
@@ -374,7 +374,7 @@ const SettingsTab = () => {
                   allowMessages: !prev.allowMessages,
                 }))
               }
-            />
+            /> */}
           </div>
           <ActionButton
             icon={Save}

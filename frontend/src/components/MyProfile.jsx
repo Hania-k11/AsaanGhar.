@@ -13,12 +13,12 @@ import {
   Menu,
   X,
 } from "lucide-react";
-
+import { format } from "date-fns";
 import MyListings from "./MyListings";
 import OverviewContent from "./OverviewContent";
 import Favourites from "./Favourites";
 import MessagesTab from "./MessagesTab";
-import MyProfileTab from "./MyProfileTab";
+
 import SettingsTab from "./SettingsTab";
 import { useAuth } from "../context/AuthContext";
 import UserProfile from "./UserProfile";
@@ -194,10 +194,12 @@ const MyProfile = () => {
                   </div>
                 )}
               </motion.div>
-              <h2 className="mt-3 text-xl font-bold">{userDetails?.name}</h2>
+              <h2 className="mt-3 text-xl font-bold">{userDetails?.first_name}</h2>
               <div className="flex items-center gap-2 text-sm text-white opacity-90 mt-2">
                 <Calendar className="w-4 h-4" />
-                <span>Member since {userDetails?.joinDate || mockUserDetails.joinDate}</span>
+              <span>
+  Member since {format(new Date(userDetails?.created_at), "yyyy")}
+</span>
               </div>
             </div>
           </div>
@@ -276,13 +278,13 @@ const MyProfile = () => {
                   className="min-h-full"
                 >
                   {activeTab === "overview" && (
-                    <OverviewContent userDetails={userDetails || mockUserDetails} />
+                    <OverviewContent userDetails={userDetails} />
                   )}
                   {activeTab === "listings" && <MyListings />}
                   {activeTab === "favorites" && <Favourites />}
                   {activeTab === "messages" && <MessagesTab />}
                   {activeTab === "profile" && <UserProfile />}
-                  {activeTab === "settings" && <SettingsTab userData={userDetails || mockUserDetails} />}
+                  {activeTab === "settings" && <SettingsTab userData={userDetails} />}
                 </motion.div>
               </AnimatePresence>
             </div>
