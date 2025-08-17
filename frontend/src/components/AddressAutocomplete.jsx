@@ -3,6 +3,15 @@ import axios from 'axios';
 
 const DEBOUNCE_DELAY = 400;
 
+const ALLOWED_AREAS = ["Gulshan", "Johar", "DHA", "PECHS", "Scheme 33"];
+
+function isAllowed(displayName) {
+  return ALLOWED_AREAS.some(area =>
+    displayName.toLowerCase().includes(area.toLowerCase())
+  );
+}
+
+
 const AddressAutocomplete = ({ value, onSelect }) => {
   const [query, setQuery] = useState(value || "");
   const [suggestions, setSuggestions] = useState([]);
@@ -80,17 +89,30 @@ const AddressAutocomplete = ({ value, onSelect }) => {
   };
 
   const handleSelect = (suggestion) => {
-    if (suggestion.noResults) return;
-    setQuery(suggestion.display_name);
+  if (suggestion.noResults) return;
+
+  // ✅ Check if selected suggestion is inside allowed areas
+  if (!isAllowed(suggestion.display_name)) {
+    // alert("Sorry, we only deal in Gulshan, Johar, DHA, PECHS, and Scheme 33. Please search within these locations.");
+    setQuery(""); // clear input
     setSuggestions([]);
-    setLastSelected(suggestion);
-    setErrorMsg("");
-    onSelect({
-      lat: parseFloat(suggestion.lat),
-      lon: parseFloat(suggestion.lon),
-      displayName: suggestion.display_name,
-    });
-  };
+    setErrorMsg("Sorry, we only deal in Gulshan, Johar, DHA, PECHS, and Scheme 33. Please search within these locations.");
+    onSelect(null); // clear in parent
+    return;
+  }
+
+  // ✅ Otherwise accept normally
+  setQuery(suggestion.display_name);
+  setSuggestions([]);
+  setLastSelected(suggestion);
+  setErrorMsg("");
+  onSelect({
+    lat: parseFloat(suggestion.lat),
+    lon: parseFloat(suggestion.lon),
+    displayName: suggestion.display_name,
+  });
+};
+
 
   const handleBlur = () => {
     if (!lastSelected || query !== lastSelected.display_name) {
