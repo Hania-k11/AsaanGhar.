@@ -464,30 +464,19 @@ const Favourites = ({
         {likedPropertiesData.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 lg:p-8 border border-emerald-100">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Favorites Summary</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <StatCard label="Total Saved" value={likedPropertiesData.length} color="text-emerald-600" />
               <StatCard
                 label="For Sale"
-                value={likedPropertiesData.filter((p) => p.type === "sale").length}
+                value={likedPropertiesData.filter((p) => p.listing_type_name === "sale").length}
                 color="text-green-600"
               />
               <StatCard
                 label="For Rent"
-                value={likedPropertiesData.filter((p) => p.type === "rent").length}
+                value={likedPropertiesData.filter((p) => p.listing_type_name === "rent").length}
                 color="text-blue-600"
               />
-              <StatCard
-                label="Avg Rating"
-                value={
-                  likedPropertiesData.length > 0
-                    ? (
-                        likedPropertiesData.reduce((sum, p) => sum + p.rating, 0) / likedPropertiesData.length
-                      ).toFixed(1)
-                    : 0
-                }
-                icon={Star}
-                color="text-yellow-500"
-              />
+             
             </div>
           </motion.div>
         )}
