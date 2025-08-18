@@ -23,6 +23,8 @@ import SettingsTab from "./SettingsTab";
 import { useAuth } from "../context/AuthContext";
 import UserProfile from "./UserProfile";
 
+
+
 const mockUserDetails = {
   name: "Sarah Johnson",
   email: "sarah.johnson@email.com",
@@ -51,6 +53,9 @@ const MyProfile = () => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+
 
   useEffect(() => {
     const handleResize = () => setSidebarOpen(true);
@@ -64,16 +69,27 @@ const MyProfile = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+  if (!userDetails) {
+    navigate("/");
+  }
+}, [userDetails]);
+
   // Update activeTab if URL changes
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
     if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl);
   }, [searchParams]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
-  };
+ const handleLogout = () => {
+  setIsLoggingOut(true);
+
+  setTimeout(() => {
+    logout();      
+    navigate("/");   
+  }, 900); // show modal for ~0.8s
+};
+
 
   const tabs = [
     { id: "overview", label: "Overview", icon: User },
@@ -116,6 +132,26 @@ const MyProfile = () => {
     </div>
   );
 
+
+  const LoggingOutModal = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
+      className="bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center"
+    >
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        className="w-12 h-12 border-4 border-t-emerald-500 border-gray-200 rounded-full mb-4"
+      />
+      <p className="text-lg font-semibold text-gray-700">Logging you out...</p>
+      <p className="text-sm text-gray-500 mt-2">Please wait</p>
+    </motion.div>
+  </div>
+);
+
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     navigate(`/my-profile?tab=${tabId}`);
@@ -123,6 +159,9 @@ const MyProfile = () => {
   };
 
   if (isLoading) return <LoadingSpinner />;
+  if (isLoggingOut) return <LoggingOutModal />;
+if (isLoading) return <LoadingSpinner />;
+
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-gray-100" style={{ top: NAVBAR_HEIGHT }}>
@@ -198,8 +237,11 @@ const MyProfile = () => {
               <div className="flex items-center gap-2 text-sm text-white opacity-90 mt-2">
                 <Calendar className="w-4 h-4" />
               <span>
-  Member since {format(new Date(userDetails?.created_at), "yyyy")}
+  Member since {userDetails?.created_at 
+    ? format(new Date(userDetails.created_at), "yyyy") 
+    : "N/A"}
 </span>
+
               </div>
             </div>
           </div>

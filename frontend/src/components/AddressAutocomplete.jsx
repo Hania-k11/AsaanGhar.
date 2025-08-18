@@ -21,14 +21,14 @@ const AddressAutocomplete = ({ value, onSelect }) => {
   const containerRef = useRef(null);
   const debounceTimer = useRef(null);
   const locationIqToken = import.meta.env.VITE_LOCATIONIQ_TOKEN;
-  const errorRef = useRef(null); // New ref for error message
+  const errorRef = useRef(null); 
 
   useEffect(() => {
     setQuery(value || ""); // sync with parent
   }, [value]);
 
   useEffect(() => {
-    // Scroll to error message when it appears
+    
     if (errorMsg && errorRef.current) {
       errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -78,7 +78,7 @@ const AddressAutocomplete = ({ value, onSelect }) => {
     if (!val.trim()) {
       setSuggestions([]);
       setErrorMsg("");
-      onSelect(null); // clear in parent
+      onSelect(null); 
       return;
     }
 
@@ -91,13 +91,13 @@ const AddressAutocomplete = ({ value, onSelect }) => {
   const handleSelect = (suggestion) => {
   if (suggestion.noResults) return;
 
-  // ✅ Check if selected suggestion is inside allowed areas
+ 
   if (!isAllowed(suggestion.display_name)) {
-    // alert("Sorry, we only deal in Gulshan, Johar, DHA, PECHS, and Scheme 33. Please search within these locations.");
-    setQuery(""); // clear input
+    
+    setQuery(""); 
     setSuggestions([]);
     setErrorMsg("Sorry, we only deal in Gulshan, Johar, DHA, PECHS, and Scheme 33. Please search within these locations.");
-    onSelect(null); // clear in parent
+    onSelect(null); 
     return;
   }
 
@@ -120,7 +120,7 @@ const AddressAutocomplete = ({ value, onSelect }) => {
       setErrorMsg(
         "Please select an address from autocomplete/suggestion list."
       );
-      onSelect(null); // clear in parent
+      onSelect(null); 
     }
   };
 

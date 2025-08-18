@@ -142,7 +142,8 @@ export const ToastProvider = ({ children }) => {
 
   const addToast = (message, type = "info", subtitle = null) => {
     const id = Date.now() + Math.random();
-    setToasts(prev => [...prev, { id, message, type, subtitle }]);
+    // setToasts(prev => [...prev, { id, message, type, subtitle }]);
+    setToasts([ { id, message, type, subtitle }]);
   };
 
   const removeToast = (id) => {
@@ -172,11 +173,15 @@ return (
     sm:left-auto sm:translate-x-0 sm:right-6
   "
 >
-  <AnimatePresence mode="popLayout">
-    {toasts.map((toast) => (
-      <AestheticToast key={toast.id} toast={toast} onClose={removeToast} />
-    ))}
-  </AnimatePresence>
+  <AnimatePresence mode="wait">
+  {toasts[0] && (
+    <AestheticToast
+      key={toasts[0].id} // each new toast is treated as new
+      toast={toasts[0]}
+      onClose={removeToast}
+    />
+  )}
+</AnimatePresence>
     </div>
   </ToastContext.Provider>
   );

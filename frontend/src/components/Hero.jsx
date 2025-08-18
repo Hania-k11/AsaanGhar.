@@ -19,13 +19,13 @@ useEffect(() => {
       }
     };
 
-    // Set initial placeholder
+   
     updatePlaceholder();
 
-    // Add event listener for window resize
+   
     window.addEventListener('resize', updatePlaceholder);
 
-    // Cleanup listener on unmount
+    
     return () => window.removeEventListener('resize', updatePlaceholder);
   }, []);
 

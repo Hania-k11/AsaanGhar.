@@ -194,7 +194,7 @@ router.post('/search/:user_id', async (req, res) => {
 
       if (nearbyPlacesFound.length > 0) {
         filteredPropertiesWithPlaces.push({
-          property, // Return full property object
+          property, 
           nearby_places: nearbyPlacesFound,
         });
       }
@@ -226,6 +226,7 @@ router.post('/search/:user_id', async (req, res) => {
     // 8️⃣ Pagination after sorting
     const totalCount = filteredPropertiesWithPlaces.length;
     const totalPages = Math.ceil(totalCount / limit);
+
     const paginatedFilteredProperties = filteredPropertiesWithPlaces.slice(
       offset,
       offset + Number(limit)
