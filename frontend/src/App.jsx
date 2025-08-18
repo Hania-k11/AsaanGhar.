@@ -18,6 +18,7 @@ import { AuthContext } from "./context/AuthContext";
 import { useAuth } from "./context/AuthContext";
 import MyProfile from "./components/MyProfile";
 import { useLocation } from "react-router-dom";
+import { ToastProvider } from "./components/ToastProvider";
 
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() =>
@@ -40,6 +41,7 @@ function App() {
   // console.log("User Details:", userDetails);
 
   return (
+     <ToastProvider>
     <AuthProvider>
       <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
@@ -90,6 +92,7 @@ function App() {
         <MouseFollower />
       </div>
     </AuthProvider>
+    </ToastProvider>
   );
 }
 

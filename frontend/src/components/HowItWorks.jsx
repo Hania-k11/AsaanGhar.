@@ -148,7 +148,7 @@ const handleClick = () => {
               : 'opacity-0 translate-y-10'
           }`}
         >
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-2 rounded-full mb-6 border border-emerald-100">
+          <div className="inline-flex items-center md:mt-5 gap-2 bg-gradient-to-r from-emerald-50 to-teal-50 px-4 py-2 rounded-full mb-6 border border-emerald-100">
             <Sparkles className="w-4 h-4 text-emerald-500" />
             <span className="text-emerald-600 font-medium text-sm">Simple Process</span>
           </div>

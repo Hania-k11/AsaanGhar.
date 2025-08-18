@@ -4,8 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import Terms from "./Terms"; // Import the new Terms component
+import { useToast } from "./ToastProvider";
 
 const LoginModal = () => {
+
+
+   const { success, error, warning, info } = useToast();
+   
   const {
     userDetails,
     setUserDetails,
@@ -62,21 +67,21 @@ const LoginModal = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
-      alert("Please enter email and password");
+      error("Please enter email and password");
       return;
     }
 
     if (isSignup) {
       // Basic validation
       if (form.password !== form.confirmPassword) {
-        alert("Passwords do not match.");
+      error("Passwords do not match.");
         return;
       }
       if (!form.agree) {
-        alert("You must agree to the Terms and Conditions to sign up.");
+        error("You must agree to the Terms and Conditions to sign up.");
         return;
       }
-      alert("Signup logic not implemented yet");
+      error("Signup logic not implemented yet");
       return;
     }
 
@@ -88,11 +93,11 @@ const LoginModal = () => {
 
       const user = res.data.user;
       setUserDetails(user);
-      alert(`Welcome, ${user.first_name}`);
+      success(`Welcome ${user.first_name}, successfully logged in!`);
       setShow(false);
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.message || "Login failed");
+      error(err.response?.data?.message || "Login failed");
     }
   };
   
