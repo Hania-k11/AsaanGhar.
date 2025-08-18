@@ -59,6 +59,7 @@ async function searchNearby(lat, lon, query, radiusInMeters) {
         }
 
         console.log(`✅ Found ${response.data.results.length} places`);
+        // console.log(response.data.results)
          console.log('🟢 Foursquare response:', response.data);
 
         return response.data.results.map(place => ({

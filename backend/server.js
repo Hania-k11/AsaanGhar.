@@ -19,6 +19,9 @@ app.use('/api/gemininlp', geminiRoutes);
 const cohereRoutes = require('./routes/cohere'); 
 app.use('/api/cohere', cohereRoutes);
 
+const cohereallRoutes = require('./routes/cohereall'); 
+app.use('/api/cohereall', cohereallRoutes);
+
 const userRoutes = require('./routes/users');
 app.use('/api/users', userRoutes);
 

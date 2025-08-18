@@ -8,12 +8,8 @@ const pool = require('../db');
 
 const fallbackLocations = ['Gulshan', 'DHA', 'PECHS', 'Scheme 33', 'Gulistan e Johar', 'Johar'];
 
-router.post('/search/:user_id', async (req, res) => {
-  const user_id = parseInt(req.params.user_id, 10);
-
-  if (isNaN(user_id)) {
-    return res.status(400).json({ error: 'Invalid user ID' });
-  }
+router.post('/search', async (req, res) => {
+  
 
   try {
     const {
@@ -60,8 +56,8 @@ router.post('/search/:user_id', async (req, res) => {
     const listingTypeFinal = filter !== 'all' ? filter : clean.listing_type ?? undefined;
 
     // 3️⃣ Fetch properties using stored procedure
-    const [rows] = await pool.query('CALL GetPropertiesExcludingUser(?)', [Number(user_id)]);
-    let properties = rows[0]; 
+    const [rows] = await pool.query('CALL GetAllProperties()');
+let properties = rows[0];
 
   
 

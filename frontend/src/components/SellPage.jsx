@@ -103,7 +103,7 @@ const SellPage = () => {
 const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const { userDetails } = useAuth();
   const [formData, setFormData] = useState({
-    owner_id: userDetails.user_id, // from auth
+    owner_id: '' , // from auth
     title: '',
     address: '',
     street_address: '',
@@ -160,7 +160,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     year_built: '',
     status: 'active',
     // is_featured: false,
-    created_by: userDetails.user_id,
+    created_by: '',
     latitude: null,
     longitude: null,
     display_name: ''

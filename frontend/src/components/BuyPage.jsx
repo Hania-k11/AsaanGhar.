@@ -18,7 +18,7 @@ const BuyPage = () => {
   // Normal search states
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 150000000]);
+  const [priceRange, setPriceRange] = useState([0, 150000000000000000]);
   const [sortBy, setSortBy] = useState("featured");
   const [normalPage, setNormalPage] = useState(1);
 
