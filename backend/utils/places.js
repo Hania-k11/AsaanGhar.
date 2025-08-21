@@ -44,7 +44,7 @@ async function searchNearby(lat, lon, query, radiusInMeters) {
             ll: `${lat},${lon}`,
             query: query,
             radius: Math.min(radiusInMeters, 100000), // Cap radius at 100km
-            limit: 5,
+            limit: 3,
         },
         timeout: 10000 // 10 second timeout
     };

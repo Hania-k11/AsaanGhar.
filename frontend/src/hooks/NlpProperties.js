@@ -8,7 +8,7 @@ const fetchNlpProperties = async ({ queryKey }) => {
   if (isLoggedIn) {
     // Logged-in user endpoint
     const response = await axios.post(`/api/cohere/search/${userId}`, {
-      user_id: userId,
+      // user_id: userId,
       query,
       filter,
       priceRange,

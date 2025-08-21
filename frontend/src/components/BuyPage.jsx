@@ -18,7 +18,7 @@ const BuyPage = () => {
   // Normal search states
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 150000000000000000]);
+  const [priceRange, setPriceRange] = useState([0, 9999999999999.99]);
   const [sortBy, setSortBy] = useState("featured");
   const [normalPage, setNormalPage] = useState(1);
 
@@ -186,7 +186,7 @@ const BuyPage = () => {
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="newest">Newest First</option>
-                  <option value="rating">Highest Rated</option>
+                  {/* <option value="rating">Highest Rated</option> */}
                 </select>
 
                 <motion.button
