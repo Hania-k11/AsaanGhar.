@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Mail, Phone, Calendar, Edit3, Save, X, User, Hash } from "lucide-react"

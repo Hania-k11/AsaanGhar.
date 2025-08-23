@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { useState, useEffect, useRef } from "react"
 import { ArrowRight, Sparkles, Award, MapPin, Users } from "lucide-react"
 import { motion } from "framer-motion"

@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useState, useEffect } from "react"
 import { Search, Home, Key, DollarSign, Sparkles, ArrowRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"

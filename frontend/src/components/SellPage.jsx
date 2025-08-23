@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { useState, useEffect, useRef } from "react"
 import LoginModal from "./LoginModal"
 import { Home } from "lucide-react"

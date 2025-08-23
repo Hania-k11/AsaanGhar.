@@ -1,4 +1,5 @@
 // src/components/FeaturedProperties.jsx
+/* eslint-disable no-unused-vars */
 
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";

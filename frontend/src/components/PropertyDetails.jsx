@@ -1,4 +1,5 @@
 //src/components/PropertyDetails.jsx
+/* eslint-disable no-unused-vars */
 
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -485,7 +486,7 @@ const PropertyDetails = () => {
             className="text-xl font-extrabold flex items-center gap-2 text-gray-800"
           >
             <MessageCircleMore className="w-6 h-6 text-emerald-600" />
-            Contact Owner
+            Contact Info
           </motion.h2>
 
           <div className="flex items-center gap-3 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100 shadow-sm">

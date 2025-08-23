@@ -1,4 +1,5 @@
 //src/components/Favourites.jsx
+/* eslint-disable no-unused-vars */
 
 import React, { useState, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
