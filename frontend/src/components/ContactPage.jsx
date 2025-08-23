@@ -215,7 +215,7 @@ const ContactPage = () => {
   return (
     <motion.div className="min-h-screen bg-gradient-to-br from-emerald-50 to-white pb-20" initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.2 } } }}>
       <div className="text-center max-w-3xl mx-auto pt-24 px-4">
-        <motion.h1 variants={fadeInUp} className="text-5xl font-bold text-emerald-900 mb-4">Get In Touch</motion.h1>
+        <motion.h1 variants={fadeInUp} className="text-5xl font-inter font-bold text-emerald-700 mb-4">Get In Touch</motion.h1>
         <motion.p variants={fadeInUp} className="text-xl text-gray-600">Have questions? Our team is ready to help.</motion.p>
       </div>
 

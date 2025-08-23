@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 import { Link } from "react-router-dom" 
 
-// Mock data for demonstration
+
 const mockStats = {
   propertiesViewed: 127,
   savedProperties: 23,

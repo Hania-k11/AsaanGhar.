@@ -4,10 +4,9 @@ import { Mail, Phone, Calendar, Edit3, Save, X, User, Hash } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import { format } from "date-fns"
 
-// Placeholder for profile image that generates an icon from initials
 const generatePlaceholderImage = (firstName, lastName) => {
-  const safeFirstName = firstName || "U"; // Fallback to "U" if undefined
-  const safeLastName = lastName || "U"; // Fallback to "U" if undefined
+  const safeFirstName = firstName || "U"; 
+  const safeLastName = lastName || "U"; 
   const initials = `${safeFirstName[0]}${safeLastName[0]}`.toUpperCase();
   const colors = ["#0D9488", "#14B8A6", "#047857", "#065F46", "#2dd4bf"];
   const color = colors[initials.charCodeAt(0) % colors.length];
@@ -39,7 +38,7 @@ const generatePlaceholderImage = (firstName, lastName) => {
 
 const UserProfile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
-  const { userDetails, updateUserDetails } = useAuth(); // Assuming updateUserDetails is provided by AuthContext
+  const { userDetails, updateUserDetails } = useAuth(); 
 
   // Initialize editData with safe defaults
   const [editData, setEditData] = useState({
@@ -68,7 +67,7 @@ const UserProfile = () => {
   };
 
   const handleSave = () => {
-    updateUserDetails(editData); // Update userDetails in context or via API (implement based on your setup)
+    updateUserDetails(editData); 
     setShowEditModal(false);
   };
 
@@ -96,12 +95,12 @@ const UserProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center font-sans p-6 md:p-10">
+    <div className="min-h-screen bg-white  flex flex-col items-center justify-center font-sans">
       <div className="w-full max-w-4xl">
         {/* Profile Header Card */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
+        <div className="bg-white  rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden relative">
           {/* Background banner with gradient */}
-          <div className="relative h-48 sm:h-56 bg-gradient-to-br from-emerald-500 to-teal-600">
+          <div className="relative h-48 sm:h-50 bg-gradient-to-br from-emerald-400 to-teal-200/80">
             <div className="absolute inset-0 bg-black opacity-20"></div>
           </div>
 

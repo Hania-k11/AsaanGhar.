@@ -8,11 +8,10 @@ const searchSchema = require("../validators/searchSchema");
 const logger = require("../utils/logger");
 const pool = require("../db");
 
-const MAX_CONCURRENT_REQUESTS = 5; 
+const MAX_CONCURRENT_REQUESTS = 5;
 
 async function processNearbyPlaces(properties, clean, radiusKm = 5) {
   if (!clean.places_nearby || clean.places_nearby.length === 0) {
-   
     return properties.map((p) => ({ property: p }));
   }
 
@@ -22,7 +21,6 @@ async function processNearbyPlaces(properties, clean, radiusKm = 5) {
   const results = [];
 
   if (!useRateLimit) {
-   
     return await Promise.all(
       properties.map(async (property) => {
         const nearbyPlacesFound = await Promise.all(
@@ -142,37 +140,115 @@ router.post("/search/:user_id", async (req, res) => {
       return res.status(400).json({ error: "Failed to parse query" });
 
     const clean = postProcess({ ...nlpOutput.parsed, query: userQuery });
-    console.log("CLEANEDDDDD:",clean)
+    console.log("CLEANEDDDDD:", clean);
 
-    // Prepare stored procedure parameters (same as your current code)
-    const location = clean.location || null;
-    const exactBedrooms = typeof clean.bedrooms === "number" ? clean.bedrooms : clean.bedrooms?.exact || null;
-    const minBedrooms = exactBedrooms === null ? clean.bedrooms?.min || null : null;
-    const maxBedrooms = exactBedrooms === null ? clean.bedrooms?.max || null : null;
-    const exactBathrooms = typeof clean.bathrooms === "number" ? clean.bathrooms : clean.bathrooms?.exact || null;
-    const minBathrooms = exactBathrooms === null ? clean.bathrooms?.min || null : null;
-    const maxBathrooms = exactBathrooms === null ? clean.bathrooms?.max || null : null;
-    const exactArea = typeof clean.area_range === "number" ? clean.area_range : clean.area_range?.exact || null;
+    // Prepare stored procedure parameters 
+    let location = null;
+if (Array.isArray(clean.location)) {
+  location = clean.location.map(l => l.trim().toLowerCase()).join(",");
+} else if (typeof clean.location === "string") {
+  location = clean.location.trim().toLowerCase();
+} else {
+  location = null;
+}
+
+    const exactBedrooms =
+      typeof clean.bedrooms === "number"
+        ? clean.bedrooms
+        : clean.bedrooms?.exact || null;
+    const minBedrooms =
+      exactBedrooms === null ? clean.bedrooms?.min || null : null;
+    const maxBedrooms =
+      exactBedrooms === null ? clean.bedrooms?.max || null : null;
+    const exactBathrooms =
+      typeof clean.bathrooms === "number"
+        ? clean.bathrooms
+        : clean.bathrooms?.exact || null;
+    const minBathrooms =
+      exactBathrooms === null ? clean.bathrooms?.min || null : null;
+    const maxBathrooms =
+      exactBathrooms === null ? clean.bathrooms?.max || null : null;
+    const exactArea =
+      typeof clean.area_range === "number"
+        ? clean.area_range
+        : clean.area_range?.exact || null;
     const minArea = exactArea === null ? clean.area_range?.min || null : null;
     const maxArea = exactArea === null ? clean.area_range?.max || null : null;
-    const exactPrice = typeof clean.price === "number" ? clean.price : clean.price?.exact ?? null;
-    const minPrice = exactPrice === null ? priceRange?.[0] ?? clean.price?.min ?? null : null;
-    const maxPrice = exactPrice === null ? priceRange?.[1] ?? clean.price?.max ?? null : null;
-    const exactMaintenance = typeof clean.monthly_maintenance === "number" ? clean.monthly_maintenance : clean.monthly_maintenance?.exact || null;
-    const minMaintenance = exactMaintenance === null ? clean.monthly_maintenance?.min || null : null;
-    const maxMaintenance = exactMaintenance === null ? clean.monthly_maintenance?.max || null : null;
-    const exactDeposit = typeof clean.security_deposit === "number" ? clean.security_deposit : clean.security_deposit?.exact || null;
-    const minDeposit = exactDeposit === null ? clean.security_deposit?.min || null : null;
-    const maxDeposit = exactDeposit === null ? clean.security_deposit?.max || null : null;
-    const exactYearBuilt = typeof clean.year_built === "number" ? clean.year_built : clean.year_built?.exact || null;
-    const minYearBuilt = exactYearBuilt === null ? clean.year_built?.min || null : null;
-    const maxYearBuilt = exactYearBuilt === null ? clean.year_built?.max || null : null;
-    const listingType = filter && filter !== "all" ? filter : clean.listing_type || null;
-    const propertyType = clean.property_type || null;
-    const furnishingStatus = clean.furnishing_status || null;
-    const floor = clean.floor_level || null;
-    const leaseDuration = clean.lease_duration || null;
-    const amenities = clean.amenities?.length ? clean.amenities.join(",") : null;
+    const exactPrice =
+      typeof clean.price === "number"
+        ? clean.price
+        : clean.price?.exact ?? null;
+    const minPrice =
+      exactPrice === null ? priceRange?.[0] ?? clean.price?.min ?? null : null;
+    const maxPrice =
+      exactPrice === null ? priceRange?.[1] ?? clean.price?.max ?? null : null;
+    const exactMaintenance =
+      typeof clean.monthly_maintenance === "number"
+        ? clean.monthly_maintenance
+        : clean.monthly_maintenance?.exact || null;
+    const minMaintenance =
+      exactMaintenance === null ? clean.monthly_maintenance?.min || null : null;
+    const maxMaintenance =
+      exactMaintenance === null ? clean.monthly_maintenance?.max || null : null;
+    const exactDeposit =
+      typeof clean.security_deposit === "number"
+        ? clean.security_deposit
+        : clean.security_deposit?.exact || null;
+    const minDeposit =
+      exactDeposit === null ? clean.security_deposit?.min || null : null;
+    const maxDeposit =
+      exactDeposit === null ? clean.security_deposit?.max || null : null;
+    const exactYearBuilt =
+      typeof clean.year_built === "number"
+        ? clean.year_built
+        : clean.year_built?.exact || null;
+    const minYearBuilt =
+      exactYearBuilt === null ? clean.year_built?.min || null : null;
+    const maxYearBuilt =
+      exactYearBuilt === null ? clean.year_built?.max || null : null;
+  
+let listingType = null;
+if (Array.isArray(clean.listing_type)) {
+  listingType = clean.listing_type.join(",");
+} else {
+  listingType = filter && filter !== "all" ? filter : clean.listing_type || null;
+}
+
+
+let propertyType = null;
+if (Array.isArray(clean.property_type)) {
+  propertyType = clean.property_type.join(",");
+} else {
+  propertyType = clean.property_type || null;
+}
+
+
+let furnishingStatus = null;
+if (Array.isArray(clean.furnishing_status)) {
+  furnishingStatus = clean.furnishing_status.join(",");
+} else {
+  furnishingStatus = clean.furnishing_status || null;
+}
+
+
+let floor = null;
+if (Array.isArray(clean.floor_level)) {
+  floor = clean.floor_level.join(",");
+} else {
+  floor = clean.floor_level || null;
+}
+
+
+let leaseDuration = null;
+if (Array.isArray(clean.lease_duration)) {
+  leaseDuration = clean.lease_duration.join(",");
+} else {
+  leaseDuration = clean.lease_duration || null;
+}
+
+    const amenities = clean.amenities?.length
+      ? clean.amenities.join(",")
+      : null;
 
     // Fetch all matching properties from DB
     const [rows] = await pool.query(
@@ -211,7 +287,10 @@ router.post("/search/:user_id", async (req, res) => {
     );
 
     let allProperties = rows[0] || [];
-    logger.info({ user_id, total: allProperties.length }, "Fetched properties from DB");
+    logger.info(
+      { user_id, total: allProperties.length },
+      "Fetched properties from DB"
+    );
 
     // Sorting
     switch (sort) {
@@ -222,7 +301,9 @@ router.post("/search/:user_id", async (req, res) => {
         allProperties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
         break;
       case "newest":
-        allProperties.sort((a, b) => new Date(b.posted_at) - new Date(a.posted_at));
+        allProperties.sort(
+          (a, b) => new Date(b.posted_at) - new Date(a.posted_at)
+        );
         break;
       default:
         allProperties.sort((a, b) => b.is_featured - a.is_featured);
@@ -235,7 +316,10 @@ router.post("/search/:user_id", async (req, res) => {
     const paginatedProperties = allProperties.slice(offset, offset + limit);
 
     // Only now fetch nearby places for paginated results
-    const filteredPropertiesWithPlaces = await processNearbyPlaces(paginatedProperties, clean);
+    const filteredPropertiesWithPlaces = await processNearbyPlaces(
+      paginatedProperties,
+      clean
+    );
 
     return res.json({
       count: totalCount,

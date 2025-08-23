@@ -38,7 +38,7 @@ const AboutPage = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-5xl font-bold mb-4 text-emerald-800 text-center"
+            className="text-5xl font-inter font-bold  mb-4 text-emerald-700 text-center"
           >
             Verified Homes. No Agents. 100% Asaan.
           </motion.h1>

@@ -79,7 +79,7 @@ const SellPage = () => {
             <Home className=" h-17 w-18 m:h-20 m:w-22 text-emerald-600" />
           </motion.div>
         </motion.div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+          <h1 className="text-5xl font-bold text-cyan-950 mb-4">
             List Your <span className="text-emerald-600">Property</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">

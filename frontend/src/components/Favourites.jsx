@@ -265,7 +265,7 @@ const Favourites = ({
     baths !== 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-pink-50 p-4 sm:p-6 lg:p-10">
+    <div className="min-h-screen bg-white p-2 ">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

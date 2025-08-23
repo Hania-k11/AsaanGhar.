@@ -78,7 +78,7 @@ const handleClick = () => {
     {
       icon: <Key className="w-8 h-8 text-white" />,
       title: "Get Your Keys",
-      description: "Complete the paperwork, finalize the deal, and get the keys to your new home. It's that simple!",
+      description: "Complete the paperwork, finalize the deal, and get the keys to your new home. Start living in your dream house, Its that simple.",
       color: "from-blue-500 via-blue-400 to-indigo-400",
       shadowColor: "shadow-blue-500/25",
       number: "04"

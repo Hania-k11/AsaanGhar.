@@ -9,6 +9,7 @@ import { Filter, Search, Grid3X3, List } from "lucide-react";
 
 import usePropertiesApi from "../hooks/useProperties";
 import { useNlpProperties } from "../hooks/NlpProperties";
+import LoadingSpinner from "./LoadingSpinner";
 
 const propertiesPerPage = 6;
 
@@ -36,6 +37,11 @@ const BuyPage = () => {
     if (nlpPage > 1) params.page = nlpPage;
     setSearchParams(params);
   }, [nlpQuery, nlpPage, setSearchParams]);
+
+
+  useEffect(() => {
+  setFilter("all");
+}, [nlpQuery]);
 
   // UI states
   const [viewMode, setViewMode] = useState("grid");
@@ -271,9 +277,12 @@ const BuyPage = () => {
         {/* Property Grid */}
         <AnimatePresence mode="wait">
           {(normalLoading && !isNlpActive) || (nlpLoading && isNlpActive) ? (
-            <p className="text-center text-gray-500 py-20">
-              Loading properties...
-            </p>
+          <div className="pt-12 pb-36 ">
+          <LoadingSpinner 
+  variant="inline" 
+  message="Loading properties..." 
+/>
+</div>
           ) : (normalError && !isNlpActive) || (nlpError && isNlpActive) ? (
             <p className="text-center text-red-500 py-20">
               Error loading properties.

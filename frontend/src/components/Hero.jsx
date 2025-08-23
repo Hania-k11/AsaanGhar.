@@ -43,7 +43,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="relative pt-10 overflow-hidden font-sans ">
+    <div className="relative pt-[-6] md:pt-10 overflow-hidden font-sans ">
       {/* Background with parallax effect */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 z-10 bg-gradient-to-b from-gray-200/50 via-emerald-200/80 to-teal-800/60 backdrop-blur-sm shadow-[inset_0_-15px_30px_-10px_rgba(0,0,0,0.3)]"></div>
@@ -108,10 +108,10 @@ useEffect(() => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-4xl md:text-6xl font-extrabold drop-shadow-[4px_4px_2px_white] text-cyan-950/90 mb-4   leading-tight"
+          className="text-4xl font-inter font-bold md:text-6xl  text-cyan-950/85 mb-4   leading-tight"
         >
           Find Your{" "}
-          <span className="text-emerald-700 drop-shadow-[2px_2px_2px_white] ">
+          <span className="text-emerald-700  drop-shadow-[2px_2px_2px_white] ">
             Dream Place
           </span>{" "}
           With Ease
@@ -122,7 +122,7 @@ useEffect(() => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="text-lg md:text-xl text-gray-700 font-medium mb-8 max-w-2xl mx-auto"
+          className="text-sm md:text-xl text-gray-700 font-medium mb-8 max-w-2xl mx-auto"
         >
           Asaan Ghar simplifies buying, selling, and renting properties. Pakistan's first natural language searching for real state site.
         </motion.p>
@@ -255,89 +255,93 @@ useEffect(() => {
               className="absolute bottom-8 left-12 w-1 h-1 bg-emerald-300 rounded-full"
             />
 
-            <div className="relative z-20 flex flex-col md:flex-row items-center gap-4">
-              {/* Ultra Enhanced search input */}
-              <div className="relative flex-1 w-full group">
-                <motion.div whileFocus={{ scale: 1.02 }} className="relative">
-                  {/* Input glow effect */}
-                  <motion.div
-                    animate={{
-                      opacity: [0.5, 1, 0.5],
-                      scale: [1, 1.02, 1],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Number.POSITIVE_INFINITY,
-                      ease: "easeInOut",
-                    }}
-                    className="absolute -inset-1 bg-gradient-to-r from-emerald-400/20 via-teal-400/30 to-emerald-400/20 rounded-xl blur-sm group-focus-within:opacity-100 opacity-0 transition-opacity duration-300"
-                  />
-
-                  <motion.div
-                    animate={{
-                      x: [0, 2, 0],
-                    }}
-                    transition={{
-                      duration: 0.1,
-                      repeat: Number.POSITIVE_INFINITY,
-                      repeatType: "reverse",
-                    }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-emerald-500 transition-colors duration-300"
-                  >
-                    <Search className="text-gray-400 w-5 h-5" />
-                  </motion.div>
-
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={placeholder}
-                    className="relative z-10 w-full pl-3 md:pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
-                  />
-                </motion.div>
-              </div>
-
-              {/* Enhanced search button */}
-              <motion.button
-                onClick={handleSearch}
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
-                }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center gap-2 group relative overflow-hidden"
-              >
-                <span className="relative z-10">Search</span>
-                <Search className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
-                {/* Button shine effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-              </motion.button>
-
-              {/* Enhanced mic button */}
-              <motion.button
-                whileHover={{
-                  scale: 1.1,
-                  backgroundColor: "rgba(16, 185, 129, 0.1)",
-                }}
-                whileTap={{ scale: 0.9 }}
-                className="p-4 bg-gray-50 hover:bg-black rounded-xl transition-all duration-300 shadow-md border border-gray-200 hover:border-emerald-200 group relative"
-              >
-                <Mic className="text-gray-600 group-hover:text-black w-5 h-5 transition-colors duration-300" />
-                {/* Pulse animation for mic */}
+        <div className="relative z-20 flex flex-col md:flex-row gap-4 items-center">
+          {/* Search input - full width on mobile, flex-1 on desktop */}
+          <div className="w-full md:flex-1">
+            {/* Ultra Enhanced search input */}
+            <div className="relative w-full group">
+              <motion.div whileFocus={{ scale: 1.02 }} className="relative">
+                {/* Input glow effect */}
                 <motion.div
                   animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.5, 0, 0.5],
+                    opacity: [0.5, 1, 0.5],
+                    scale: [1, 1.02, 1],
                   }}
                   transition={{
                     duration: 2,
-                    repeat: Infinity,
-                    repeatType: "loop",
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
                   }}
-                  className="absolute inset-0 rounded-xl bg-emerald-400/30 pointer-events-none"
+                  className="absolute -inset-1 bg-gradient-to-r from-emerald-400/20 via-teal-400/30 to-emerald-400/20 rounded-xl blur-sm group-focus-within:opacity-100 opacity-0 transition-opacity duration-300"
                 />
-              </motion.button>
+                <motion.div
+                  animate={{ x: [0, 2, 0] }}
+                  transition={{
+                    duration: 0.1,
+                    repeat: Number.POSITIVE_INFINITY,
+                    repeatType: "reverse",
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-emerald-500 transition-colors duration-300"
+                >
+                  <Search className="text-gray-400 w-5 h-5" />
+                </motion.div>
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={placeholder}
+                  className="relative z-10 w-full pl-3 pr-3 md:pl-12  py-3 md:pr-4 md:py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
+                />
+              </motion.div>
             </div>
+          </div>
+
+          {/* Buttons row - full width on mobile, auto width on desktop */}
+          <div className="flex flex-row gap-4 items-center w-full md:w-auto">
+            {/* Enhanced mic button */}
+            <motion.button
+              whileHover={{
+                scale: 1.1,
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+              }}
+              whileTap={{ scale: 0.9 }}
+              className="flex-1 md:flex-none py-2 md:p-4 md:py-4 bg-gray-50 hover:bg-black rounded-xl transition-all duration-300 shadow-md border border-gray-200 hover:border-emerald-200 group relative"
+            >
+              <div className="flex items-center justify-center">
+                <Mic className="text-gray-600 group-hover:text-black w-5 h-5 transition-colors duration-300" />
+              </div>
+              {/* Pulse animation for mic */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 0, 0.5],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  repeatType: "loop",
+                }}
+                className="absolute inset-0 rounded-xl bg-emerald-400/30 pointer-events-none"
+              />
+            </motion.button>
+
+            {/* Search button */}
+            <motion.button
+              onClick={handleSearch}
+              whileHover={{
+                scale: 1.05,
+                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
+              }}
+              whileTap={{ scale: 0.95 }}
+              className="flex-1 md:flex-none bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-2 md:py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
+            >
+              <span className="relative z-10">Search</span>
+              <Search className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              {/* Button shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+            </motion.button>
+          </div>
+        </div>
 
             {/* Bottom accent line */}
             <motion.div
@@ -381,8 +385,7 @@ useEffect(() => {
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
-            fill="#ffffffff
-"
+            fill="#ffffffff"
             fillOpacity="1"
           />
         </motion.svg>

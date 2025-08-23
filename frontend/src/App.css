@@ -1,4 +1,6 @@
 /* main.css or styles.css */
+
+
 @import "tailwindcss/preflight";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
@@ -64,6 +66,8 @@
     --shadow-property: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
   }
 
+
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -93,15 +97,12 @@
 }
 
 /* Font family configuration */
-@layer base {
-  html {
-    font-family: "Inter", sans-serif;
-  }
-}
+
 
 /* Define custom utilities that were previously from plugins */
 @layer utilities {
   /* Add animations to replace tailwindcss-animate plugin */
+ 
   @keyframes enter {
     from {
       opacity: 0;

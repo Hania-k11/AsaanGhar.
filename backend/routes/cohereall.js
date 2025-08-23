@@ -143,8 +143,16 @@ router.post("/search", async (req, res) => {
     const clean = postProcess({ ...nlpOutput.parsed, query: userQuery });
     console.log("CLEANEDDDDD:",clean)
 
-    // Prepare stored procedure parameters (same as your current code)
-    const location = clean.location || null;
+    // Prepare stored procedure parameters 
+   let location = null;
+if (Array.isArray(clean.location)) {
+  location = clean.location.map(l => l.trim().toLowerCase()).join(",");
+} else if (typeof clean.location === "string") {
+  location = clean.location.trim().toLowerCase();
+} else {
+  location = null;
+}
+
     const exactBedrooms = typeof clean.bedrooms === "number" ? clean.bedrooms : clean.bedrooms?.exact || null;
     const minBedrooms = exactBedrooms === null ? clean.bedrooms?.min || null : null;
     const maxBedrooms = exactBedrooms === null ? clean.bedrooms?.max || null : null;
@@ -166,14 +174,49 @@ router.post("/search", async (req, res) => {
     const exactYearBuilt = typeof clean.year_built === "number" ? clean.year_built : clean.year_built?.exact || null;
     const minYearBuilt = exactYearBuilt === null ? clean.year_built?.min || null : null;
     const maxYearBuilt = exactYearBuilt === null ? clean.year_built?.max || null : null;
-    const listingType = filter && filter !== "all" ? filter : clean.listing_type || null;
-    const propertyType = clean.property_type || null;
-    const furnishingStatus = clean.furnishing_status || null;
-    const floor = clean.floor_level || null;
-    const leaseDuration = clean.lease_duration || null;
+
+    let listingType = null;
+if (Array.isArray(clean.listing_type)) {
+  listingType = clean.listing_type.join(",");
+} else {
+  listingType = filter && filter !== "all" ? filter : clean.listing_type || null;
+}
+
+
+let propertyType = null;
+if (Array.isArray(clean.property_type)) {
+  propertyType = clean.property_type.join(",");
+} else {
+  propertyType = clean.property_type || null;
+}
+
+
+let furnishingStatus = null;
+if (Array.isArray(clean.furnishing_status)) {
+  furnishingStatus = clean.furnishing_status.join(",");
+} else {
+  furnishingStatus = clean.furnishing_status || null;
+}
+
+
+let floor = null;
+if (Array.isArray(clean.floor_level)) {
+  floor = clean.floor_level.join(",");
+} else {
+  floor = clean.floor_level || null;
+}
+
+
+let leaseDuration = null;
+if (Array.isArray(clean.lease_duration)) {
+  leaseDuration = clean.lease_duration.join(",");
+} else {
+  leaseDuration = clean.lease_duration || null;
+}
+
     const amenities = clean.amenities?.length ? clean.amenities.join(",") : null;
 
-    // Fetch all matching properties from DB
+    
     const [rows] = await pool.query(
       `CALL GetFilteredPropertiesByFieldsGuest(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
@@ -227,13 +270,13 @@ router.post("/search", async (req, res) => {
         allProperties.sort((a, b) => b.is_featured - a.is_featured);
     }
 
-    // Pagination
+  
     const totalCount = allProperties.length;
     const totalPages = Math.ceil(totalCount / limit);
     const offset = (page - 1) * limit;
     const paginatedProperties = allProperties.slice(offset, offset + limit);
 
-    // Only now fetch nearby places for paginated results
+   
     const filteredPropertiesWithPlaces = await processNearbyPlaces(paginatedProperties, clean);
 
     return res.json({

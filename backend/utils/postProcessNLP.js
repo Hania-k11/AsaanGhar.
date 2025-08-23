@@ -842,17 +842,23 @@ function postProcess(parsed, options = {}) {
       debug("Normalized location to:", output.location);
     }
 
-    if (output.property_type) {
+   if (output.property_type) {
+   
+    if (Array.isArray(output.property_type)) {
+      output.property_type = output.property_type.map(item => normalizepropertytype(item));
+      output.property_type = output.property_type.filter(item => item !== null);
+    } else {
+    
       output.property_type = normalizepropertytype(output.property_type);
-      debug("Normalized property type to:", output.property_type);
     }
+  }
 
   if (output.amenities && Array.isArray(output.amenities)) {
-    // Iterate through each amenity in the array
+  
     output.amenities = output.amenities.map(amenity => {
-        // Call the normalization function on each individual amenity string
+     
         return normalizeamnities(amenity);
-    // Remove any null values that result from a failed normalization
+
     }).filter(Boolean); 
 
     console.log("Normalized amenities to:", output.amenities);
