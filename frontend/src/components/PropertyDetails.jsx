@@ -52,7 +52,9 @@ const PropertyDetails = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(property.contact_phone);
+
+      const number = `+92 ${String(property.contact_phone).replace(/^0/, "")}`;
+      await navigator.clipboard.writeText(number);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000); // reset after 2s
     } catch (err) {
@@ -513,7 +515,7 @@ const PropertyDetails = () => {
               className="relative"
             >
               <a
-                href={`tel:${property.contact_phone}`}
+                href={`tel:+92${property.contact_phone}`}
                 onClick={handleClick}
                 className="relative z-10 flex items-center justify-center gap-3 bg-green-600 text-white font-semibold py-2.5 px-4 rounded-xl text-sm shadow hover:bg-green-700 transition-all duration-300 w-full"
               >
@@ -593,10 +595,10 @@ const PropertyDetails = () => {
             className="pt-4 border-t border-gray-200"
           >
             {property.pref_whatsapp === 1 && (
-              <a
-                href={`https://wa.me/${
-                  property.contact_whatsapp || property.contact_phone
-                }?text=Hi, I'm interested in your property: ${property.title}`}
+             <a
+  href={`https://wa.me/92${String(
+    (property.contact_whatsapp || property.contact_phone).replace(/^0/, "")
+  )}?text=Hi, I'm interested in your property: ${property.title}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full flex items-center justify-center gap-2 bg-green-500 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-green-600 transition duration-300 shadow"
@@ -664,7 +666,7 @@ const PropertyDetails = () => {
                   Please dial this number manually:
                 </p>
                 <div className="bg-gray-100 px-4 py-2 rounded-lg text-lg font-bold text-green-700">
-                  {property.contact_phone}
+                {`+92 ${String(property.contact_phone).replace(/^0/, "")}`}
                 </div>
                 <button
                   onClick={handleCopy}
