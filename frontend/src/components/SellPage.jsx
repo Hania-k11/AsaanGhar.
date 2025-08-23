@@ -571,7 +571,7 @@ console.log(amenitiesList)
  <form
   onSubmit={handleSubmit}
   className="bg-white rounded-3xl shadow-2xl overflow-hidden 
-               ring-offset-0 focus-within:ring-emerald-400/70 transition-all duration-300"
+             ring-emerald-400 ring-4 ring-offset-0 focus-within:ring-emerald-400/70 transition-all duration-300"
 >
 
 
@@ -972,24 +972,6 @@ console.log(amenitiesList)
                         className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
-
-                      <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
-                      <div className="relative">
-                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">
-                          PKR
-                        </span>
-                        <input
-                          type="number"
-                          name="maintenance"
-                          value={formData.maintenance}
-                          onChange={handleChange}
-                          placeholder="5,000"
-                          min="0"
-                          className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
-                        />
-                      </div>
-                    </div>
                 {formData.listingType === "rent" && (
                   <>
                     <div>
@@ -1024,7 +1006,7 @@ console.log(amenitiesList)
                       </div>
                     </div>
 
-                    {/* <div>
+                    <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">
@@ -1040,7 +1022,7 @@ console.log(amenitiesList)
                           className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                         />
                       </div>
-                    </div> */}
+                    </div>
                   </>
                 )}
               </div>
