@@ -89,7 +89,24 @@ router.get('/getallnew/:user_id', async (req, res) => {
         properties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
         break;
       case 'newest':
-        properties.sort((a, b) => b.year_built - a.year_built);
+        properties.sort((a, b) => {
+  const aDate =
+    a.posted_at instanceof Date
+      ? a.posted_at.getTime()
+      : a.posted_at
+      ? new Date(String(a.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  const bDate =
+    b.posted_at instanceof Date
+      ? b.posted_at.getTime()
+      : b.posted_at
+      ? new Date(String(b.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  return bDate - aDate;
+});
+
         break;
     }
     console.log('After sorting:', properties);
@@ -179,7 +196,23 @@ router.get('/getall', async (req, res) => {
         properties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
         break;
       case 'newest':
-        properties.sort((a, b) => b.year_built - a.year_built);
+        properties.sort((a, b) => {
+  const aDate =
+    a.posted_at instanceof Date
+      ? a.posted_at.getTime()
+      : a.posted_at
+      ? new Date(String(a.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  const bDate =
+    b.posted_at instanceof Date
+      ? b.posted_at.getTime()
+      : b.posted_at
+      ? new Date(String(b.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  return bDate - aDate;
+});
         break;
     }
     console.log('After sorting:', properties);

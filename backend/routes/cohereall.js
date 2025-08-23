@@ -264,7 +264,23 @@ if (Array.isArray(clean.lease_duration)) {
         allProperties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
         break;
       case "newest":
-        allProperties.sort((a, b) => new Date(b.posted_at) - new Date(a.posted_at));
+        allProperties.sort((a, b) => {
+  const aDate =
+    a.posted_at instanceof Date
+      ? a.posted_at.getTime()
+      : a.posted_at
+      ? new Date(String(a.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  const bDate =
+    b.posted_at instanceof Date
+      ? b.posted_at.getTime()
+      : b.posted_at
+      ? new Date(String(b.posted_at).replace(" ", "T")).getTime()
+      : 0;
+
+  return bDate - aDate;
+});
         break;
       default:
         allProperties.sort((a, b) => b.is_featured - a.is_featured);
