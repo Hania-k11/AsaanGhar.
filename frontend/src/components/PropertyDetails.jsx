@@ -348,63 +348,72 @@ const PropertyDetails = () => {
               )}
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="space-y-6"
-            >
-              <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg">
-                  <Landmark size={22} className="text-emerald-600" />
-                </div>
-                Property Details
-              </h3>
+           <motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.4, duration: 0.5 }}
+  className="space-y-6"
+>
+  <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+    <div className="p-2 bg-emerald-100 rounded-lg">
+      <Landmark size={22} className="text-emerald-600" />
+    </div>
+    Property Details
+  </h3>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <DetailItem
-                  label="Property Type"
-                  value={property.property_type_name || "Apartment"}
-                />
-                <DetailItem
-                  label="Built Year"
-                  value={property.built_year || "2021"}
-                />
-                <DetailItem
-                  label="Furnishing"
-                  value={property.furnishing_status_name || "Fully Furnished"}
-                />
-                <DetailItem label="Floor" value={property.floor || "2"} />
-                <DetailItem
-                  label="Available From"
-                  value={
-                    property.available_from
-                      ? new Date(property.available_from).toLocaleDateString(
-                          "en-GB"
-                        )
-                      : "30/03/2025"
-                  }
-                />
-                <DetailItem
-                  label="Security Deposit"
-                  value={
-                    property.deposit
-                      ? `PKR ${property.deposit.toLocaleString()}`
-                      : "PKR 100,000"
-                  }
-                />
-                {property.listing_type_name?.toLowerCase().includes("rent") && (
-                  <DetailItem
-                    label="Monthly Maintenance"
-                    value={
-                      property.maintenance_fee
-                        ? `PKR ${property.maintenance_fee.toLocaleString()}`
-                        : "PKR 5,000"
-                    }
-                  />
-                )}
-              </div>
-            </motion.div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <DetailItem
+      label="Property Type"
+      value={property.property_type_name || "Apartment"}
+    />
+    <DetailItem
+      label="Built Year"
+      value={property.built_year || "2021"}
+    />
+    <DetailItem
+      label="Furnishing"
+      value={property.furnishing_status_name || "Fully Furnished"}
+    />
+    <DetailItem label="Floor" value={property.floor || "2"} />
+    <DetailItem
+      label="Available From"
+      value={
+        property.available_from
+          ? new Date(property.available_from).toLocaleDateString("en-GB")
+          : "30/03/2025"
+      }
+    />
+    <DetailItem
+      label="Security Deposit"
+      value={
+        property.deposit
+          ? `PKR ${property.deposit.toLocaleString()}`
+          : "PKR 100,000"
+      }
+    />
+
+    {/* Show maintenance fee only if listing type is rent */}
+    {property.listing_type_name?.toLowerCase().includes("rent") && (
+      <DetailItem
+        label="Monthly Maintenance"
+        value={
+          property.maintenance_fee
+            ? `PKR ${property.maintenance_fee.toLocaleString()}`
+            : "PKR 5,000"
+        }
+      />
+    )}
+
+    {property.lease_duration && (
+  <DetailItem
+    label="Minimum Lease Duration"
+    value={property.lease_duration}
+  />
+)}
+
+  </div>
+</motion.div>
+
 
             {property.nearby_places && property.nearby_places.trim() !== "" && (
               <motion.div
