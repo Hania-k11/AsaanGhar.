@@ -568,11 +568,19 @@ console.log(amenitiesList)
           </div>
         </div>
       </div>
+ <form
+  onSubmit={handleSubmit}
+  className="bg-white rounded-3xl shadow-2xl overflow-hidden 
+             ring-emerald-400 ring-4 ring-offset-0 focus-within:ring-emerald-400/70 transition-all duration-300"
+>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+
+
         {/* Step 1: Basic Details */}
         {currentStep === 1 && (
           <div className="p-8 sm:p-12">
+            
             <div className="flex items-center space-x-3 text-emerald-600 mb-8">
               <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <svg
