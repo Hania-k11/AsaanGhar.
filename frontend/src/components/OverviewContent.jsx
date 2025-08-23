@@ -32,10 +32,10 @@ const mockRecentActivity = [
 
 
 const quickActions = [
-  { icon: Plus, label: "List Property", color: "from-emerald-500 to-emerald-600", href: "/sell" },
-  { icon: Search, label: "Find Property", color: "from-blue-500 to-blue-600", href: "/buy" },
-  { icon: Heart, label: "Saved Listings", color: "from-rose-500 to-rose-600", href: "/my-profile?tab=favorites" },
-  { icon: Edit, label: "Manage Profile", color: "from-purple-500 to-purple-600", href: "/my-profile?tab=profile" },
+{ icon: Plus, label: "List Property", color: "from-emerald-500 to-emerald-600", href: "/sell" },
+{ icon: Search, label: "Find Property", color: "from-blue-500 to-blue-600", href: "/buy" },
+{ icon: Heart, label: "Saved Listings", color: "from-rose-500 to-rose-600", href: "/my-profile?tab=favorites" },
+{ icon: Edit, label: "Manage Profile", color: "from-purple-500 to-purple-600", href: "/my-profile?tab=profile" },
 ];
 
 const containerVariants = {
