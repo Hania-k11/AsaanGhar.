@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { createContext, useContext, useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, CheckCircle2, AlertTriangle, Info } from "lucide-react";

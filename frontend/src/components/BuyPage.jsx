@@ -1,4 +1,5 @@
 // src/components/BuyPage.jsx
+/* eslint-disable no-unused-vars */
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +19,7 @@ const BuyPage = () => {
 
   // Normal search states
   const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");  
   const [priceRange, setPriceRange] = useState([0, 9999999999999.99]);
   const [sortBy, setSortBy] = useState("featured");
   const [normalPage, setNormalPage] = useState(1);
@@ -48,7 +49,7 @@ const BuyPage = () => {
   const [likedProperties, setLikedProperties] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch normal filtered data
+
   const {
     data: normalData,
     isLoading: normalLoading,
@@ -62,18 +63,17 @@ const BuyPage = () => {
     limit: propertiesPerPage,
   });
 
-  // Fetch NLP data with fixed hook usage
   const {
     data: nlpData,
     isLoading: nlpLoading,
-    error: nlpError,
-  } = useNlpProperties({
+    error: nlpError,} = 
+    useNlpProperties({
     query: nlpQuery,
     page: nlpPage,
     limit: propertiesPerPage,
-    filter, // Pass current filter
-    priceRange, // Pass current priceRange
-    sort: sortBy, // Pass current sortBy
+    filter, 
+    priceRange, 
+    sort: sortBy, 
   });
 
   // Reset pages when queries or filters change

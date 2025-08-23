@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";

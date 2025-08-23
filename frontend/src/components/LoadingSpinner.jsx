@@ -1,4 +1,6 @@
 // src/components/LoadingSpinner.jsx
+/* eslint-disable no-unused-vars */
+
 import { motion } from "framer-motion";
 
 const LoadingSpinner = ({ 
