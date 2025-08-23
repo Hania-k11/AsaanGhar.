@@ -1,4 +1,5 @@
 // src/components/LoggingOutModal.jsx
+/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2 } from "lucide-react";
 

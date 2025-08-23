@@ -568,11 +568,19 @@ console.log(amenitiesList)
           </div>
         </div>
       </div>
+ <form
+  onSubmit={handleSubmit}
+  className="bg-white rounded-3xl shadow-2xl overflow-hidden 
+               ring-offset-0 focus-within:ring-emerald-400/70 transition-all duration-300"
+>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+
+
         {/* Step 1: Basic Details */}
         {currentStep === 1 && (
           <div className="p-8 sm:p-12">
+            
             <div className="flex items-center space-x-3 text-emerald-600 mb-8">
               <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                 <svg
@@ -954,7 +962,34 @@ console.log(amenitiesList)
                     className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                   />
                 </div>
+<div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Available From</label>
+                      <input
+                        type="date"
+                        name="availableFrom"
+                        value={formData.availableFrom}
+                        onChange={handleChange}
+                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                      />
+                    </div>
 
+                      <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">
+                          PKR
+                        </span>
+                        <input
+                          type="number"
+                          name="maintenance"
+                          value={formData.maintenance}
+                          onChange={handleChange}
+                          placeholder="5,000"
+                          min="0"
+                          className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                        />
+                      </div>
+                    </div>
                 {formData.listingType === "rent" && (
                   <>
                     <div>
@@ -969,16 +1004,7 @@ console.log(amenitiesList)
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Available From</label>
-                      <input
-                        type="date"
-                        name="availableFrom"
-                        value={formData.availableFrom}
-                        onChange={handleChange}
-                        className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
-                      />
-                    </div>
+                    
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Security Deposit</label>
@@ -998,7 +1024,7 @@ console.log(amenitiesList)
                       </div>
                     </div>
 
-                    <div>
+                    {/* <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">
@@ -1014,7 +1040,7 @@ console.log(amenitiesList)
                           className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                         />
                       </div>
-                    </div>
+                    </div> */}
                   </>
                 )}
               </div>
@@ -1155,74 +1181,151 @@ console.log(amenitiesList)
 
             <div className="space-y-8">
               {/* Contact Information */}
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-6">Contact Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Owner/Agent Name *</label>
-                    <input
-                      ref={refs.ownerName}
-                      type="text"
-                      name="ownerName"
-                      value={formData.ownerName}
-                      onChange={handleChange}
-                      placeholder="Your full name"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.ownerName ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                      }`}
-                    />
-                    {errors.ownerName && <p className="text-red-500 text-sm mt-1">{errors.ownerName}</p>}
-                  </div>
+<div>
+  <h3 className="text-xl font-semibold text-gray-900 mb-6">Contact Details</h3>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Owner/Agent Name */}
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        Owner/Agent Name *
+      </label>
+      <input
+        ref={refs.ownerName}
+        type="text"
+        name="ownerName"
+        value={formData.ownerName}
+        onChange={handleChange}
+        placeholder="Your full name"
+        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+          errors.ownerName
+            ? "border-red-300 bg-red-50"
+            : "border-gray-200 focus:border-emerald-500"
+        }`}
+      />
+      {errors.ownerName && (
+        <p className="text-red-500 text-sm mt-1">{errors.ownerName}</p>
+      )}
+    </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
-                    <input
-                      ref={refs.ownerEmail}
-                      type="email"
-                      name="ownerEmail"
-                      value={formData.ownerEmail}
-                      onChange={handleChange}
-                      placeholder="your.email@gmail.com"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.ownerEmail ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                      }`}
-                    />
-                    {errors.ownerEmail && <p className="text-red-500 text-sm mt-1">{errors.ownerEmail}</p>}
-                  </div>
+    {/* Email */}
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        Email Address *
+      </label>
+      <input
+        ref={refs.ownerEmail}
+        type="email"
+        name="ownerEmail"
+        value={formData.ownerEmail}
+        onChange={handleChange}
+        placeholder="your.email@gmail.com"
+        className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+          errors.ownerEmail
+            ? "border-red-300 bg-red-50"
+            : "border-gray-200 focus:border-emerald-500"
+        }`}
+      />
+      {errors.ownerEmail && (
+        <p className="text-red-500 text-sm mt-1">{errors.ownerEmail}</p>
+      )}
+    </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
-                    <input
-                      ref={refs.phoneNumber}
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleChange}
-                      placeholder="+92 300 1234567"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.phoneNumber ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                      }`}
-                    />
-                    {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
-                  </div>
+    
+      {/* Phone Number */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Phone Number *
+  </label>
+  <div className="flex items-center">
+    <span className="px-3 py-4 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-700 font-medium">
+      +92
+    </span>
+    <input
+      ref={refs.phoneNumber}
+      type="tel"
+      name="phoneNumber"
+      value={formData.phoneNumber}
+      onChange={(e) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.startsWith("0")) value = value.slice(1);
+        if (value.length > 10) value = value.slice(0, 10);
+        setFormData({ ...formData, phoneNumber: value });
+      }}
+      placeholder="3001234567"
+      className={`w-full px-4 py-4 border-2 rounded-r-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+        errors.phoneNumber
+          ? "border-red-300 bg-red-50"
+          : "border-gray-200 focus:border-emerald-500"
+      }`}
+    />
+  </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
-                    <input
-                      ref={refs.whatsappNumber}
-                      type="tel"
-                      name="whatsappNumber"
-                      value={formData.whatsappNumber}
-                      onChange={handleChange}
-                      placeholder="+92 300 1234567"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.whatsappNumber ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                      }`}
-                    />
-                    {errors.whatsappNumber && <p className="text-red-500 text-sm mt-1">{errors.whatsappNumber}</p>}
-                  </div>
-                </div>
-              </div>
+  {/* Single Validation at a time */}
+  {formData.phoneNumber && formData.phoneNumber[0] !== "3" ? (
+    <p className="text-red-500 text-sm mt-1">
+      Number must start with 3 (e.g., 3001234567)
+    </p>
+  ) : formData.phoneNumber &&
+    formData.phoneNumber.length !== 10 ? (
+    <p className="text-red-500 text-sm mt-1">
+      Number must be exactly 10 digits
+    </p>
+  ) : null}
+
+  {errors.phoneNumber && (
+    <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+  )}
+</div>
+
+{/* WhatsApp Number */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    WhatsApp Number
+  </label>
+  <div className="flex items-center">
+    <span className="px-3 py-4 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-700 font-medium">
+      +92
+    </span>
+    <input
+      ref={refs.whatsappNumber}
+      type="tel"
+      name="whatsappNumber"
+      value={formData.whatsappNumber}
+      onChange={(e) => {
+        let value = e.target.value.replace(/\D/g, "");
+        if (value.startsWith("0")) value = value.slice(1);
+        if (value.length > 10) value = value.slice(0, 10);
+        setFormData({ ...formData, whatsappNumber: value });
+      }}
+      placeholder="3001234567"
+      className={`w-full px-4 py-4 border-2 rounded-r-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
+        errors.whatsappNumber
+          ? "border-red-300 bg-red-50"
+          : "border-gray-200 focus:border-emerald-500"
+      }`}
+    />
+  </div>
+
+  {/* Single Validation at a time */}
+  {formData.whatsappNumber && formData.whatsappNumber[0] !== "3" ? (
+    <p className="text-red-500 text-sm mt-1">
+      Number must start with 3 (e.g., 3001234567)
+    </p>
+  ) : formData.whatsappNumber &&
+    formData.whatsappNumber.length !== 10 ? (
+    <p className="text-red-500 text-sm mt-1">
+      Number must be exactly 10 digits
+    </p>
+  ) : null}
+
+  {errors.whatsappNumber && (
+    <p className="text-red-500 text-sm mt-1">{errors.whatsappNumber}</p>
+  )}
+</div>
+
+  </div>
+</div>
+
 
               {/* Contact Preferences */}
               <div>
