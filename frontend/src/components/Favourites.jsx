@@ -225,10 +225,13 @@ const Favourites = ({
       const matchesSearch =
         property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         property.location_name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = filterType === "all" || property.type === filterType;
+      const matchesType =
+  filterType === "all" ||
+  property.listing_type_name === filterType ||
+  property.type === filterType;
       const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
-      const matchesBeds = beds === 0 || property.beds >= beds;
-      const matchesBaths = baths === 0 || property.baths >= baths;
+      const matchesBeds = beds === 0 || property.bedrooms >= beds;
+      const matchesBaths = baths === 0 || property.bathrooms >= baths;
 
       return matchesSearch && matchesType && matchesPrice && matchesBeds && matchesBaths;
     });
@@ -348,7 +351,7 @@ const Favourites = ({
                 transition={{ duration: 0.3, ease: "easeInOut" }}
                 className="mt-6 pt-6 border-t border-gray-200 overflow-hidden"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
                   {/* Property Type Filter */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
@@ -368,7 +371,7 @@ const Favourites = ({
                   </div>
 
                   {/* Price Range Filter */}
-                  <div className="md:col-span-2">
+                  {/* <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
                     <div className="flex items-center gap-2">
                       <input
@@ -387,10 +390,10 @@ const Favourites = ({
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Bed and Bath Filters */}
-                  <div className="flex gap-4">
+                  {/* <div className="flex gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Beds</label>
                       <input
@@ -413,7 +416,7 @@ const Favourites = ({
                         className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Clear Filters Button */}
                   <div className="flex items-end">
