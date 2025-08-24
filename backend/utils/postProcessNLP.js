@@ -1,20 +1,5 @@
 // utils/postProcessNLP.js
 
-
-/**
- * Post-processes parsed NLP output into a clean, normalized object.
- *
- * This version includes significant improvements:
- * - More robust date handling (e.g., "next Tuesday", "in a couple of months", "3rd Feb", partial dates).
- * - Comprehensive numeric parsing for ranges, fractions, and different locales/units.
- * - Enhanced radius extraction to support more units (meters, feet) and vague terms ("couple of km").
- * - Improved nearby count extraction with broader number and comparator support.
- * - Refactored amenity/nearby logic to be more precise and less prone to false positives.
- * - Added basic internationalization for currencies and units.
- * - Increased robustness and safety against ReDoS and mutation issues.
- * - Minor performance optimizations and clearer code structure.
- */
-
 const { utcToZonedTime, zonedTimeToUtc } = require("date-fns-tz");
 
 const {
@@ -32,33 +17,16 @@ const {
   isMatch,
 } = require("date-fns");
 
-
-
-/**
- * @typedef {{min?: number|string, max?: number|string}} Range
- * @typedef {{
- * debug?: boolean,
- * weekStartsOn?: 0|1|2|3|4|5|6,
- * defaultVagueRadiusKm?: number,
- * preferMaxDistanceForRanges?: boolean,
- * speedsKmph?: { walking?: number, driving?: number, cycling?: number, transit?: number },
- * locale?: string,
- * timezone?: string,
- * normalize?: { dedupe?: boolean, lowercase?: boolean, trim?: boolean }
- * }} PostProcessOptions
- */
-
-/** Defaults and constants */
 const DEFAULTS = {
   debug: process.env.DEBUG_POSTPROCESS === "1",
   locale: "en-US",
-  timezone: "UTC", // Sensible default, but ideally user's timezone
-  weekStartsOn: 1, // Monday
+  timezone: "UTC",
+  weekStartsOn: 1,
   defaultVagueRadiusKm: 1,
   preferMaxDistanceForRanges: true,
   speedsKmph: {
-    walking: 5, // ~12 min/km
-    driving: 30, // urban average
+    walking: 5,
+    driving: 30,
     cycling: 15,
     transit: 25,
   },
@@ -88,11 +56,9 @@ const VAGUE_RADIUS_TERMS = [
   "half a kilometre",
 ];
 
-// Pre-compiled regex for efficiency
 const NEARBY_PHRASING_REGEX =
   /\b(nearby|near|close to|within|walking distance to|near me|in vicinity of)\b/i;
 
-// Memoized synonym map for performance
 const SYNONYM_MAP = (() => {
   const map = new Map();
   const synonyms = {
@@ -103,7 +69,7 @@ const SYNONYM_MAP = (() => {
     "train station": ["railway station"],
     metro: ["subway"],
     "bus stop": ["busstation", "bus stand"],
-    hospital: ["hospitales"], // Basic plural support
+    hospital: ["hospitales"],
     apartment: ["apartments"],
     flat: ["flats"],
     office: ["offices"],
@@ -149,7 +115,6 @@ const NEARBY_CANDIDATES = new Set([
   "coffee shop",
 ]);
 
-/** Location alias map */
 const LOCATION_ALIASES = {
   jauhar: "Gulistan-e-Johar",
   johor: "Gulistan-e-Johar",
@@ -169,14 +134,12 @@ const LOCATION_ALIASES = {
   phs: "PECHS",
 };
 
-/** Normalize location string using aliases */
 const normalizeLocation = (loc) => {
   if (!loc || typeof loc !== "string") return loc;
   const n = loc.trim().toLowerCase();
   return LOCATION_ALIASES[n] || loc;
 };
 
-/** Location alias map */
 const PROPERTYTYPE_ALIASES = {
   house: "HOUSE",
   apartment: "APARTMENT",
@@ -185,13 +148,12 @@ const PROPERTYTYPE_ALIASES = {
   commercial: "COMMERCIAL",
   shop: "SHOP",
   warehouse: "WAREHOUSE",
-    storage: "WAREHOUSE",
+  storage: "WAREHOUSE",
   office: "OFFICE",
-   work: "OFFICE",
-   'work place': "OFFICE"
+  work: "OFFICE",
+  "work place": "OFFICE",
 };
 
-/** Normalize location string using aliases */
 function normalizepropertytype(input) {
   if (!input) return null;
   const key = input.toLowerCase().trim();
@@ -201,7 +163,7 @@ function normalizepropertytype(input) {
 const AMENITIES_ALIASES = {
   parking: "Parking",
   balcony: "Balcony",
-   terrace: "Balcony",
+  terrace: "Balcony",
   gym: "Gym",
   swimmingpool: "SwimmingPool",
   petfriendly: "PetFriendly",
@@ -212,17 +174,14 @@ const AMENITIES_ALIASES = {
   heater: "Heating",
   security: "Security",
   gatedcommunity: "GatedCommunity",
-  public_transport_access: "publicTransportAccess"
+  public_transport_access: "publicTransportAccess",
 };
 
-/** Normalize location string using aliases */
 function normalizeamnities(input) {
   if (!input) return null;
   const key = input.toLowerCase().trim();
   return AMENITIES_ALIASES[key] || null;
 }
-
-/** Utils */
 
 const roundTo = (num, decimals = 2) => {
   if (typeof num !== "number" || isNaN(num)) return num;
@@ -264,17 +223,14 @@ const parseNumberLike = (value) => {
 
   let s = String(value).toLowerCase().trim();
 
-  // Handle common western (100,000) and Indian (1,00,000) comma formats
   s = s.replace(/(\d),(\d)/g, "$1$2");
-  // Handle European decimal comma
+
   s = s.replace(/(\d+),(\d+)/, "$1.$2");
-  // Remove other non-numeric non-dot characters
+
   s = s.replace(/[^a-z0-9.]/g, "");
 
-  // Currency symbols
   s = s.replace(/(₹|rs\.?|Pkr|Rs|\$|usd|eur|¥|£|₩|chf)/g, "");
 
-  // Fractions
   const fractionMatch = s.match(/(\d+)\/(\d+)/);
   if (fractionMatch) {
     const numerator = parseFloat(fractionMatch[1]);
@@ -326,7 +282,7 @@ const parseNumberLike = (value) => {
 
 const normalizeRange = (range) => {
   if (!isRangeObject(range)) {
-    // Handle stringified ranges like "10-15k"
+   
     if (typeof range === "string") {
       const parts = range.split(/\s*-\s*|\s*to\s*/);
       if (parts.length === 2) {
@@ -340,7 +296,6 @@ const normalizeRange = (range) => {
     return range;
   }
 
-  // Deep copy to prevent mutation leaks
   const out = JSON.parse(JSON.stringify(range));
 
   if ("min" in out) {
@@ -352,7 +307,7 @@ const normalizeRange = (range) => {
     if (!isNaN(n)) out.max = n;
   }
 
-  // Ensure min is less than max
+
   if (
     typeof out.min === "number" &&
     typeof out.max === "number" &&
@@ -371,7 +326,7 @@ const clampYear = (year) => {
   return Math.max(min, Math.min(max, year));
 };
 
-/** Date helpers */
+
 
 const safeFormatDate = (date) => {
   if (!(date instanceof Date) || !isValid(date)) return null;
@@ -381,7 +336,7 @@ const safeFormatDate = (date) => {
 const tryParseToISODateString = (str, opts) => {
   const now = zonedTimeToUtc(new Date(), opts.timezone);
 
-  // Weekday references like "next Tuesday"
+  
   const weekdayMatch = str.match(
     /\b(next\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i
   );
@@ -402,14 +357,14 @@ const tryParseToISODateString = (str, opts) => {
         result = addDays(result, 1);
       }
       if (weekdayMatch[1]) {
-        // "next"
+    
         result = addWeeks(result, 1);
       }
       return safeFormatDate(result);
     }
   }
 
-  // Ordinal dates like "3rd Feb"
+
   const ordinalMatch = str.match(
     /(\d{1,2})(?:st|nd|rd|th)?\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i
   );
@@ -424,7 +379,7 @@ const tryParseToISODateString = (str, opts) => {
     }
   }
 
-  // Partial dates like "May 2025"
+
   const partialMatch = str.match(
     /(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{4})/i
   );
@@ -436,7 +391,7 @@ const tryParseToISODateString = (str, opts) => {
     }
   }
 
-  // Fallback to parseISO and native Date parser
+
   const iso = parseISO(str);
   if (isValid(iso)) return safeFormatDate(iso);
 
@@ -450,10 +405,9 @@ const convertToDate = (str, options = {}) => {
   if (!str || typeof str !== "string") return str;
   const opts = { ...DEFAULTS, ...options };
   const now = utcToZonedTime(new Date(), opts.timezone);
-const lower = str.toLowerCase().trim().replace(/[.,]/g, "");
+  const lower = str.toLowerCase().trim().replace(/[.,]/g, "");
 
 
-  // Immediate / ASAP
   if (
     /\b(immediate|immediately|asap|as soon as possible|right away|urgent)\b/.test(
       lower
@@ -474,51 +428,51 @@ const lower = str.toLowerCase().trim().replace(/[.,]/g, "");
   if (/\b(next\s+year)\b/.test(lower)) return safeFormatDate(addYears(now, 1));
 
   // "in N days/weeks/months" and vague timeframes
-const timeMatch = lower.match(
-  /\b(in|within)\s+((?:a\s+couple\s+of|few|\d+\.?\d*))\s*(day|week|month|year)s?\b/i
-);
+  const timeMatch = lower.match(
+    /\b(in|within)\s+((?:a\s+couple\s+of|few|\d+\.?\d*))\s*(day|week|month|year)s?\b/i
+  );
 
-if (timeMatch) {
-  const num =
-    ["a couple of", "couple of", "few"].includes(timeMatch[2])
+  if (timeMatch) {
+    const num = ["a couple of", "couple of", "few"].includes(timeMatch[2])
       ? 3
       : parseFloat(timeMatch[2]);
 
-  const unit = timeMatch[3];
-  if (!isNaN(num)) {
-    if (unit === "day") return safeFormatDate(addDays(now, num));
-    if (unit === "week") return safeFormatDate(addWeeks(now, num));
-    if (unit === "month") return safeFormatDate(addMonths(now, num));
-    if (unit === "year") return safeFormatDate(addYears(now, num));
+    const unit = timeMatch[3];
+    if (!isNaN(num)) {
+      if (unit === "day") return safeFormatDate(addDays(now, num));
+      if (unit === "week") return safeFormatDate(addWeeks(now, num));
+      if (unit === "month") return safeFormatDate(addMonths(now, num));
+      if (unit === "year") return safeFormatDate(addYears(now, num));
+    }
   }
-}
 
-  // --- Robust: handle 'after N days', 'move in N days', 'move after N days', etc. ---
+  
   const robustPatterns = [
     // after/move in/move after/available in/available after N days/weeks/months/years
     /\b(?:after|move in|move after|available in|available after)\s+(a|an|\d+)\s*(day|week|month|year)s?\b/i,
     // in N days/weeks/months/years
     /\b(in)\s+(a|an|\d+)\s*(day|week|month|year)s?\b/i,
     // N days/weeks/months/years
-    /\b(a|an|\d+)\s*(day|week|month|year)s?\b/i
+    /\b(a|an|\d+)\s*(day|week|month|year)s?\b/i,
   ];
   for (const pattern of robustPatterns) {
     const m = lower.match(pattern);
     if (m) {
       let num = m[1];
-      if (num === 'a' || num === 'an') num = 1;
+      if (num === "a" || num === "an") num = 1;
       else num = parseInt(num, 10);
       const unit = m[2] || m[3];
       if (!isNaN(num)) {
-        if (unit.startsWith('day')) return safeFormatDate(addDays(now, num));
-        if (unit.startsWith('week')) return safeFormatDate(addWeeks(now, num));
-        if (unit.startsWith('month')) return safeFormatDate(addMonths(now, num));
-        if (unit.startsWith('year')) return safeFormatDate(addYears(now, num));
+        if (unit.startsWith("day")) return safeFormatDate(addDays(now, num));
+        if (unit.startsWith("week")) return safeFormatDate(addWeeks(now, num));
+        if (unit.startsWith("month"))
+          return safeFormatDate(addMonths(now, num));
+        if (unit.startsWith("year")) return safeFormatDate(addYears(now, num));
       }
     }
   }
 
-  // --- Fallback: direct patterns like "2 days", "3 weeks", etc. ---
+ 
   const directTimeMatch = lower.match(/^(\d+)\s*(day|week|month|year)s?$/i);
   if (directTimeMatch) {
     const num = parseInt(directTimeMatch[1], 10);
@@ -532,7 +486,6 @@ if (timeMatch) {
   }
 
 
-  // EOW/EOM/EOY (end of next week/month also handled)
   if (/\b(eow|end of( the)?( current)? week)\b/.test(lower))
     return safeFormatDate(endOfWeek(now, { weekStartsOn: opts.weekStartsOn }));
   if (/\b(end of next week)\b/.test(lower))
@@ -550,11 +503,11 @@ if (timeMatch) {
   const direct = tryParseToISODateString(str, opts);
   if (direct) return direct;
 
-  // Finally, unknown — return as-is
+ 
   return str;
 };
 
-/** Radius extraction */
+
 
 const extractRadiusInKm = (text, opts = {}) => {
   if (!text || typeof text !== "string") return null;
@@ -577,8 +530,7 @@ const extractRadiusInKm = (text, opts = {}) => {
     return roundTo(val, 2);
   };
 
-  // Regex to match numbers, ranges, fractions and units (using a safer, non-alternation-heavy pattern)
-  // Anchoring the regex to a word boundary (\b) and being more specific with units helps mitigate ReDoS.
+
   const distanceRegex =
     /\b(\d+(?:\.\d+)?|\d+\/\d+|(?:half|quarter))(?:\s*-\s*|\s*to\s*)?(\d+(?:\.\d+)?|\d+\/\d+)?\s*(k?m|kilometers?|kilometres?|mi|miles?|foot|feet|ft|meter|meters|metre|metres|m|yard|yards)\b/g;
   let match;
@@ -603,7 +555,6 @@ const extractRadiusInKm = (text, opts = {}) => {
     allRadii.push(roundTo(km, 2));
   }
 
-  // Time-based (minutes/hours) with mode (walk/drive/cycle)
   const timeRegex =
     /\b(\d+(?:\.\d+)?|\d+\/\d+|(?:half|quarter))(?:\s*-\s*|\s*to\s*)?(\d+(?:\.\d+)?|\d+\/\d+)?\s*(minutes?|mins?|hours?|hrs?|hr|h)\b[^.]*?\b(walk(?:ing)?|on\s*foot|drive|driving|by\s*car|car|cycle|cycling|bike|biking|scooter|transit|metro|train|e-scooter)\b/g;
   while ((match = timeRegex.exec(lower)) !== null) {
@@ -633,11 +584,11 @@ const extractRadiusInKm = (text, opts = {}) => {
   }
 
   if (allRadii.length > 0) {
-    // Return the most specific (e.g., first) or a combined value if needed
+   
     return allRadii[0];
   }
 
-  // Vague terms fallback
+  
   if (VAGUE_RADIUS_TERMS.some((term) => lower.includes(term))) {
     return DEFAULTS.defaultVagueRadiusKm;
   }
@@ -649,7 +600,7 @@ const extractNearbyCount = (query) => {
   const lower = query.toLowerCase();
   const counts = {};
 
-  // A more robust regex for various comparators and number words/digits
+
   const comparatorRegex =
     /\b(atleast|at\s*least|more\s*than|min(?:imum)?|max(?:imum)?|at\s*most|less\s*than|no\s*more\s*than|no\s*less\s*than|exactly|equal\s*to|>=|<=|>|<)\s*(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|dozen|half-a-dozen|couple|several|a)\s+(.*?)\b(?=\s|$)/g;
 
@@ -657,7 +608,7 @@ const extractNearbyCount = (query) => {
   while ((match = comparatorRegex.exec(lower)) !== null) {
     const comparator = match[1].replace(/\s+/g, " ").trim();
     const numberWord = match[2];
-    const placeRaw = match[3].split(/\b(?:and|or|with)\b/)[0].trim(); // Take the first place
+    const placeRaw = match[3].split(/\b(?:and|or|with)\b/)[0].trim(); 
 
     const numberWords = {
       one: 1,
@@ -677,7 +628,7 @@ const extractNearbyCount = (query) => {
       eleven: 11,
       twelve: 12,
       dozen: 12,
-      several: 3, // Treat 'several' as a vague number, e.g., 3+
+      several: 3, 
     };
 
     const count = numberWords[numberWord] || parseInt(numberWord, 10);
@@ -721,14 +672,78 @@ const extractNearbyCount = (query) => {
 // --- Add helper to detect range/exact keywords in query ---
 function detectRangeType(field, query) {
   // Lowercase for easier matching
-  const q = (query || '').toLowerCase();
+  const q = (query || "").toLowerCase();
   // Map field to possible keywords
   const keywords = {
     price: [
-      'min price', 'minimum price', 'at least', 'more than', 'greater than', 'above', 'over', 'max price', 'maximum price', 'at most', 'less than', 'below', 'under', 'between', 'range', 'upto', 'up to', 'from', 'to', 'till', 'until', 'not more than', 'not less than', 'within', 'around', 'approx', 'about', 'exactly', 'equal to', 'fixed', 'only', 'just', 'exact',
+      "min price",
+      "minimum price",
+      "at least",
+      "more than",
+      "greater than",
+      "above",
+      "over",
+      "max price",
+      "maximum price",
+      "at most",
+      "less than",
+      "below",
+      "under",
+      "between",
+      "range",
+      "upto",
+      "up to",
+      "from",
+      "to",
+      "till",
+      "until",
+      "not more than",
+      "not less than",
+      "within",
+      "around",
+      "approx",
+      "about",
+      "exactly",
+      "equal to",
+      "fixed",
+      "only",
+      "just",
+      "exact",
     ],
     area: [
-      'min area', 'minimum area', 'at least', 'more than', 'greater than', 'above', 'over', 'max area', 'maximum area', 'at most', 'less than', 'below', 'under', 'between', 'range', 'upto', 'up to', 'from', 'to', 'till', 'until', 'not more than', 'not less than', 'within', 'around', 'approx', 'about', 'exactly', 'equal to', 'fixed', 'only', 'just', 'exact',
+      "min area",
+      "minimum area",
+      "at least",
+      "more than",
+      "greater than",
+      "above",
+      "over",
+      "max area",
+      "maximum area",
+      "at most",
+      "less than",
+      "below",
+      "under",
+      "between",
+      "range",
+      "upto",
+      "up to",
+      "from",
+      "to",
+      "till",
+      "until",
+      "not more than",
+      "not less than",
+      "within",
+      "around",
+      "approx",
+      "about",
+      "exactly",
+      "equal to",
+      "fixed",
+      "only",
+      "just",
+      "exact",
     ],
   };
   const fieldKeywords = keywords[field] || [];
@@ -741,10 +756,8 @@ function detectRangeType(field, query) {
 /** Main postProcess */
 
 
-// Removed duplicate parseNumberLike function since it's already defined above
-
 function normalizeDiscrete(obj, field) {
-  // If it's a plain number or string number, convert to exact value
+
   if (obj[field] !== null && typeof obj[field] !== "object") {
     const num = parseNumberLike(obj[field]);
     if (!isNaN(num)) {
@@ -752,21 +765,21 @@ function normalizeDiscrete(obj, field) {
       return;
     }
   }
-  
-  // Handle object form with min/max/exact
+
+
   if (obj[field] && typeof obj[field] === "object") {
     const { min, max, exact } = obj[field];
     if (exact != null) {
-      // Keep only exact if it exists
+    
       obj[field] = { exact };
       return;
     }
     if (min != null && max != null && min === max) {
-      // If min and max are equal, convert to exact
+    
       obj[field] = { exact: min };
       return;
     }
-    // Otherwise keep as is (only min or only max or both different values)
+   
   }
 }
 
@@ -779,7 +792,7 @@ function normalizeContinuous(obj, field) {
       return;
     }
   }
-  
+
   // Handle object form with min/max/exact
   if (obj[field] && typeof obj[field] === "object") {
     const { min, max, exact } = obj[field];
@@ -817,7 +830,9 @@ function postProcess(parsed, options = {}) {
       return { ...fallbackOutput, error: "Invalid input object" };
     }
 
-    const output = { query: typeof input.query === "string" ? input.query : "" };
+    const output = {
+      query: typeof input.query === "string" ? input.query : "",
+    };
     const originalQuery = output.query;
 
     // Step 0: Remove listing_type if it's not explicitly hinted
@@ -842,31 +857,32 @@ function postProcess(parsed, options = {}) {
       debug("Normalized location to:", output.location);
     }
 
-   if (output.property_type) {
-   
-    if (Array.isArray(output.property_type)) {
-      output.property_type = output.property_type.map(item => normalizepropertytype(item));
-      output.property_type = output.property_type.filter(item => item !== null);
-    } else {
-    
-      output.property_type = normalizepropertytype(output.property_type);
+    if (output.property_type) {
+      if (Array.isArray(output.property_type)) {
+        output.property_type = output.property_type.map((item) =>
+          normalizepropertytype(item)
+        );
+        output.property_type = output.property_type.filter(
+          (item) => item !== null
+        );
+      } else {
+        output.property_type = normalizepropertytype(output.property_type);
+      }
     }
-  }
 
-  if (output.amenities && Array.isArray(output.amenities)) {
-  
-    output.amenities = output.amenities.map(amenity => {
-     
-        return normalizeamnities(amenity);
+    if (output.amenities && Array.isArray(output.amenities)) {
+      output.amenities = output.amenities
+        .map((amenity) => {
+          return normalizeamnities(amenity);
+        })
+        .filter(Boolean);
 
-    }).filter(Boolean); 
-
-    console.log("Normalized amenities to:", output.amenities);
-    debug("Normalized amenities to:", output.amenities);
-} else {
-    // Handle the case where amenities is not an array or is missing
-    console.log("Amenities is not a valid array or is missing.");
-}
+      console.log("Normalized amenities to:", output.amenities);
+      debug("Normalized amenities to:", output.amenities);
+    } else {
+      // Handle the case where amenities is not an array or is missing
+      console.log("Amenities is not a valid array or is missing.");
+    }
 
     // Step 1: Normalize availability (force to date if possible)
     if (output.availability) {
@@ -874,113 +890,119 @@ function postProcess(parsed, options = {}) {
       // If convertToDate returns a string that is not a valid date, fallback to null
       if (dateVal && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
         output.availability = dateVal;
-        console.log("DATE",output.availability)
+        console.log("DATE", output.availability);
       } else {
         output.availability = null;
-          console.log("DATE null",output.availability)
+        console.log("DATE null", output.availability);
       }
       debug("Normalized availability to:", output.availability);
-        console.log("DATE debug",output.availability)
+      console.log("DATE debug", output.availability);
     }
-const discreteFields = ["bedrooms", "bathrooms", "year_built"];
-  discreteFields.forEach((f) => normalizeDiscrete(output, f));
+    const discreteFields = ["bedrooms", "bathrooms", "year_built"];
+    discreteFields.forEach((f) => normalizeDiscrete(output, f));
 
-  // --- Continuous fields ---
-  const continuousFields = [
-    "price",
-    "area_range",
-    "monthly_maintenance",
-    "security_deposit",
-  ];
-  continuousFields.forEach((f) => normalizeContinuous(output, f));
- 
-// Step 2b: Collapse discrete numeric fields (bedrooms, bathrooms, year_built)
-// Normalize range values for all fields that might have min/max/exact values
-const rangeFields = ["bedrooms", "bathrooms", "year_built", "price", "area_range", "monthly_maintenance", "security_deposit"];
-for (const field of rangeFields) {
-  if (output[field] && typeof output[field] === "object") {
-    const { min, max, exact } = output[field];
+    // --- Continuous fields ---
+    const continuousFields = [
+      "price",
+      "area_range",
+      "monthly_maintenance",
+      "security_deposit",
+    ];
+    continuousFields.forEach((f) => normalizeContinuous(output, f));
 
-    // If exact exists, keep only exact
-    if (exact != null) {
-      output[field] = { exact };
+    // Step 2b: Collapse discrete numeric fields (bedrooms, bathrooms, year_built)
+    // Normalize range values for all fields that might have min/max/exact values
+    const rangeFields = [
+      "bedrooms",
+      "bathrooms",
+      "year_built",
+      "price",
+      "area_range",
+      "monthly_maintenance",
+      "security_deposit",
+    ];
+    for (const field of rangeFields) {
+      if (output[field] && typeof output[field] === "object") {
+        const { min, max, exact } = output[field];
+
+        // If exact exists, keep only exact
+        if (exact != null) {
+          output[field] = { exact };
+        }
+        // If min and max exist but are equal → convert to exact
+        else if (min != null && max != null && min === max) {
+          output[field] = { exact: min };
+        }
+        // Otherwise keep as is (only min or only max or both different values)
+      }
     }
-    // If min and max exist but are equal → convert to exact
-    else if (min != null && max != null && min === max) {
-      output[field] = { exact: min };
-    }
-    // Otherwise keep as is (only min or only max or both different values)
-  }
-}
-
 
     //-----------
     function normalizeField(field) {
-  if (!output[field]) return;
+      if (!output[field]) return;
 
-  // Handle object form
-  if (typeof output[field] === "object") {
-    const { min, max, exact } = output[field];
+      // Handle object form
+      if (typeof output[field] === "object") {
+        const { min, max, exact } = output[field];
 
-    if (exact != null) {
-      output[field] = exact; // exact overrides everything
-      return;
-    }
+        if (exact != null) {
+          output[field] = exact; // exact overrides everything
+          return;
+        }
 
-    if (min != null && max != null) {
-      if (min === max) {
-        output[field] = min; // collapse to single exact value
-      } else {
-        output[field] = { min, max }; // keep proper range
+        if (min != null && max != null) {
+          if (min === max) {
+            output[field] = min; // collapse to single exact value
+          } else {
+            output[field] = { min, max }; // keep proper range
+          }
+          return;
+        }
+
+        if (min != null) {
+          output[field] = { min };
+          return;
+        }
+
+        if (max != null) {
+          output[field] = { max };
+          return;
+        }
       }
-      return;
+
+      // If plain number → treat as exact
+      if (typeof output[field] === "number") {
+        output[field] = output[field];
+      }
     }
 
-    if (min != null) {
-      output[field] = { min };
-      return;
-    }
+    // Apply to discrete numeric fields
+    ["bedrooms", "bathrooms", "area", "year_built"].forEach(normalizeField);
+    //here new
 
-    if (max != null) {
-      output[field] = { max };
-      return;
-    }
-  }
+    //     // Step 2b: Handle exact values for discrete numeric fields like bedrooms, bathrooms
+    // const discreteFields = ["bedrooms", "bathrooms"];
+    // for (const field of discreteFields) {
+    //   if (output[field] && typeof output[field] === "object") {
+    //     // If exact exists, just take exact
+    //     if ("exact" in output[field]) {
+    //       output[field] = output[field].exact;
+    //     } else if ("min" in output[field] && "max" in output[field] && output[field].min === output[field].max) {
+    //       // If min === max, collapse to single number
+    //       output[field] = output[field].min;
+    //     } else if ("min" in output[field] && !("max" in output[field])) {
+    //       output[field] = output[field].min;
+    //     } else if ("max" in output[field] && !("min" in output[field])) {
+    //       output[field] = output[field].max;
+    //     }
+    //   }
+    // }
 
-  // If plain number → treat as exact
-  if (typeof output[field] === "number") {
-    output[field] = output[field];
-  }
-}
-
-// Apply to discrete numeric fields
-["bedrooms", "bathrooms", "area", "year_built"].forEach(normalizeField);
-//here new
-
-//     // Step 2b: Handle exact values for discrete numeric fields like bedrooms, bathrooms
-// const discreteFields = ["bedrooms", "bathrooms"];
-// for (const field of discreteFields) {
-//   if (output[field] && typeof output[field] === "object") {
-//     // If exact exists, just take exact
-//     if ("exact" in output[field]) {
-//       output[field] = output[field].exact;
-//     } else if ("min" in output[field] && "max" in output[field] && output[field].min === output[field].max) {
-//       // If min === max, collapse to single number
-//       output[field] = output[field].min;
-//     } else if ("min" in output[field] && !("max" in output[field])) {
-//       output[field] = output[field].min;
-//     } else if ("max" in output[field] && !("min" in output[field])) {
-//       output[field] = output[field].max;
-//     }
-//   }
-// }
-
-
-//     // Apply for price fields
-//     setExactOrRange('bedrooms', 'bedrooms', 'bedrooms');
-//     setExactOrRange('price', 'price', 'price');
-//     // Apply for area
-//     setExactOrRange('area_range', 'area', 'area_range');
+    //     // Apply for price fields
+    //     setExactOrRange('bedrooms', 'bedrooms', 'bedrooms');
+    //     setExactOrRange('price', 'price', 'price');
+    //     // Apply for area
+    //     setExactOrRange('area_range', 'area', 'area_range');
 
     // Step 3: Normalize array fields
     const arrayFields = ["amenities", "places_nearby", "places_not_near"];
@@ -1041,13 +1063,12 @@ for (const field of rangeFields) {
       output.amenities = normalizeArray(keepAsAmenities, opts.normalize);
     }
 
-    // Step 6: Extract numeric constraints for nearby places
+    
     const nearbyCount = extractNearbyCount(originalQuery);
     if (nearbyCount) {
       output.min_nearby_count = nearbyCount;
     }
 
-    // Step 7: Resolve contradictions
     if (
       Array.isArray(output.places_nearby) &&
       Array.isArray(output.places_not_near)

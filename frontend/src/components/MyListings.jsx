@@ -97,7 +97,7 @@ const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
   );
 };
 
-// Mock data for user listings
+
 const mockListings = [
   {
     property_id: 1,
@@ -361,7 +361,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 
 // Main App Component
 const MyListings = () => {
-  // State for all dashboard settings
+
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");

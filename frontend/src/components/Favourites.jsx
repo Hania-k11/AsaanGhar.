@@ -24,11 +24,10 @@ import {
   Home,
   Tags,
 } from "lucide-react";
-import PropertyGrid from "./PropertyGrid"; // This is assumed to be a robust component
+import PropertyGrid from "./PropertyGrid"; 
 import { useNavigate } from "react-router-dom";
 
-// Mock data for all properties.
-// In a real application, this would be fetched from an API.
+
 const mockAllProperties = [
   {
   property_id: "1",
