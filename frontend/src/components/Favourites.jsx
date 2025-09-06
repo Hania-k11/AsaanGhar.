@@ -24,13 +24,12 @@ import {
   Home,
   Tags,
 } from "lucide-react";
-import PropertyGrid from "./PropertyGrid"; 
+import PropertyGrid from "./PropertyGrid";
 import { useNavigate } from "react-router-dom";
-
 
 const mockAllProperties = [
   {
-  property_id: "1",
+    property_id: "1",
     title: "Modern Downtown Condo",
     price: "850000",
     location_name: "123 Market St, San Francisco, CA",
@@ -38,7 +37,8 @@ const mockAllProperties = [
     bathrooms: 2,
     area_sqft: 1200,
     listing_type_name: "sale",
-    image: "https://images.unsplash.com/photo-1549517045-bc93de07f01d?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1549517045-bc93de07f01d?q=80&w=400",
     rating: 4.8,
     year_built: 2020,
     description: "Stunning modern condo with city views and premium amenities.",
@@ -53,10 +53,12 @@ const mockAllProperties = [
     bathrooms: 2,
     area_sqft: 1800,
     listing_type_name: "sale",
-    image: "https://images.unsplash.com/photo-1570129477041-3b7c2b3e4073?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1570129477041-3b7c2b3e4073?q=80&w=400",
     rating: 4.6,
     year_built: 1905,
-    description: "Charming Victorian home with original details and modern updates.",
+    description:
+      "Charming Victorian home with original details and modern updates.",
   },
   {
     property_id: "3",
@@ -68,10 +70,12 @@ const mockAllProperties = [
     bathrooms: 3,
     area_sqft: 2500,
     listing_type_name: "sale",
-    image: "https://images.unsplash.com/photo-1615529141938-e6b7d52a20a4?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1615529141938-e6b7d52a20a4?q=80&w=400",
     rating: 4.9,
     year_built: 2018,
-    description: "Exclusive penthouse with panoramic city views and luxury finishes.",
+    description:
+      "Exclusive penthouse with panoramic city views and luxury finishes.",
   },
   {
     property_id: "4",
@@ -83,7 +87,8 @@ const mockAllProperties = [
     bathrooms: 1,
     area_sqft: 600,
     listing_type_name: "rent",
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=400",
     rating: 4.2,
     year_built: 2015,
     description: "Perfect starter home in a vibrant neighborhood.",
@@ -98,10 +103,12 @@ const mockAllProperties = [
     bathrooms: 2,
     area_sqft: 1600,
     listing_type_name: "sale",
-    image: "https://images.unsplash.com/photo-1588880331179-bc9b93a8db56?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1588880331179-bc9b93a8db56?q=80&w=400",
     rating: 4.7,
     year_built: 1985,
-    description: "Spacious family home with beautiful garden and quiet neighborhood.",
+    description:
+      "Spacious family home with beautiful garden and quiet neighborhood.",
   },
   {
     property_id: "6",
@@ -113,7 +120,8 @@ const mockAllProperties = [
     bathrooms: 1,
     area_sqft: 1100,
     listing_type_name: "rent",
-    image: "https://images.unsplash.com/photo-1547349942-83b3815c325c?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1547349942-83b3815c325c?q=80&w=400",
     rating: 4.4,
     year_built: 2010,
     description: "Industrial-style loft with high ceilings and exposed brick.",
@@ -128,7 +136,8 @@ const mockAllProperties = [
     bathrooms: 2,
     area_sqft: 1450,
     listing_type_name: "sale",
-    image: "https://images.unsplash.com/photo-1598464350172-e1d51c3a647d?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1598464350172-e1d51c3a647d?q=80&w=400",
     rating: 4.9,
     yearBuilt: 1998,
     description: "A beautiful cottage steps from the beach.",
@@ -143,7 +152,8 @@ const mockAllProperties = [
     baths: 2.5,
     area: 2400,
     type: "sale",
-    image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400",
+    image:
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=400",
     rating: 4.5,
     yearBuilt: 2008,
     description: "Ideal family home with a large backyard.",
@@ -151,21 +161,23 @@ const mockAllProperties = [
 ];
 
 // Reusable Filter/Sort Button Component
-const ActionButton = React.memo(({ icon: Icon, label, onClick, isActive, className = "" }) => (
-  <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={onClick}
-    className={`px-4 py-3 lg:py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm lg:text-base ${
-      isActive
-        ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-200"
-        : "border border-gray-200 text-gray-700 hover:bg-gray-100"
-    } ${className}`}
-  >
-    <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
-    <span>{label}</span>
-  </motion.button>
-));
+const ActionButton = React.memo(
+  ({ icon: Icon, label, onClick, isActive, className = "" }) => (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className={`px-4 py-3 lg:py-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium text-sm lg:text-base ${
+        isActive
+          ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-200"
+          : "border border-gray-200 text-gray-700 hover:bg-gray-100"
+      } ${className}`}
+    >
+      <Icon className="w-4 h-4 lg:w-5 lg:h-5" />
+      <span>{label}</span>
+    </motion.button>
+  )
+);
 
 // Reusable StatCard Component
 const StatCard = React.memo(({ label, value, icon: Icon, color }) => (
@@ -175,7 +187,9 @@ const StatCard = React.memo(({ label, value, icon: Icon, color }) => (
     transition={{ duration: 0.2 }}
     className="text-center"
   >
-    <div className={`text-2xl lg:text-3xl font-bold ${color} flex items-center justify-center gap-1`}>
+    <div
+      className={`text-2xl lg:text-3xl font-bold ${color} flex items-center justify-center gap-1`}
+    >
       {value}
       {Icon && <Icon className="w-4 h-4 fill-current" />}
     </div>
@@ -185,7 +199,7 @@ const StatCard = React.memo(({ label, value, icon: Icon, color }) => (
 
 const Favourites = ({
   allProperties = mockAllProperties,
-  likedProperties = new Set(["1", "3", "5", "4","2", "6", "7", "8"]), // Use string IDs
+  likedProperties = new Set(["1", "3", "5", "4", "2", "6", "7", "8"]), // Use string IDs
   toggleLike,
 }) => {
   // State for all filters and sorting
@@ -199,7 +213,7 @@ const Favourites = ({
   const [viewMode, setViewMode] = useState("grid");
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
-  
+
   // Constants for filter/sort options
   const sortOptions = [
     { value: "rating", label: "Rating", icon: Star },
@@ -216,7 +230,9 @@ const Favourites = ({
 
   // Memoize the liked properties to prevent re-filtering on every render
   const likedPropertiesData = useMemo(() => {
-    return allProperties.filter((property) => likedProperties.has(property.property_id));
+    return allProperties.filter((property) =>
+      likedProperties.has(property.property_id)
+    );
   }, [allProperties, likedProperties]);
 
   // Memoize the final filtered and sorted list
@@ -226,14 +242,21 @@ const Favourites = ({
         property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         property.location_name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType =
-  filterType === "all" ||
-  property.listing_type_name === filterType ||
-  property.type === filterType;
-      const matchesPrice = property.price >= priceRange[0] && property.price <= priceRange[1];
+        filterType === "all" ||
+        property.listing_type_name === filterType ||
+        property.type === filterType;
+      const matchesPrice =
+        property.price >= priceRange[0] && property.price <= priceRange[1];
       const matchesBeds = beds === 0 || property.bedrooms >= beds;
       const matchesBaths = baths === 0 || property.bathrooms >= baths;
 
-      return matchesSearch && matchesType && matchesPrice && matchesBeds && matchesBaths;
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesPrice &&
+        matchesBeds &&
+        matchesBaths
+      );
     });
 
     filtered.sort((a, b) => {
@@ -248,7 +271,16 @@ const Favourites = ({
     });
 
     return filtered;
-  }, [likedPropertiesData, searchTerm, sortBy, sortOrder, filterType, priceRange, beds, baths]);
+  }, [
+    likedPropertiesData,
+    searchTerm,
+    sortBy,
+    sortOrder,
+    filterType,
+    priceRange,
+    beds,
+    baths,
+  ]);
 
   // Use useCallback to memoize callback functions
   const clearFilters = useCallback(() => {
@@ -271,7 +303,11 @@ const Favourites = ({
     <div className="min-h-screen bg-white p-2 ">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+        >
           <div>
             <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 flex items-center gap-4">
               <div className="p-3 lg:p-4 bg-gradient-to-r from-red-500 to-pink-500 rounded-2xl text-white shadow-xl shadow-red-200">
@@ -280,12 +316,25 @@ const Favourites = ({
               My Favorites
             </h1>
             <p className="text-gray-600 mt-2 text-sm lg:text-base">
-              You have {likedPropertiesData.length} saved properties. Explore and manage them here.
+              You have {likedPropertiesData.length} saved properties. Explore
+              and manage them here.
             </p>
           </div>
           <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-lg border border-gray-100">
-            <ActionButton icon={LayoutGrid} onClick={() => setViewMode("grid")} isActive={viewMode === "grid"} label="Grid" className="px-3" />
-            <ActionButton icon={List} onClick={() => setViewMode("list")} isActive={viewMode === "list"} label="List" className="px-3" />
+            <ActionButton
+              icon={LayoutGrid}
+              onClick={() => setViewMode("grid")}
+              isActive={viewMode === "grid"}
+              label="Grid"
+              className="px-3"
+            />
+            <ActionButton
+              icon={List}
+              onClick={() => setViewMode("list")}
+              isActive={viewMode === "list"}
+              label="List"
+              className="px-3"
+            />
           </div>
         </motion.div>
 
@@ -327,7 +376,9 @@ const Favourites = ({
               </div>
               <ActionButton
                 icon={sortOrder === "asc" ? SortAsc : SortDesc}
-                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
                 label={sortOrder === "asc" ? "Low to High" : "High to Low"}
                 className="min-w-[140px]"
               />
@@ -354,14 +405,18 @@ const Favourites = ({
                 <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
                   {/* Property Type Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Property Type
+                    </label>
                     <div className="flex rounded-xl bg-gray-100 p-1">
                       {propertyTypeOptions.map(({ value, label }) => (
                         <button
                           key={value}
                           onClick={() => setFilterType(value)}
                           className={`flex-1 text-sm py-2 px-4 rounded-lg transition-colors duration-200 font-medium ${
-                            filterType === value ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:bg-gray-200"
+                            filterType === value
+                              ? "bg-white text-emerald-600 shadow-sm"
+                              : "text-gray-500 hover:bg-gray-200"
                           }`}
                         >
                           {label}
@@ -434,7 +489,11 @@ const Favourites = ({
         </motion.div>
 
         {/* Properties Display */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           {filteredAndSortedProperties.length > 0 ? (
             <PropertyGrid
               properties={filteredAndSortedProperties}
@@ -444,12 +503,18 @@ const Favourites = ({
               navigate={navigate}
             />
           ) : (
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-16 lg:py-24">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-16 lg:py-24"
+            >
               <div className="w-24 h-24 lg:w-32 lg:h-32 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Heart className="w-12 h-12 lg:w-16 lg:h-16 text-red-400" />
               </div>
               <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-3">
-                {isFilterActive ? "No matching favorites found" : "You have no saved favorites"}
+                {isFilterActive
+                  ? "No matching favorites found"
+                  : "You have no saved favorites"}
               </h3>
               <p className="text-gray-600 mb-8 max-w-md mx-auto leading-relaxed">
                 {isFilterActive
@@ -457,7 +522,12 @@ const Favourites = ({
                   : "Start exploring properties and save your favorites to see them here."}
               </p>
               {isFilterActive && (
-                <ActionButton icon={RefreshCw} onClick={clearFilters} label="Reset Filters" className="mx-auto" />
+                <ActionButton
+                  icon={RefreshCw}
+                  onClick={clearFilters}
+                  label="Reset Filters"
+                  className="mx-auto"
+                />
               )}
             </motion.div>
           )}
@@ -465,21 +535,39 @@ const Favourites = ({
 
         {/* Quick Stats */}
         {likedPropertiesData.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 lg:p-8 border border-emerald-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Favorites Summary</h3>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 lg:p-8 border border-emerald-100"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Your Favorites Summary
+            </h3>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <StatCard label="Total Saved" value={likedPropertiesData.length} color="text-emerald-600" />
+              <StatCard
+                label="Total Saved"
+                value={likedPropertiesData.length}
+                color="text-emerald-600"
+              />
               <StatCard
                 label="For Sale"
-                value={likedPropertiesData.filter((p) => p.listing_type_name === "sale").length}
+                value={
+                  likedPropertiesData.filter(
+                    (p) => p.listing_type_name === "sale"
+                  ).length
+                }
                 color="text-green-600"
               />
               <StatCard
                 label="For Rent"
-                value={likedPropertiesData.filter((p) => p.listing_type_name === "rent").length}
+                value={
+                  likedPropertiesData.filter(
+                    (p) => p.listing_type_name === "rent"
+                  ).length
+                }
                 color="text-blue-600"
               />
-             
             </div>
           </motion.div>
         )}
