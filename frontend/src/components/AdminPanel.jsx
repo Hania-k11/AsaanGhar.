@@ -111,13 +111,14 @@ if (loading) {
                 setSelectedProperty(p);
                 setShowDocuments(true);
               }}
-              onApprove={(id) =>
+              onApprove={(property) =>
                 setProperties((prev) =>
                   prev.map((p) =>
-                    p.id === id
+                    p.property_id === property.property_id
                       ? {
                           ...p,
                           status: "approved",
+                          approval_status: "approved",
                           adminAction: user.email,
                           actionDate: new Date().toISOString().split("T")[0],
                         }
@@ -149,10 +150,11 @@ if (loading) {
           if (!rejectReason.trim()) return;
           setProperties((prev) =>
             prev.map((p) =>
-              p.id === selectedProperty.id
+              p.property_id === selectedProperty.property_id
                 ? {
                     ...p,
                     status: "rejected",
+                    approval_status: "rejected",
                     adminAction: user.email,
                     actionDate: new Date().toISOString().split("T")[0],
                     rejectReason,

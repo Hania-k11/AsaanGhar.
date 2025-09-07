@@ -104,4 +104,45 @@ router.get("/me", async (req, res) => {
 });
 
 
+
+router.post('/properties/:id/approve', async (req, res) => {
+  const propertyId = req.params.id;
+  const adminId = req.body.adminId;
+  try {
+    await pool.query(
+      `UPDATE properties SET approval_status = 'approved' WHERE property_id = ?`,
+      [propertyId]
+    );
+    await pool.query(
+      `INSERT INTO property_moderation (property_id, admin_id, action) VALUES (?, ?, 'approved')`,
+      [propertyId, adminId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Reject property
+router.post('/properties/:id/reject', async (req, res) => {
+  const propertyId = req.params.id;
+  const { adminId, reason } = req.body;
+  try {
+    await pool.query(
+      `UPDATE properties SET approval_status = 'rejected', rejection_reason = ? WHERE property_id = ?`,
+      [reason, propertyId]
+    );
+    await pool.query(
+      `INSERT INTO property_moderation (property_id, admin_id, action, reason) VALUES (?, ?, 'rejected', ?)`,
+      [propertyId, adminId, reason]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
 module.exports = router;
