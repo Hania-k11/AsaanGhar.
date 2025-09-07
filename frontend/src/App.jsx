@@ -19,6 +19,7 @@ import { useAuth } from "./context/AuthContext";
 import MyProfile from "./components/MyProfile";
 import { useLocation } from "react-router-dom";
 import { ToastProvider } from "./components/ToastProvider";
+import AdminPanel from "./components/AdminPanel";
 
 const Hero = lazy(() => import("./components/Hero"));
 const FeaturedProperties = lazy(() =>
@@ -32,7 +33,9 @@ const SellPage = lazy(() => import("./components/SellPage"));
 
 function App() {
   const location = useLocation();
+ const hideNavbarRoutes = ["/admin-panel"];
   const hideFooterRoutes = ["/my-profile"];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
   const shouldHideFooter = hideFooterRoutes.includes(location.pathname);
 
   const state = useContext(AuthContext);
@@ -45,7 +48,7 @@ function App() {
     <AuthProvider>
       <ScrollToTop />
       <div className="font-sans bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex flex-col">
-        <Navbar />
+        {!shouldHideNavbar && <Navbar />}
 
         <main className="flex-grow">
           <Suspense
@@ -68,6 +71,7 @@ function App() {
               <Route path="/sell" element={<SellPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/about" element={<AboutPage />} />
+               <Route path="/admin-panel" element={<AdminPanel />} />
               <Route path="/property/:id" element={<PropertyDetails />} />
 
               {/* MyProfile with nested tab routes */}

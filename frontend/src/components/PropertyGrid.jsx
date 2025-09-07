@@ -315,49 +315,59 @@ const PropertyGrid = ({
               </div> */}
             </div>
 
-            {isOwner ? (
-              <div className="flex gap-3 mt-5">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(property);
-                  }}
-                  className="flex-1 bg-white dark:bg-gray-800 border-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl py-3 px-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
-                >
-                  <Edit3 size={16} />
-                  <span className="hidden xs:inline">Edit</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(property.property_id);
-                  }}
-                  className="flex-1 bg-red-600 text-white font-semibold rounded-xl py-3 px-4 shadow-lg shadow-red-200 dark:shadow-red-900/30 hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
-                >
-                  <Trash2 size={16} />
-                  <span className="hidden xs:inline">Delete</span>
-                </motion.button>
-              </div>
-            ) : (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/property/${property.property_id}`, {
-                    state: { property },
-                  });
-                }}
-                className="mt-4 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-6 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30"
-              >
-                View Details
-                <ArrowRight size={16} />
-              </motion.button>
-            )}
+{/* Actions */}
+{property.adminActions ? (
+  // Render admin actions if available
+  <div className="mt-4">
+    {property.adminActions}
+  </div>
+) : isOwner ? (
+  // Owner actions
+  <div className="flex gap-3 mt-5">
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onEdit(property);
+      }}
+      className="flex-1 bg-white dark:bg-gray-800 border-2 border-emerald-600 dark:border-emerald-400 text-emerald-600 dark:text-emerald-400 font-semibold rounded-xl py-3 px-4 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
+    >
+      <Edit3 size={16} />
+      <span className="hidden xs:inline">Edit</span>
+    </motion.button>
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onDelete(property.property_id);
+      }}
+      className="flex-1 bg-red-600 text-white font-semibold rounded-xl py-3 px-4 shadow-lg shadow-red-200 dark:shadow-red-900/30 hover:bg-red-700 transition-all duration-300 flex items-center justify-center gap-2 text-sm sm:text-base"
+    >
+      <Trash2 size={16} />
+      <span className="hidden xs:inline">Delete</span>
+    </motion.button>
+  </div>
+) : (
+  // Default "View Details" button
+  <motion.button
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={(e) => {
+      e.stopPropagation();
+      navigate(`/property/${property.property_id}`, {
+        state: { property },
+      });
+    }}
+    className="mt-4 w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-3 px-6 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30"
+  >
+    View Details
+    <ArrowRight size={16} />
+  </motion.button>
+)}
+
+         
           </div>
         </motion.div>
       ))}
