@@ -25,6 +25,8 @@ router.get("/moderated-properties", async (req, res) => {
 });
 
 
+
+
 router.get("/pending-properties", async (req, res) => {
   try {
     const [rows] = await pool.query("CALL GetPendingProperties()");

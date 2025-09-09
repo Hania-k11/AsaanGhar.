@@ -24,27 +24,27 @@ const AdminPanel = () => {
 
   // Fetch properties when admin is logged in
   useEffect(() => {
-  if (!user) return;
+    if (!user) return;
 
-  const fetchProperties = async () => {
-    try {
-      const res = await axios.get("/api/admin/moderated-properties", {
-        params: { adminId: user.user_id },
-        withCredentials: true,
-      });
-      if (res.data.success) {
-        setProperties(res.data.properties);
-      } else {
-        setError("Failed to fetch properties");
+    const fetchProperties = async () => {
+      try {
+        const res = await axios.get("/api/admin/moderated-properties", {
+          params: { adminId: user.user_id },
+          withCredentials: true,
+        });
+        if (res.data.success) {
+          setProperties(res.data.properties);
+        } else {
+          setError("Failed to fetch properties");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Server error while fetching properties");
       }
-    } catch (err) {
-      console.error(err);
-      setError("Server error while fetching properties");
-    }
-  };
+    };
 
-  fetchProperties();
-}, [user]);
+    fetchProperties();
+  }, [user]);
 
   // Refetch when switching to All tab
   useEffect(() => {
@@ -69,64 +69,58 @@ const AdminPanel = () => {
   }, [activeTab, user]);
 
   // Show loading while context checks cookie
-// Show loading while context checks cookie
-if (loading) {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <div className="text-gray-600 text-lg font-medium">Loading...</div>
-    </div>
-  );
-}
-
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-lg font-medium text-gray-600">Loading...</div>
+      </div>
+    );
+  }
 
   // Show login form if not logged in
   if (!user) return <AdminLogin onLogin={loginadmin} />;
 
   // Filter properties
   const filteredProperties = properties.filter((p) => {
-  let keep = true;
+    let keep = true;
 
-  if (activeTab === "pending") {
-    keep = keep && p.approval_status === "pending";
-  }
+    if (activeTab === "pending") {
+      keep = keep && p.approval_status === "pending";
+    }
 
-  if (activeTab === "approved") {
-    keep = keep && p.approval_status === "approved";
-  }
+    if (activeTab === "approved") {
+      keep = keep && p.approval_status === "approved";
+    }
 
-  if (activeTab === "rejected") {
-    keep = keep && p.approval_status === "rejected";
-  }
+    if (activeTab === "rejected") {
+      keep = keep && p.approval_status === "rejected";
+    }
 
-  if (activeTab === "myActions") {
-    keep = keep && p.moderated_by === user.user_id; 
-  }
+    if (activeTab === "myActions") {
+      keep = keep && p.moderated_by === user.user_id;
+    }
 
-  if (filterStatus !== "all") {
-    keep = keep && p.approval_status === filterStatus;
-  }
+    if (filterStatus !== "all") {
+      keep = keep && p.approval_status === filterStatus;
+    }
 
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    keep =
-      keep &&
-      (p.title?.toLowerCase().includes(term) ||
-        p.owner_id?.toString().includes(term) ||
-        p.location_city?.toLowerCase().includes(term) ||
-        p.location_name?.toLowerCase().includes(term));
-  }
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      keep =
+        keep &&
+        (p.title?.toLowerCase().includes(term) ||
+          p.owner_id?.toString().includes(term) ||
+          p.location_city?.toLowerCase().includes(term) ||
+          p.location_name?.toLowerCase().includes(term));
+    }
 
-  return keep;
-});
-
+    return keep;
+  });
 
   return (
-    <div className="flex flex-col bg-emerald-100/30 min-h-screen">
+    <div className="flex flex-col min-h-screen bg-emerald-100/30">
       {/* Navbar handles branding + profile + logout */}
-      <AdminNavbar
-        navbarActive={navbarActive}
-        setNavbarActive={setNavbarActive}
-      />
+      <AdminNavbar navbarActive={navbarActive} setNavbarActive={setNavbarActive} />
 
       <div className="p-6">
         {error && <p className="text-red-500">{error}</p>}
@@ -164,8 +158,8 @@ if (loading) {
                           adminAction: user.email,
                           actionDate: new Date().toISOString().split("T")[0],
                         }
-                      : p
-                  )
+                      : p,
+                  ),
                 )
               }
               onReject={(updatedProperty, reason) => {
@@ -180,8 +174,8 @@ if (loading) {
                           actionDate: new Date().toISOString().split("T")[0],
                           rejectReason: reason,
                         }
-                      : p
-                  )
+                      : p,
+                  ),
                 );
               }}
               currentAdmin={user}

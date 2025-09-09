@@ -3,9 +3,9 @@ import React from 'react';
 import { Clock, Check, X, Building } from 'lucide-react';
 
 const AdminStats = ({ properties }) => {
-  const pendingCount = properties.filter(p => p.status === 'pending').length;
-  const approvedCount = properties.filter(p => p.status === 'approved').length;
-  const rejectedCount = properties.filter(p => p.status === 'rejected').length;
+  const pendingCount = properties.filter(p => p.approval_status === 'pending').length;
+  const approvedCount = properties.filter(p => p.approval_status === 'approved').length;
+  const rejectedCount = properties.filter(p => p.approval_status === 'rejected').length;
   const totalCount = properties.length;
 
   return (

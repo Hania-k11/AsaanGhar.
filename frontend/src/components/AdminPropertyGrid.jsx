@@ -14,7 +14,7 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
       alert("Please enter a rejection reason");
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       await onConfirm(reason.trim());
@@ -34,15 +34,15 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+      <div className="w-full max-w-md max-h-[90vh] overflow-hidden bg-white rounded-2xl shadow-2xl">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-gray-900">Reject Property</h3>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 transition-colors hover:text-gray-600"
               disabled={isSubmitting}
             >
               <X className="w-6 h-6" />
@@ -50,14 +50,14 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
           </div>
 
           {/* Property Info */}
-          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="p-3 mb-4 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Property:</p>
-            <p className="font-medium text-gray-900 truncate">{propertyTitle}</p>
+            <p className="font-medium truncate text-gray-900">{propertyTitle}</p>
           </div>
 
           {/* Reason Input */}
           <div className="mb-6">
-            <label htmlFor="rejectionReason" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="rejectionReason" className="block mb-2 text-sm font-medium text-gray-700">
               Rejection Reason <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -65,18 +65,18 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Please provide a detailed reason for rejecting this property..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors resize-none"
+              className="w-full px-3 py-2 transition-colors border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
               rows={4}
               disabled={isSubmitting}
             />
-            <p className="text-xs text-gray-500 mt-1">{reason.length}/500 characters</p>
+            <p className="mt-1 text-xs text-gray-500">{reason.length}/500 characters</p>
           </div>
 
           {/* Actions */}
           <div className="flex gap-3">
             <button
               onClick={handleClose}
-              className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+              className="flex-1 px-4 py-2 font-medium text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
               disabled={isSubmitting}
             >
               Cancel
@@ -84,11 +84,11 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting || !reason.trim()}
-              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex items-center justify-center flex-1 px-4 py-2 font-medium text-white transition-colors bg-red-600 rounded-lg hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <div className="w-4 h-4 mr-2 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
                   Rejecting...
                 </>
               ) : (
@@ -118,10 +118,12 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
     // Only update local properties if they're different from the current ones
     const hasChanges = properties.some((prop, index) => {
       const localProp = localProperties[index];
-      return !localProp || 
-             localProp.property_id !== prop.property_id || 
-             localProp.approval_status !== prop.approval_status ||
-             localProp.status !== prop.status;
+      return (
+        !localProp ||
+        localProp.property_id !== prop.property_id ||
+        localProp.approval_status !== prop.approval_status ||
+        localProp.status !== prop.status
+      );
     });
 
     if (hasChanges) {
@@ -132,24 +134,18 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
 
   const handleApprove = async (property) => {
     try {
-      const res = await fetch(
-        `/api/admin/properties/${property.property_id}/approve`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adminId: user.user_id }),
-        }
-      );
+      const res = await fetch(`/api/admin/properties/${property.property_id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId: user.user_id }),
+      });
       const data = await res.json();
       if (data.success) {
         // Update local state immediately
         setLocalProperties((prev) =>
-          prev
-            .map((p) =>
-              p.property_id === property.property_id
-                ? { ...p, approval_status: "approved", status: "approved" }
-                : p
-            )
+          prev.map((p) =>
+            p.property_id === property.property_id ? { ...p, approval_status: "approved", status: "approved" } : p,
+          ),
         );
         // Call parent's onApprove if provided
         if (onApprove) {
@@ -175,38 +171,31 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
     if (!property) return;
 
     try {
-      console.log('Attempting to reject property:', property.property_id);
-      const res = await fetch(
-        `/api/admin/properties/${property.property_id}/reject`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ adminId: user.user_id, reason }),
-        }
-      );
+      console.log("Attempting to reject property:", property.property_id);
+      const res = await fetch(`/api/admin/properties/${property.property_id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId: user.user_id, reason }),
+      });
       const data = await res.json();
-      console.log('Rejection response:', data);
-      
+      console.log("Rejection response:", data);
+
       if (data.success) {
         const updatedProperty = {
           ...property,
           approval_status: "rejected",
           status: "rejected",
-          rejectReason: reason
+          rejectReason: reason,
         };
 
         // Update local state immediately
-        setLocalProperties(prev => 
-          prev.map(p =>
-            p.property_id === property.property_id ? updatedProperty : p
-          )
-        );
-        
+        setLocalProperties((prev) => prev.map((p) => (p.property_id === property.property_id ? updatedProperty : p)));
+
         // Call parent's onReject if provided
         if (onReject) {
           onReject(updatedProperty, reason);
         }
-        
+
         // Close modal and reset state
         closeRejectionModal();
         alert("Successfully rejected");
@@ -253,16 +242,16 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
     return {
       ...property,
       adminActions: (
-        <div className="space-y-3 mt-4">
+        <div className="mt-4 space-y-3">
           {/* View Details */}
           <button
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/property/${property.property_id}`, { state: { property } });
             }}
-            className="group w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-slate-50 to-slate-100 hover:from-slate-100 hover:to-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-slate-200 hover:border-slate-300"
+            className="group w-full flex items-center justify-center rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:from-slate-100 hover:to-slate-200 hover:shadow-md"
           >
-            <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+            <Eye className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
             View Details
           </button>
 
@@ -272,22 +261,22 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
               e.stopPropagation();
               onViewDocuments(property);
             }}
-            className="group w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-700 rounded-xl text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-blue-200 hover:border-blue-300"
+            className="group w-full flex items-center justify-center rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-3 text-sm font-semibold text-blue-700 shadow-sm transition-all duration-200 hover:border-blue-300 hover:from-blue-100 hover:to-blue-200 hover:shadow-md"
           >
-            <FileText className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+            <FileText className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
             View Documents
           </button>
 
           {/* Approve/Reject or Status */}
-          {(property.approval_status === "approved" || property.status === "approved") ? (
+          {property.approval_status === "approved" || property.status === "approved" ? (
             // APPROVED STATE: Only show "Approved" button, no reject button
-            <div className="w-full px-4 py-3 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 rounded-xl font-semibold text-center border border-emerald-300 flex items-center justify-center">
+            <div className="flex items-center justify-center w-full px-4 py-3 font-semibold text-center text-emerald-800 rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-200">
               <Check className="w-4 h-4 mr-2" />
               Approved
             </div>
-          ) : (property.approval_status === "rejected" || property.status === "rejected") ? (
+          ) : property.approval_status === "rejected" || property.status === "rejected" ? (
             // REJECTED STATE: Only show "Rejected" button, no approve button
-            <div className="w-full px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl font-semibold text-center border border-red-300 flex items-center justify-center">
+            <div className="flex items-center justify-center w-full px-4 py-3 font-semibold text-center text-red-800 rounded-xl border border-red-300 bg-gradient-to-r from-red-100 to-red-200">
               <X className="w-4 h-4 mr-2" />
               Rejected
             </div>
@@ -299,7 +288,7 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                   e.stopPropagation();
                   handleApprove(property);
                 }}
-                className="flex-1 flex items-center justify-center px-4 py-3 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-emerald-200 hover:border-emerald-300"
+                className="flex items-center justify-center flex-1 px-4 py-3 font-semibold text-emerald-700 transition-all duration-200 rounded-xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100 shadow-sm hover:border-emerald-300 hover:from-emerald-100 hover:to-emerald-200 hover:shadow-md"
               >
                 <Check className="w-4 h-4 mr-2" /> Approve
               </button>
@@ -308,7 +297,7 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                   e.stopPropagation();
                   handleReject(property);
                 }}
-                className="flex-1 flex items-center justify-center px-4 py-3 bg-gradient-to-r from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 text-red-700 rounded-xl font-semibold transition-all duration-200 shadow-sm hover:shadow-md border border-red-200 hover:border-red-300"
+                className="flex items-center justify-center flex-1 px-4 py-3 font-semibold text-red-700 transition-all duration-200 rounded-xl border border-red-200 bg-gradient-to-r from-red-50 to-red-100 shadow-sm hover:border-red-300 hover:from-red-100 hover:to-red-200 hover:shadow-md"
               >
                 <X className="w-4 h-4 mr-2" /> Reject
               </button>
@@ -346,7 +335,7 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
     <>
       <div className="space-y-8">
         {/* Sorting Controls */}
-        <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="font-semibold">Sort By:</span>
           <button
             onClick={() => {
@@ -407,16 +396,14 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
 
         {/* Professional Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm">
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="px-6 py-4">
               {/* Pagination Info */}
               <div className="flex items-center justify-between mb-4">
                 <div className="text-sm text-gray-600">
                   Showing <span className="font-medium text-gray-900">{indexOfFirst + 1}</span> to{" "}
-                  <span className="font-medium text-gray-900">
-                    {Math.min(indexOfLast, localProperties.length)}
-                  </span>{" "}
-                  of <span className="font-medium text-gray-900">{localProperties.length}</span> properties
+                  <span className="font-medium text-gray-900">{Math.min(indexOfLast, localProperties.length)}</span> of{" "}
+                  <span className="font-medium text-gray-900">{localProperties.length}</span> properties
                 </div>
                 <div className="text-sm text-gray-600">
                   Page <span className="font-medium text-gray-900">{currentPage}</span> of{" "}
@@ -433,8 +420,8 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                     disabled={currentPage === 1}
                     className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       currentPage === 1
-                        ? "bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm"
+                        ? "cursor-not-allowed border border-gray-200 bg-gray-50 text-gray-400"
+                        : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:shadow-sm"
                     }`}
                     aria-label="Previous page"
                   >
@@ -443,10 +430,10 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                   </button>
 
                   {/* Page Numbers */}
-                  <div className="hidden sm:flex items-center space-x-1 mx-4">
+                  <div className="hidden mx-4 space-x-1 sm:flex items-center">
                     {getPaginationRange().map((page, i) =>
                       page === "..." ? (
-                        <span key={i} className="px-3 py-2 text-gray-400 text-sm">
+                        <span key={i} className="px-3 py-2 text-sm text-gray-400">
                           ...
                         </span>
                       ) : (
@@ -455,19 +442,19 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                           onClick={() => setCurrentPage(page)}
                           className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                             currentPage === page
-                              ? "bg-blue-600 text-white shadow-sm border border-blue-600 hover:bg-blue-700"
-                              : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm"
+                              ? "border border-blue-600 bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+                              : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:shadow-sm"
                           }`}
                           aria-current={currentPage === page ? "page" : undefined}
                         >
                           {page}
                         </button>
-                      )
+                      ),
                     )}
                   </div>
 
                   {/* Mobile Page Indicator */}
-                  <div className="sm:hidden mx-4 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="px-4 py-2 mx-4 border border-gray-200 rounded-lg sm:hidden bg-gray-50">
                     <span className="text-sm font-medium text-gray-900">
                       {currentPage} / {totalPages}
                     </span>
@@ -479,8 +466,8 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
                     disabled={currentPage === totalPages}
                     className={`relative inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                       currentPage === totalPages
-                        ? "bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm"
+                        ? "cursor-not-allowed border border-gray-200 bg-gray-50 text-gray-400"
+                        : "border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:shadow-sm"
                     }`}
                     aria-label="Next page"
                   >

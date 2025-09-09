@@ -7,10 +7,9 @@ const AdminFilters = ({
   setActiveTab, 
   searchTerm, 
   setSearchTerm, 
-  filterStatus, 
-  setFilterStatus, 
+  
   properties, 
-  currentAdmin 
+  
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -73,7 +72,7 @@ const AdminFilters = ({
             />
           </div>
           
-          <select
+          {/* <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
@@ -82,7 +81,7 @@ const AdminFilters = ({
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="rejected">Rejected</option>
-          </select>
+          </select> */}
         </div>
       </div>
     </div>
