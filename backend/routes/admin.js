@@ -6,6 +6,25 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+
+
+router.get("/moderated-properties", async (req, res) => {
+  const adminId = req.query.adminId; // or from JWT (recommended)
+  
+  if (!adminId) {
+    return res.status(400).json({ success: false, message: "Admin ID required" });
+  }
+
+  try {
+    const [rows] = await pool.query("CALL GetPropertiesByModeration(?)", [adminId]);
+    res.json({ success: true, properties: rows[0] });
+  } catch (err) {
+    console.error("Error fetching moderated properties:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+
 router.get("/pending-properties", async (req, res) => {
   try {
     const [rows] = await pool.query("CALL GetPendingProperties()");

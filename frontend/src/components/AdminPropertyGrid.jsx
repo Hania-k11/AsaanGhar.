@@ -19,10 +19,9 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
     try {
       await onConfirm(reason.trim());
       setReason("");
-      onClose();
+      onClose(); // Close on success
     } catch (error) {
       console.error("Error submitting rejection:", error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -116,8 +115,20 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
 
   // Update local properties when props change
   React.useEffect(() => {
-    setLocalProperties(properties);
-  }, [properties]);
+    // Only update local properties if they're different from the current ones
+    const hasChanges = properties.some((prop, index) => {
+      const localProp = localProperties[index];
+      return !localProp || 
+             localProp.property_id !== prop.property_id || 
+             localProp.approval_status !== prop.approval_status ||
+             localProp.status !== prop.status;
+    });
+
+    if (hasChanges) {
+      console.log("Updating local properties due to prop changes");
+      setLocalProperties(properties);
+    }
+  }, [properties, localProperties]);
 
   const handleApprove = async (property) => {
     try {
@@ -133,16 +144,18 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
       if (data.success) {
         // Update local state immediately
         setLocalProperties((prev) =>
-          prev.map((p) =>
-            p.property_id === property.property_id
-              ? { ...p, approval_status: "approved" }
-              : p
-          )
+          prev
+            .map((p) =>
+              p.property_id === property.property_id
+                ? { ...p, approval_status: "approved", status: "approved" }
+                : p
+            )
         );
         // Call parent's onApprove if provided
         if (onApprove) {
           onApprove(property);
         }
+        alert("Successfully approved");
       } else {
         alert("Failed to approve property");
       }
@@ -159,7 +172,10 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
 
   const confirmReject = async (reason) => {
     const property = rejectionModal.property;
+    if (!property) return;
+
     try {
+      console.log('Attempting to reject property:', property.property_id);
       const res = await fetch(
         `/api/admin/properties/${property.property_id}/reject`,
         {
@@ -169,25 +185,40 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
         }
       );
       const data = await res.json();
+      console.log('Rejection response:', data);
+      
       if (data.success) {
+        const updatedProperty = {
+          ...property,
+          approval_status: "rejected",
+          status: "rejected",
+          rejectReason: reason
+        };
+
         // Update local state immediately
-        setLocalProperties((prev) =>
-          prev.map((p) =>
-            p.property_id === property.property_id
-              ? { ...p, approval_status: "rejected" }
-              : p
+        setLocalProperties(prev => 
+          prev.map(p =>
+            p.property_id === property.property_id ? updatedProperty : p
           )
         );
+        
         // Call parent's onReject if provided
         if (onReject) {
-          onReject(property, reason);
+          onReject(updatedProperty, reason);
         }
+        
+        // Close modal and reset state
+        closeRejectionModal();
+        alert("Successfully rejected");
+        return true; // Indicate success to the modal
       } else {
         alert("Failed to reject property");
+        return false;
       }
     } catch (err) {
       console.error(err);
       alert("Server error");
+      return false;
     }
   };
 
@@ -218,7 +249,7 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
   const totalPages = Math.ceil(localProperties.length / propertiesPerPage);
 
   const transformedProperties = currentProperties.map((property) => {
-    console.log("Rendering property:", property.property_id, "with status:", property.approval_status);
+    console.log("Rendering property:", property.property_id, "with status:", property.approval_status, "and status:", property.status);
     return {
       ...property,
       adminActions: (
@@ -248,13 +279,13 @@ const AdminPropertyGrid = ({ properties, onViewDocuments, onApprove, onReject })
           </button>
 
           {/* Approve/Reject or Status */}
-          {property.approval_status === "approved" ? (
+          {(property.approval_status === "approved" || property.status === "approved") ? (
             // APPROVED STATE: Only show "Approved" button, no reject button
             <div className="w-full px-4 py-3 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 rounded-xl font-semibold text-center border border-emerald-300 flex items-center justify-center">
               <Check className="w-4 h-4 mr-2" />
               Approved
             </div>
-          ) : property.approval_status === "rejected" ? (
+          ) : (property.approval_status === "rejected" || property.status === "rejected") ? (
             // REJECTED STATE: Only show "Rejected" button, no approve button
             <div className="w-full px-4 py-3 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-xl font-semibold text-center border border-red-300 flex items-center justify-center">
               <X className="w-4 h-4 mr-2" />

@@ -18,34 +18,55 @@ const AdminPanel = () => {
   const [error, setError] = useState("");
 
   // Modals
-  const [showRejectModal, setShowRejectModal] = useState(false);
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
-  const [rejectReason, setRejectReason] = useState("");
 
   // Fetch properties when admin is logged in
   useEffect(() => {
-    if (!user) return;
+  if (!user) return;
 
-    const fetchProperties = async () => {
+  const fetchProperties = async () => {
+    try {
+      const res = await axios.get("/api/admin/moderated-properties", {
+        params: { adminId: user.user_id },
+        withCredentials: true,
+      });
+      if (res.data.success) {
+        setProperties(res.data.properties);
+      } else {
+        setError("Failed to fetch properties");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Server error while fetching properties");
+    }
+  };
+
+  fetchProperties();
+}, [user]);
+
+  // Refetch when switching to All tab
+  useEffect(() => {
+    if (!user) return;
+    if (activeTab !== "all") return;
+
+    const fetchAll = async () => {
       try {
-        const res = await axios.get("/api/admin/pending-properties", {
+        const res = await axios.get("/api/admin/moderated-properties", {
+          params: { adminId: user.user_id },
           withCredentials: true,
         });
         if (res.data.success) {
           setProperties(res.data.properties);
-        } else {
-          setError("Failed to fetch properties");
         }
       } catch (err) {
         console.error(err);
-        setError("Server error while fetching properties");
       }
     };
 
-    fetchProperties();
-  }, [user]);
+    fetchAll();
+  }, [activeTab, user]);
 
   // Show loading while context checks cookie
 // Show loading while context checks cookie
@@ -63,20 +84,41 @@ if (loading) {
 
   // Filter properties
   const filteredProperties = properties.filter((p) => {
-    let keep = true;
-    if (activeTab === "pending") keep = keep && p.status === "pending";
-    if (activeTab === "myActions") keep = keep && p.adminAction === user.email;
-    if (filterStatus !== "all") keep = keep && p.status === filterStatus;
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      keep =
-        keep &&
-        (p.title.toLowerCase().includes(term) ||
-          p.owner.toLowerCase().includes(term) ||
-          p.location.toLowerCase().includes(term));
-    }
-    return keep;
-  });
+  let keep = true;
+
+  if (activeTab === "pending") {
+    keep = keep && p.approval_status === "pending";
+  }
+
+  if (activeTab === "approved") {
+    keep = keep && p.approval_status === "approved";
+  }
+
+  if (activeTab === "rejected") {
+    keep = keep && p.approval_status === "rejected";
+  }
+
+  if (activeTab === "myActions") {
+    keep = keep && p.moderated_by === user.user_id; 
+  }
+
+  if (filterStatus !== "all") {
+    keep = keep && p.approval_status === filterStatus;
+  }
+
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    keep =
+      keep &&
+      (p.title?.toLowerCase().includes(term) ||
+        p.owner_id?.toString().includes(term) ||
+        p.location_city?.toLowerCase().includes(term) ||
+        p.location_name?.toLowerCase().includes(term));
+  }
+
+  return keep;
+});
+
 
   return (
     <div className="flex flex-col bg-emerald-100/30 min-h-screen">
@@ -126,9 +168,21 @@ if (loading) {
                   )
                 )
               }
-              onReject={(p) => {
-                setSelectedProperty(p);
-                setShowRejectModal(true);
+              onReject={(updatedProperty, reason) => {
+                setProperties((prev) =>
+                  prev.map((p) =>
+                    p.property_id === updatedProperty.property_id
+                      ? {
+                          ...p,
+                          status: "rejected",
+                          approval_status: "rejected",
+                          adminAction: user.email,
+                          actionDate: new Date().toISOString().split("T")[0],
+                          rejectReason: reason,
+                        }
+                      : p
+                  )
+                );
               }}
               currentAdmin={user}
             />
@@ -137,35 +191,11 @@ if (loading) {
       </div>
 
       <AdminModals
-        showRejectModal={showRejectModal}
-        setShowRejectModal={setShowRejectModal}
         showPropertyDetails={showPropertyDetails}
         setShowPropertyDetails={setShowPropertyDetails}
         showDocuments={showDocuments}
         setShowDocuments={setShowDocuments}
         selectedProperty={selectedProperty}
-        rejectReason={rejectReason}
-        setRejectReason={setRejectReason}
-        onSubmitReject={() => {
-          if (!rejectReason.trim()) return;
-          setProperties((prev) =>
-            prev.map((p) =>
-              p.property_id === selectedProperty.property_id
-                ? {
-                    ...p,
-                    status: "rejected",
-                    approval_status: "rejected",
-                    adminAction: user.email,
-                    actionDate: new Date().toISOString().split("T")[0],
-                    rejectReason,
-                  }
-                : p
-            )
-          );
-          setShowRejectModal(false);
-          setRejectReason("");
-          setSelectedProperty(null);
-        }}
       />
     </div>
   );

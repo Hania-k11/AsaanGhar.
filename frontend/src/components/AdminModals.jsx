@@ -3,60 +3,17 @@ import React from 'react';
 import { X, FileText, MapPin, User, DollarSign, Building, Calendar, Bed, Bath, Square } from 'lucide-react';
 
 const AdminModals = ({
-  showRejectModal,
-  setShowRejectModal,
+
   showPropertyDetails,
   setShowPropertyDetails,
   showDocuments,
   setShowDocuments,
   selectedProperty,
-  rejectReason,
-  setRejectReason,
-  onSubmitReject
+ 
 }) => {
   return (
     <>
-      {/* Reject Modal */}
-      {showRejectModal && selectedProperty && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Reject Property</h3>
-              <p className="text-gray-600 mb-4">
-                Please provide a reason for rejecting "{selectedProperty.title}":
-              </p>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
-                rows="4"
-                placeholder="Enter rejection reason..."
-              />
-              <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setRejectReason('');
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={async () => {
-                    await onSubmitReject();
-                    setShowRejectModal(false);
-                  }}
-                  disabled={!rejectReason.trim()}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 transition-colors"
-                >
-                  Reject Property
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    
 
       {/* Property Details Modal */}
       {showPropertyDetails && selectedProperty && (

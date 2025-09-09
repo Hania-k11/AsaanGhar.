@@ -35,7 +35,7 @@ const AdminFilters = ({
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Pending Properties ({properties.filter(p => p.status === 'pending').length})
+            Pending Properties ({properties.filter(p => p.approval_status === 'pending').length})
           </button>
 
           <button
@@ -46,7 +46,7 @@ const AdminFilters = ({
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Approved Properties ({properties.filter(p => p.status === 'approved').length})
+            Approved Properties ({properties.filter(p => p.approval_status === 'approved').length})
           </button>
 
           <button
@@ -57,7 +57,7 @@ const AdminFilters = ({
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
-            Rejected Properties ({properties.filter(p => p.status === 'rejected').length})
+            Rejected Properties ({properties.filter(p => p.approval_status === 'rejected').length})
           </button>
         </div>
         
