@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 
 router.get("/moderated-properties", async (req, res) => {
-  const adminId = req.query.adminId; // or from JWT (recommended)
+  const adminId = req.query.adminId; 
   
   if (!adminId) {
     return res.status(400).json({ success: false, message: "Admin ID required" });
