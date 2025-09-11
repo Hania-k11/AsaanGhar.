@@ -2,11 +2,12 @@
 import React from 'react';
 import { Clock, Check, X, Building } from 'lucide-react';
 
-const AdminStats = ({ properties }) => {
-  const pendingCount = properties.filter(p => p.approval_status === 'pending').length;
-  const approvedCount = properties.filter(p => p.approval_status === 'approved').length;
-  const rejectedCount = properties.filter(p => p.approval_status === 'rejected').length;
-  const totalCount = properties.length;
+const AdminStats = ({ properties, totalCount, stats }) => {
+  // Backend-provided counts for accuracy
+  const pendingCount = stats?.pendingCount ?? properties.filter(p => p.approval_status === 'pending').length;
+  const approvedCount = stats?.approvedByAdminCount ?? properties.filter(p => p.approval_status === 'approved').length;
+  const rejectedCount = stats?.rejectedByAdminCount ?? properties.filter(p => p.approval_status === 'rejected').length;
+  const totalShown = properties.length;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -52,7 +53,7 @@ const AdminStats = ({ properties }) => {
             <Building className="w-6 h-6 text-emerald-600" />
           </div>
           <div className="ml-4">
-            <div className="text-2xl font-bold text-gray-800">{totalCount}</div>
+            <div className="text-2xl font-bold text-gray-800">{totalCount ?? totalShown}</div>
             <div className="text-gray-600">Total Properties</div>
           </div>
         </div>

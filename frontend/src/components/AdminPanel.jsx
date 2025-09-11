@@ -12,6 +12,9 @@ const AdminPanel = () => {
   const { user, loading, loginadmin, logoutadmin } = useAuth(); // use context
   const [navbarActive, setNavbarActive] = useState("properties");
   const [properties, setProperties] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [stats, setStats] = useState({ pendingCount: 0, approvedByAdminCount: 0, rejectedByAdminCount: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [activeTab, setActiveTab] = useState("pending");
@@ -23,30 +26,58 @@ const AdminPanel = () => {
   const [selectedProperty, setSelectedProperty] = useState(null);
 
   // Fetch properties when admin is logged in
-  useEffect(() => {
-    if (!user) return;
+const [page, setPage] = useState(1);
+const [limit] = useState(6);
+const [sortByDate, setSortByDate] = useState("newest"); // newest / oldest
+const [listingType, setListingType] = useState(""); // rent / sale / ""
 
-    const fetchProperties = async () => {
-      try {
-        const res = await axios.get("/api/admin/moderated-properties", {
-          params: { adminId: user.user_id },
-          withCredentials: true,
-        });
-        if (res.data.success) {
-          setProperties(res.data.properties);
-        } else {
-          setError("Failed to fetch properties");
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Server error while fetching properties");
+useEffect(() => {
+  if (!user) return;
+
+  const fetchProperties = async () => {
+    try {
+      const res = await axios.get("/api/admin/moderated-properties", {
+        params: {
+          adminId: user.user_id,
+          page,
+          limit,
+          sortBy: sortByDate,
+          sortByDate, // for backend compatibility
+          listingType: listingType || null,
+          statusFilter: filterStatus,
+        },
+        withCredentials: true,
+      });
+
+      if (res.data.success) {
+        setProperties(res.data.properties || []);
+        const p = res.data.pagination || {};
+        setTotalCount(p.totalCount || 0);
+        setTotalPages(p.totalPages || 1);
+        if (res.data.stats) setStats(res.data.stats);
+      } else {
+        setError("Failed to fetch properties");
       }
-    };
+    } catch (err) {
+      console.error(err);
+      setError("Server error while fetching properties");
+    }
+  };
 
-    fetchProperties();
-  }, [user]);
+  fetchProperties();
+}, [user, page, limit, sortByDate, listingType, filterStatus]);
 
-  // Refetch when switching to All tab
+
+  // Update status filter based on active tab
+  useEffect(() => {
+    if (activeTab === "all") setFilterStatus("all");
+    else if (activeTab === "pending") setFilterStatus("pending");
+    else if (activeTab === "approved") setFilterStatus("approved");
+    else if (activeTab === "rejected") setFilterStatus("rejected");
+    setPage(1);
+  }, [activeTab]);
+
+  // Refetch when switching to All tab (kept for UX parity)
   useEffect(() => {
     if (!user) return;
     if (activeTab !== "all") return;
@@ -54,11 +85,23 @@ const AdminPanel = () => {
     const fetchAll = async () => {
       try {
         const res = await axios.get("/api/admin/moderated-properties", {
-          params: { adminId: user.user_id },
+          params: { 
+            adminId: user.user_id,
+            page,
+            limit,
+            sortBy: sortByDate,
+            sortByDate,
+            listingType: listingType || null,
+            statusFilter: filterStatus,
+          },
           withCredentials: true,
         });
         if (res.data.success) {
-          setProperties(res.data.properties);
+          setProperties(res.data.properties || []);
+          const p = res.data.pagination || {};
+          setTotalCount(p.totalCount || 0);
+          setTotalPages(p.totalPages || 1);
+          if (res.data.stats) setStats(res.data.stats);
         }
       } catch (err) {
         console.error(err);
@@ -126,7 +169,7 @@ const AdminPanel = () => {
         {error && <p className="text-red-500">{error}</p>}
         {!error && navbarActive === "properties" && (
           <>
-            <AdminStats properties={properties} />
+            <AdminStats properties={properties} totalCount={totalCount} stats={stats} />
             <AdminFilters
               activeTab={activeTab}
               setActiveTab={setActiveTab}
@@ -147,7 +190,7 @@ const AdminPanel = () => {
                 setSelectedProperty(p);
                 setShowDocuments(true);
               }}
-              onApprove={(property) =>
+              handleApprove={(property) =>
                 setProperties((prev) =>
                   prev.map((p) =>
                     p.property_id === property.property_id
@@ -162,7 +205,7 @@ const AdminPanel = () => {
                   ),
                 )
               }
-              onReject={(updatedProperty, reason) => {
+              handleReject={(updatedProperty, reason) => {
                 setProperties((prev) =>
                   prev.map((p) =>
                     p.property_id === updatedProperty.property_id
@@ -178,6 +221,17 @@ const AdminPanel = () => {
                   ),
                 );
               }}
+              // Backend-driven pagination & sorting
+              currentPage={page}
+              totalPages={totalPages}
+              onNextPage={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+              onPrevPage={() => setPage((prev) => Math.max(prev - 1, 1))}
+              onFirstPage={() => setPage(1)}
+              onLastPage={() => setPage(totalPages)}
+              sortByDate={sortByDate}
+              listingType={listingType}
+              onChangeSortByDate={(val) => { setPage(1); setSortByDate(val); setListingType(""); }}
+              onChangeListingType={(val) => { setPage(1); setListingType(val); setSortByDate(""); }}
               currentAdmin={user}
             />
           </>
