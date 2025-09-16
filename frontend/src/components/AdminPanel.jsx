@@ -7,111 +7,60 @@ import AdminPropertyGrid from "./AdminPropertyGrid";
 import AdminModals from "./AdminModals";
 import AdminNavbar from "./AdminNavbar";
 import axios from "axios";
+import { useAdmin } from "../hooks/useAdmin";
+
 
 const AdminPanel = () => {
-  const { user, loading, loginadmin, logoutadmin } = useAuth(); // use context
+  const { user, loading, loginadmin, logoutadmin } = useAuth();
   const [navbarActive, setNavbarActive] = useState("properties");
-  const [properties, setProperties] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const [stats, setStats] = useState({ pendingCount: 0, approvedByAdminCount: 0, rejectedByAdminCount: 0 });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [activeTab, setActiveTab] = useState("pending");
-  const [error, setError] = useState("");
-
-  // Modals
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
-
-  // Fetch properties when admin is logged in
-const [page, setPage] = useState(1);
-const [limit] = useState(6);
-const [sortByDate, setSortByDate] = useState("newest"); // newest / oldest
-const [listingType, setListingType] = useState(""); // rent / sale / ""
-
-useEffect(() => {
-  if (!user) return;
-
-  const fetchProperties = async () => {
-    try {
-      const res = await axios.get("/api/admin/moderated-properties", {
-        params: {
-          adminId: user.user_id,
-          page,
-          limit,
-          sortBy: sortByDate,
-          sortByDate, // for backend compatibility
-          listingType: listingType || null,
-          statusFilter: filterStatus,
-        },
-        withCredentials: true,
-      });
-
-      if (res.data.success) {
-        setProperties(res.data.properties || []);
-        const p = res.data.pagination || {};
-        setTotalCount(p.totalCount || 0);
-        setTotalPages(p.totalPages || 1);
-        if (res.data.stats) setStats(res.data.stats);
-      } else {
-        setError("Failed to fetch properties");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Server error while fetching properties");
-    }
-  };
-
-  fetchProperties();
-}, [user, page, limit, sortByDate, listingType, filterStatus]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(6);
+  const [sortByDate, setSortByDate] = useState("newest");
+  const [listingType, setListingType] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
 
-  // Update status filter based on active tab
+  // convert activeTab -> status param
+  const status =
+    activeTab === "all"
+      ? undefined
+      : activeTab === "pending"
+      ? "pending"
+      : activeTab === "approved"
+      ? "approved"
+      : activeTab === "rejected"
+      ? "rejected"
+      : undefined;
+
+  // Fetch properties with React Query (useAdmin) - only when user is logged in
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+  } = useAdmin({
+    page,
+    limit,
+    sort_by: sortByDate === "newest" ? "posted_at" : "posted_at",
+    sort_order: sortByDate === "newest" ? "DESC" : "ASC",
+    status,
+    enabled: !!user, // Only fetch when user is logged in
+  });
+const properties = data?.data || []; 
+const totalCount = data?.pagination?.totalCount || 0;
+const totalPages = data?.pagination?.totalPages || 1;
+  const stats = data?.stats || {};
+
+
+  // keep filter tab synced
   useEffect(() => {
-    if (activeTab === "all") setFilterStatus("all");
-    else if (activeTab === "pending") setFilterStatus("pending");
-    else if (activeTab === "approved") setFilterStatus("approved");
-    else if (activeTab === "rejected") setFilterStatus("rejected");
     setPage(1);
-  }, [activeTab]);
+  }, [activeTab, sortByDate, listingType]);
 
-  // Refetch when switching to All tab (kept for UX parity)
-  useEffect(() => {
-    if (!user) return;
-    if (activeTab !== "all") return;
-
-    const fetchAll = async () => {
-      try {
-        const res = await axios.get("/api/admin/moderated-properties", {
-          params: { 
-            adminId: user.user_id,
-            page,
-            limit,
-            sortBy: sortByDate,
-            sortByDate,
-            listingType: listingType || null,
-            statusFilter: filterStatus,
-          },
-          withCredentials: true,
-        });
-        if (res.data.success) {
-          setProperties(res.data.properties || []);
-          const p = res.data.pagination || {};
-          setTotalCount(p.totalCount || 0);
-          setTotalPages(p.totalPages || 1);
-          if (res.data.stats) setStats(res.data.stats);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchAll();
-  }, [activeTab, user]);
-
-  // Show loading while context checks cookie
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
@@ -120,54 +69,31 @@ useEffect(() => {
     );
   }
 
-  // Show login form if not logged in
-  if (!user) return <AdminLogin onLogin={loginadmin} />;
+  if (!user) return <AdminLogin />;
+
 
   // Filter properties
   const filteredProperties = properties.filter((p) => {
-    let keep = true;
-
-    if (activeTab === "pending") {
-      keep = keep && p.approval_status === "pending";
-    }
-
-    if (activeTab === "approved") {
-      keep = keep && p.approval_status === "approved";
-    }
-
-    if (activeTab === "rejected") {
-      keep = keep && p.approval_status === "rejected";
-    }
-
-    if (activeTab === "myActions") {
-      keep = keep && p.moderated_by === user.user_id;
-    }
-
-    if (filterStatus !== "all") {
-      keep = keep && p.approval_status === filterStatus;
-    }
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      keep =
-        keep &&
-        (p.title?.toLowerCase().includes(term) ||
-          p.owner_id?.toString().includes(term) ||
-          p.location_city?.toLowerCase().includes(term) ||
-          p.location_name?.toLowerCase().includes(term));
-    }
-
-    return keep;
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return (
+      p.title?.toLowerCase().includes(term) ||
+      p.owner_id?.toString().includes(term) ||
+      p.location_city?.toLowerCase().includes(term) ||
+      p.location_name?.toLowerCase().includes(term)
+    );
   });
 
+
   return (
-    <div className="flex flex-col min-h-screen bg-emerald-100/30">
-      {/* Navbar handles branding + profile + logout */}
+<div className="flex flex-col min-h-screen bg-emerald-100/30">
       <AdminNavbar navbarActive={navbarActive} setNavbarActive={setNavbarActive} />
 
       <div className="p-6">
-        {error && <p className="text-red-500">{error}</p>}
-        {!error && navbarActive === "properties" && (
+        {isError && <p className="text-red-500">{error.message || "Error fetching properties"}</p>}
+        {isLoading && <p className="text-gray-500">Loading properties...</p>}
+
+        {!isError && !isLoading && navbarActive === "properties" && (
           <>
             <AdminStats properties={properties} totalCount={totalCount} stats={stats} />
             <AdminFilters
@@ -175,63 +101,20 @@ useEffect(() => {
               setActiveTab={setActiveTab}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
-              filterStatus={filterStatus}
-              setFilterStatus={setFilterStatus}
+              filterStatus={status}
+              setFilterStatus={() => {}}
               properties={properties}
               currentAdmin={user}
             />
             <AdminPropertyGrid
               properties={filteredProperties}
-              onViewDetails={(p) => {
-                setSelectedProperty(p);
-                setShowPropertyDetails(true);
-              }}
-              onViewDocuments={(p) => {
-                setSelectedProperty(p);
-                setShowDocuments(true);
-              }}
-              handleApprove={(property) =>
-                setProperties((prev) =>
-                  prev.map((p) =>
-                    p.property_id === property.property_id
-                      ? {
-                          ...p,
-                          status: "approved",
-                          approval_status: "approved",
-                          adminAction: user.email,
-                          actionDate: new Date().toISOString().split("T")[0],
-                        }
-                      : p,
-                  ),
-                )
-              }
-              handleReject={(updatedProperty, reason) => {
-                setProperties((prev) =>
-                  prev.map((p) =>
-                    p.property_id === updatedProperty.property_id
-                      ? {
-                          ...p,
-                          status: "rejected",
-                          approval_status: "rejected",
-                          adminAction: user.email,
-                          actionDate: new Date().toISOString().split("T")[0],
-                          rejectReason: reason,
-                        }
-                      : p,
-                  ),
-                );
-              }}
-              // Backend-driven pagination & sorting
-              currentPage={page}
+              page={page}
               totalPages={totalPages}
-              onNextPage={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-              onPrevPage={() => setPage((prev) => Math.max(prev - 1, 1))}
-              onFirstPage={() => setPage(1)}
-              onLastPage={() => setPage(totalPages)}
+              onPageChange={setPage}
               sortByDate={sortByDate}
-              listingType={listingType}
-              onChangeSortByDate={(val) => { setPage(1); setSortByDate(val); setListingType(""); }}
-              onChangeListingType={(val) => { setPage(1); setListingType(val); setSortByDate(""); }}
+              onSortByDateChange={setSortByDate}    
+  listingType={listingType}
+  onListingTypeChange={setListingType}  
               currentAdmin={user}
             />
           </>

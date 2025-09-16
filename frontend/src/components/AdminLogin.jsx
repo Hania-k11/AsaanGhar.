@@ -4,7 +4,7 @@ import { Building, Home } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from "../context/AuthContext";
 
-const AdminLogin = ({ onLogin }) => {
+const AdminLogin = () => {
    const { loginadmin } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,10 +13,11 @@ const AdminLogin = ({ onLogin }) => {
 const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await loginadmin(email, password);
-    onLogin({ email, name: 'name' });
-    if (!result.success) setError(result.message);
-    
-    else setError("");
+    if (!result.success) {
+      setError(result.message);
+    } else {
+      setError("");
+    }
   };
 
   return (

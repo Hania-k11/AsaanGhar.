@@ -32,13 +32,16 @@ export const AuthProvider = ({ children }) => {
 useEffect(() => {
   const fetchAdmin = async () => {
     try {
+      console.log("Fetching admin info...");
       const res = await axios.get("/api/admin/me", { withCredentials: true });
+      console.log("Admin info response:", res.data);
       if (res.data.success) {
         setUser(res.data.admin);
       } else {
         setUser(null);
       }
     } catch (err) {
+      console.log("Error fetching admin info:", err.response?.status, err.response?.data);
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,14 +63,15 @@ const loginadmin = async (email, password) => {
 
     console.log("Response from server:", res.data);
 
-    if (res.data.success) {
-      console.log("Login successful, admin data:", res.data.admin);
+ if (res.data.success && res.data.admin) {
+      // No need to store token - backend uses HttpOnly cookies
+      console.log("Login successful, setting user:", res.data.admin);
       setUser(res.data.admin);
-      return { success: true, admin: res.data.admin }; // pass admin for frontend
-    } else {
-      console.warn("Login failed:", res.data.message);
-      return { success: false, message: res.data.message };
+
+      return { success: true, admin: res.data.admin };
     }
+
+    return { success: false, message: res.data.message || "Login failed" };
   } catch (err) {
     let message = "Server error during login"; // default
 
@@ -91,6 +95,7 @@ const loginadmin = async (email, password) => {
   const logoutadmin = async () => {
     try {
       await axios.post("/api/admin/logout", {}, { withCredentials: true });
+      // No need to clear token from localStorage - backend clears HttpOnly cookie
       setUser(null);
     } catch (err) {
       console.error("Logout error:", err);

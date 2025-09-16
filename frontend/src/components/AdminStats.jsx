@@ -7,7 +7,7 @@ const AdminStats = ({ properties, totalCount, stats }) => {
   const pendingCount = stats?.pendingCount ?? properties.filter(p => p.approval_status === 'pending').length;
   const approvedCount = stats?.approvedByAdminCount ?? properties.filter(p => p.approval_status === 'approved').length;
   const rejectedCount = stats?.rejectedByAdminCount ?? properties.filter(p => p.approval_status === 'rejected').length;
-  const totalShown = properties.length;
+const totalShown = stats?.totalCount ?? 0;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -53,7 +53,7 @@ const AdminStats = ({ properties, totalCount, stats }) => {
             <Building className="w-6 h-6 text-emerald-600" />
           </div>
           <div className="ml-4">
-            <div className="text-2xl font-bold text-gray-800">{totalCount ?? totalShown}</div>
+            <div className="text-2xl font-bold text-gray-800">{totalShown}</div>
             <div className="text-gray-600">Total Properties</div>
           </div>
         </div>

@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { Eye, FileText, Check, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { useToast } from "./ToastProvider";
+import axios from "axios";
+import {
+  Eye,
+  FileText,
+  Check,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import PropertyGrid from "./PropertyGrid";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -53,29 +64,36 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
   );
 };
 
-const AdminPropertyGrid = ({ 
-  properties, 
-  onViewDocuments, 
-  handleApprove, 
-  handleReject,
-  // Backend-driven pagination & sorting controls
-  currentPage,
+const AdminPropertyGrid = ({
+  properties,
+  onViewDocuments,
+  page,
   totalPages,
-  onNextPage,
-  onPrevPage,
-  onFirstPage,
-  onLastPage,
+  onPageChange,
   sortByDate,
   listingType,
-  onChangeSortByDate,
-  onChangeListingType,
+  onSortByDateChange,    
+  onListingTypeChange, 
+  currentAdmin,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [rejectionModal, setRejectionModal] = useState({ isOpen: false, property: null });
 
-  const closeRejectionModal = () => setRejectionModal({ isOpen: false, property: null });
+  const [rejectionModal, setRejectionModal] = useState({
+    isOpen: false,
+    property: null,
+  });
+  const [localProperties, setLocalProperties] = useState(properties);
+  const toast = useToast();
+
+  // Keep localProperties in sync with props
+  React.useEffect(() => {
+    setLocalProperties(properties);
+  }, [properties]);
+
+  const closeRejectionModal = () =>
+    setRejectionModal({ isOpen: false, property: null });
 
   const confirmReject = async (reason) => {
     if (!rejectionModal.property) return;
@@ -83,32 +101,50 @@ const AdminPropertyGrid = ({
     closeRejectionModal();
   };
 
-  const getPaginationRange = () => {
-    const delta = 2;
-    const range = [];
-    const rangeWithDots = [];
-    if (totalPages <= 1) return [1];
-
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-      range.push(i);
+  // Approve property API call
+  const handleApprove = async (property) => {
+    try {
+      await axios.post(`/api/admin/properties/${property.property_id}/approve`, {
+        adminId: currentAdmin?.user_id,
+      });
+      setLocalProperties((prev) =>
+        prev.map((p) =>
+          p.property_id === property.property_id
+            ? { ...p, approval_status: "approved" }
+            : p
+        )
+      );
+      toast.success("Property approved successfully");
+    } catch (err) {
+      toast.error("Failed to approve property");
     }
-
-    if (currentPage - delta > 2) rangeWithDots.push(1, "...");
-    else rangeWithDots.push(1);
-
-    rangeWithDots.push(...range);
-
-    if (currentPage + delta < totalPages - 1) rangeWithDots.push("...", totalPages);
-    else if (totalPages > 1) rangeWithDots.push(totalPages);
-
-    return rangeWithDots;
   };
 
-  const transformedProperties = properties.map((property) => ({
+  // Reject property API call
+  const handleReject = async (property, reason) => {
+    try {
+      await axios.post(`/api/admin/properties/${property.property_id}/reject`, {
+        adminId: currentAdmin?.user_id,
+        reason,
+      });
+      setLocalProperties((prev) =>
+        prev.map((p) =>
+          p.property_id === property.property_id
+            ? { ...p, approval_status: "rejected", rejection_reason: reason }
+            : p
+        )
+      );
+      toast.success("Property rejected successfully");
+    } catch (err) {
+      toast.error("Failed to reject property");
+    }
+  };
+
+  // Add adminActions to each property for PropertyGrid
+  const propertiesWithAdminActions = localProperties.map((property) => ({
     ...property,
     adminActions: (
       <div className="mt-4 space-y-3">
-        {/* View Details */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -119,8 +155,6 @@ const AdminPropertyGrid = ({
           <Eye className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
           View Details
         </button>
-
-        {/* View Documents */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -131,8 +165,6 @@ const AdminPropertyGrid = ({
           <FileText className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
           View Documents
         </button>
-
-        {/* Approve/Reject */}
         {property.approval_status === "approved" || property.status === "approved" ? (
           <div className="flex items-center justify-center w-full px-4 py-3 font-semibold text-center text-emerald-800 rounded-xl border border-emerald-300 bg-gradient-to-r from-emerald-100 to-emerald-200">
             <Check className="w-4 h-4 mr-2" />
@@ -175,89 +207,96 @@ const AdminPropertyGrid = ({
         {/* Sorting Controls */}
         <div className="flex flex-wrap items-center gap-3">
           <span className="font-semibold">Sort By:</span>
-          <button
-            onClick={() => {
-              onChangeSortByDate && onChangeSortByDate("newest");
-            }}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              sortByDate === "newest" ? "bg-gray-100 shadow-sm" : "bg-white border border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Date: Newest
-          </button>
-          <button
-            onClick={() => {
-              onChangeSortByDate && onChangeSortByDate("oldest");
-            }}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              sortByDate === "oldest" ? "bg-gray-100 shadow-sm" : "bg-white border border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Date: Oldest
-          </button>
-          <button
-            onClick={() => {
-              onChangeListingType && onChangeListingType("rent");
-            }}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              listingType === "rent" ? "bg-gray-100 shadow-sm" : "bg-white border border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Rent
-          </button>
-          <button
-            onClick={() => {
-              onChangeListingType && onChangeListingType("sale");
-            }}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              listingType === "sale" ? "bg-gray-100 shadow-sm" : "bg-white border border-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            Sale
-          </button>
+       <button
+  onClick={() => onSortByDateChange("newest")}
+  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+    sortByDate === "newest"
+      ? "bg-gray-100 shadow-sm"
+      : "bg-white border border-gray-200 hover:bg-gray-50"
+  }`}
+>
+  Date: Newest
+</button>
+
+<button
+  onClick={() => onSortByDateChange("oldest")}
+  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+    sortByDate === "oldest"
+      ? "bg-gray-100 shadow-sm"
+      : "bg-white border border-gray-200 hover:bg-gray-50"
+  }`}
+>
+  Date: Oldest
+</button>
+
+{/* <button
+  onClick={() => onListingTypeChange("rent")}
+  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+    listingType === "rent"
+      ? "bg-gray-100 shadow-sm"
+      : "bg-white border border-gray-200 hover:bg-gray-50"
+  }`}
+>
+  Renttt
+</button>
+
+<button
+  onClick={() => onListingTypeChange("sale")}
+  className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+    listingType === "sale"
+      ? "bg-gray-100 shadow-sm"
+      : "bg-white border border-gray-200 hover:bg-gray-50"
+  }`}
+>
+  Sale
+</button> */}
+
         </div>
 
         {/* Properties Grid */}
         <PropertyGrid
-          properties={transformedProperties}
+          properties={propertiesWithAdminActions}
           viewMode="grid"
           likedProperties={new Set()}
         />
-        {/* Backend Pagination Controls */}
+
+        {/* Pagination Controls */}
         <div className="flex items-center justify-center gap-2 mt-4">
           <button
             className="px-3 py-2 rounded border border-gray-200 bg-white disabled:opacity-50"
-            onClick={onFirstPage}
-            disabled={!onFirstPage || currentPage <= 1}
+            onClick={() => onPageChange(1)}
+            disabled={page <= 1}
             aria-label="First page"
           >
             <ChevronsLeft className="w-4 h-4" />
           </button>
+
           <button
             className="px-3 py-2 rounded border border-gray-200 bg-white disabled:opacity-50"
-            onClick={onPrevPage}
-            disabled={!onPrevPage || currentPage <= 1}
+            onClick={() => onPageChange(page - 1)}
+            disabled={page <= 1}
             aria-label="Previous page"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
 
           <div className="px-3 py-2 text-sm text-gray-700">
-            Page {currentPage} of {Math.max(totalPages || 1, 1)}
+            Page {page} of {Math.max(totalPages || 1, 1)}
           </div>
 
           <button
             className="px-3 py-2 rounded border border-gray-200 bg-white disabled:opacity-50"
-            onClick={onNextPage}
-            disabled={!onNextPage || currentPage >= (totalPages || 1)}
+            onClick={() => onPageChange(page + 1)}
+            disabled={page >= (totalPages || 1)}
             aria-label="Next page"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
+
           <button
             className="px-3 py-2 rounded border border-gray-200 bg-white disabled:opacity-50"
-            onClick={onLastPage}
-            disabled={!onLastPage || currentPage >= (totalPages || 1)}
+            onClick={() => onPageChange(totalPages)}
+            disabled={page >= (totalPages || 1)}
             aria-label="Last page"
           >
             <ChevronsRight className="w-4 h-4" />
