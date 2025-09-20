@@ -52,6 +52,11 @@ app.use('/api/property', propertyRoutes);
 const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 
+const locationRoutes = require('./routes/location');
+app.use('/api/location', locationRoutes);
+
+const locationiqRoutes = require('./routes/locationiq');
+app.use('/api/locationiq', locationiqRoutes);
 
 app.get('/', (req, res) => {
   res.send('FYP Backend working');

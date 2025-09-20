@@ -11,7 +11,7 @@ import { useAdmin } from "../hooks/useAdmin";
 
 
 const AdminPanel = () => {
-  const { user, loading, loginadmin, logoutadmin } = useAuth();
+  const { admin, loading, loginadmin, logoutadmin } = useAuth();
   const [navbarActive, setNavbarActive] = useState("properties");
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
@@ -48,7 +48,7 @@ const AdminPanel = () => {
     sort_by: sortByDate === "newest" ? "posted_at" : "posted_at",
     sort_order: sortByDate === "newest" ? "DESC" : "ASC",
     status,
-    enabled: !!user, // Only fetch when user is logged in
+    enabled: !!admin, // Only fetch when user is logged in
   });
 const properties = data?.data || []; 
 const totalCount = data?.pagination?.totalCount || 0;
@@ -69,7 +69,7 @@ const totalPages = data?.pagination?.totalPages || 1;
     );
   }
 
-  if (!user) return <AdminLogin />;
+  if (!admin) return <AdminLogin />;
 
 
   // Filter properties
@@ -104,7 +104,7 @@ const totalPages = data?.pagination?.totalPages || 1;
               filterStatus={status}
               setFilterStatus={() => {}}
               properties={properties}
-              currentAdmin={user}
+              currentAdmin={admin}
             />
             <AdminPropertyGrid
               properties={filteredProperties}
@@ -115,7 +115,7 @@ const totalPages = data?.pagination?.totalPages || 1;
               onSortByDateChange={setSortByDate}    
   listingType={listingType}
   onListingTypeChange={setListingType}  
-              currentAdmin={user}
+              currentAdmin={admin}
             />
           </>
         )}

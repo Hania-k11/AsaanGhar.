@@ -129,7 +129,7 @@ const RecentActivityItem = ({ activity, index }) => {
   )
 }
 
-const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
+const OverviewContent = ({ user = { name: "Alex" } }) => {
   return (
     <motion.div
       className="space-y-8"
@@ -144,7 +144,7 @@ const OverviewContent = ({ userDetails = { name: "Alex" } }) => {
       >
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-2">
        <span>
-  Welcome back {userDetails?.first_name || ""} {userDetails?.last_name || ""}! 👋
+  Welcome back {user?.first_name || ""} {user?.last_name || ""}! 👋
 </span>
 
         </h1>

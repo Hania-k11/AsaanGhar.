@@ -3,7 +3,8 @@ const router = express.Router();
 const pool = require("../db"); 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const authenticateAdmin = require("../middleware/auth");
+const { authenticateAdmin } = require("../middleware/auth");
+
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 

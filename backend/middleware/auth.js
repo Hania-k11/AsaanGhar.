@@ -1,6 +1,24 @@
 const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+
+
+function authenticateUser(req, res, next) {
+  const token = req.cookies?.token;
+  if (!token) return res.status(401).json({ error: "Not authenticated" });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== "user") {
+      return res.status(403).json({ error: "Not a user token" });
+    }
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
 function authenticateAdmin(req, res, next) {
   const token = req.cookies.token; // ✅ read from cookie
 
@@ -22,4 +40,4 @@ function authenticateAdmin(req, res, next) {
   }
 }
 
-module.exports = authenticateAdmin;
+module.exports = { authenticateUser, authenticateAdmin };

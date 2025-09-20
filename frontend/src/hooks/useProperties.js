@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuth } from "../context/AuthContext";
 
+
 const fetchProperties = async ({ queryKey }) => {
   const [_key, { isLoggedIn, userId, filter, searchTerm, priceRange, sortBy, currentPage, limit }] = queryKey;
 
@@ -31,8 +32,8 @@ const fetchProperties = async ({ queryKey }) => {
 };
 
 export default function useProperties({ filter, searchTerm, priceRange, sortBy, currentPage, limit }) {
-  const { userDetails, isLoggedIn } = useAuth();
-  const userId = userDetails?.user_id;
+  const { user, isLoggedIn } = useAuth();
+  const userId = user?.user_id;
 
   return useQuery({
     queryKey: ['properties', { isLoggedIn, userId, filter, searchTerm, priceRange, sortBy, currentPage, limit }],
@@ -43,3 +44,5 @@ export default function useProperties({ filter, searchTerm, priceRange, sortBy, 
     refetchOnWindowFocus: false,
   });
 }
+
+

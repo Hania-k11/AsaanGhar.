@@ -24,7 +24,7 @@ const Navbar = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false); 
   const navigate = useNavigate();
 
-  const { userDetails, logout } = useAuth();
+  const { user, logoutUser } = useAuth();
   const { setShowLoginModal } = useAuth();
 
   const desktopDropdownRef = useRef();
@@ -76,7 +76,7 @@ const Navbar = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     try {
-      await logout();
+      await logoutUser();
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
@@ -150,7 +150,7 @@ if (isLoggingOut) {
             className="hidden md:flex items-center space-x-4 relative"
             ref={desktopDropdownRef}
           >
-            {userDetails ? (
+            {user ? (
               <div className="relative">
                 <div
                   className="flex items-center space-x-2 cursor-pointer"
@@ -163,7 +163,7 @@ if (isLoggingOut) {
                     <User className="w-5 h-5" />
                   </motion.div>
                   <span className="font-medium text-gray-800">
-                    {userDetails.first_name}
+                    {user.first_name}
                   </span>
                   <ChevronDown
                     size={18}
@@ -237,7 +237,7 @@ if (isLoggingOut) {
             className="md:hidden flex items-center space-x-3 relative"
             ref={mobileDropdownRef}
           >
-            {userDetails && (
+            {user && (
               <div
                 className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md cursor-pointer"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -245,7 +245,7 @@ if (isLoggingOut) {
                 <User size={20} />
               </div>
             )}
-            {!userDetails && (
+            {!user && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -286,7 +286,7 @@ if (isLoggingOut) {
             </motion.button>
 
             <AnimatePresence>
-              {dropdownOpen && userDetails && (
+              {dropdownOpen && user && (
                 <motion.div
                   initial="hidden"
                   animate="visible"
@@ -299,7 +299,7 @@ if (isLoggingOut) {
                     variants={itemVariants}
                     className="px-4 py-2 text-gray-700 font-semibold"
                   >
-                    {userDetails.first_name}
+                    {user.first_name}
                   </motion.div>
                   <div className="border-t border-gray-100 my-1"></div>
                   <motion.div

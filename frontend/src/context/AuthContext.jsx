@@ -1,144 +1,159 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// AuthContext.jsx
+import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
-
-
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);        
+  const [admin, setAdmin] = useState(null);     
+  const [loading, setLoading] = useState(true);  
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
-  const [user, setUser] = useState(null); // stores logged-in user
-  const [loading, setLoading] = useState(true); // loading on mount
+  const axiosOpts = { withCredentials: true };
 
-  ///MODAL
- const [showLoginModal, setShowLoginModal] = useState(false);
- //-----------------------------------------
-
-    const [userDetails, setUserDetails] = useState(() => {
-        return localStorage.getItem('userDetails') 
-          ? JSON.parse(localStorage.getItem('userDetails')) 
-          : null; // Check localStorage for initial value
-      });
   
- useEffect(() => {
-    if (userDetails) {
-      localStorage.setItem("userDetails", JSON.stringify(userDetails));
-    } else {
-      localStorage.removeItem("userDetails");
-    }
-  }, [userDetails]);
+  useEffect(() => {
+    const checkSession = async () => {
+      setLoading(true);
+      try {
+        const [userRes, adminRes] = await Promise.allSettled([
+          axios.get("/api/auth/me", axiosOpts),
+          axios.get("/api/admin/me", axiosOpts),
+        ]);
+console.log("Admin check response:", adminRes);
+console.log("user check response:", userRes);
 
+        // If backend returns user/admin in response body, set state accordingly.
+        if (userRes.status === "fulfilled" && userRes.value?.data?.user) {
+          setUser(userRes.value.data.user);
+        } else {
+          setUser(null);
+        }
 
-useEffect(() => {
-  const fetchAdmin = async () => {
-    try {
-      console.log("Fetching admin info...");
-      const res = await axios.get("/api/admin/me", { withCredentials: true });
-      console.log("Admin info response:", res.data);
-      if (res.data.success) {
-        setUser(res.data.admin);
-      } else {
+        if (adminRes.status === "fulfilled" && adminRes.value?.data?.admin) {
+          setAdmin(adminRes.value.data.admin);
+        } else {
+          setAdmin(null);
+        }
+      } catch (err) {
+        console.error("Session check error:", err);
         setUser(null);
+        setAdmin(null);
+      } finally {
+        setLoading(false);
       }
+    };
+
+    checkSession();
+  }, []);
+
+  // USER login
+  const loginuser = async (email, password) => {
+    try {
+      const res = await axios.post(
+        "/api/auth/login",
+        { email, password },
+        axiosOpts
+      );
+
+      // Accept res.data.user or (res.data.success && res.data.user)
+      const userObj = res?.data?.user ?? (res?.data?.success ? res.data.user : null);
+
+      if (userObj) {
+        setUser(userObj);
+        return { success: true, user: userObj };
+      }
+
+      return { success: false, message: res?.data?.message || "Login failed" };
     } catch (err) {
-      console.log("Error fetching admin info:", err.response?.status, err.response?.data);
-      setUser(null);
-    } finally {
-      setLoading(false);
+      console.error("loginUser error:", err.response?.data ?? err.message);
+      return { success: false, message: err.response?.data?.message || "Server error" };
     }
   };
-  fetchAdmin();
-}, []);
 
-
+  // ADMIN login
 const loginadmin = async (email, password) => {
-  console.log("Attempting login with:", { email, password });
-
   try {
+    console.log("📤 Sending admin login request with:", { email, password });
+
     const res = await axios.post(
       "/api/admin/login",
       { email, password },
-      { withCredentials: true } // Important for cookies
+      axiosOpts
     );
 
-    console.log("Response from server:", res.data);
+    console.log("📥 Raw admin login response:", res);
 
- if (res.data.success && res.data.admin) {
-      // No need to store token - backend uses HttpOnly cookies
-      console.log("Login successful, setting user:", res.data.admin);
-      setUser(res.data.admin);
+    // Check the response body shape
+    console.log("📥 Response data:", res.data);
 
-      return { success: true, admin: res.data.admin };
+    const adminObj =
+      res?.data?.admin ?? (res?.data?.success ? res.data.admin : null);
+
+    console.log("✅ Parsed admin object:", adminObj);
+
+    if (adminObj) {
+      setAdmin(adminObj);
+      console.log("🎉 Admin state set:", adminObj);
+      return { success: true, admin: adminObj };
     }
 
-    return { success: false, message: res.data.message || "Login failed" };
+    console.warn("⚠️ No admin object found in response");
+    return { success: false, message: res?.data?.message || "Login failed" };
   } catch (err) {
-    let message = "Server error during login"; // default
-
-    // If backend sent a response, use its message
-    if (err.response && err.response.data && err.response.data.message) {
-      message = err.response.data.message;
-      console.error("Server responded with error:", err.response.data, err.response.status);
-    } else if (err.request) {
-      console.error("No response received:", err.request);
-      message = "No response from server";
-    } else {
-      console.error("Error setting up request:", err.message);
-    }
-
-    return { success: false, message };
+    console.error(
+      "❌ loginAdmin error:",
+      err.response?.data ?? err.message
+    );
+    return {
+      success: false,
+      message: err.response?.data?.message || "Server error",
+    };
   }
 };
 
 
-
-  const logoutadmin = async () => {
+  // USER logout
+  const logoutUser = async () => {
     try {
-      await axios.post("/api/admin/logout", {}, { withCredentials: true });
-      // No need to clear token from localStorage - backend clears HttpOnly cookie
-      setUser(null);
+      await axios.post("/api/auth/logout", {}, axiosOpts);
     } catch (err) {
-      console.error("Logout error:", err);
+      console.error("logoutUser error:", err.response?.data ?? err.message);
+      // proceed to clear client state regardless
+    } finally {
+      setUser(null);
     }
   };
 
-
-
-
-  const logout = async () => {
+  // ADMIN logout
+  const logoutAdmin = async () => {
     try {
-      setUser(null);
-      localStorage.removeItem("userDetails");
-      // optionally: await axios.post("/api/users/logout");
+      await axios.post("/api/admin/logout", {}, axiosOpts);
     } catch (err) {
-      console.error("Logout error:", err);
+      console.error("logoutAdmin error:", err.response?.data ?? err.message);
+    } finally {
+      setAdmin(null);
     }
-  }
-
-
-  const clearUserDetails = () => {
-    setUserDetails(null);
-    localStorage.removeItem('userDetails');
   };
 
-    const isLoggedIn = !!userDetails;
-    const isLoggedInAdmin = !!user;
+  const isLoggedIn = !!user;
+  const isLoggedInAdmin = !!admin;
 
   return (
     <AuthContext.Provider
       value={{
-        userDetails,
-        setUserDetails,
-        loginadmin,
-        logoutadmin,
         user,
-        logout,
-        clearUserDetails,
+        admin,
         loading,
         showLoginModal,
         setShowLoginModal,
+        loginuser,
+        loginadmin,
+        logoutUser,
+        logoutAdmin,
         isLoggedIn,
-        isLoggedInAdmin
+        isLoggedInAdmin,
       }}
     >
       {children}

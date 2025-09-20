@@ -7,15 +7,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import PropertyGrid from "./PropertyGrid";
 import { Filter, Search, Grid3X3, List } from "lucide-react";
-
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import usePropertiesApi from "../hooks/useProperties";
 import { useNlpProperties } from "../hooks/NlpProperties";
 import LoadingSpinner from "./LoadingSpinner";
+import { useAuth } from "../context/AuthContext";
+import axios from 'axios';
 
 const propertiesPerPage = 6;
 
+// API function for toggling favorite
+const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
+    if (isCurrentlyLiked) {
+        await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+    } else {
+        await axios.post('/api/property/favorites', { userId, propertyId });
+    }
+};
+
 const BuyPage = () => {
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useAuth();
+  const userId = user?.user_id;
 
   // Normal search states
   const [filter, setFilter] = useState("all");
@@ -39,16 +52,14 @@ const BuyPage = () => {
     setSearchParams(params);
   }, [nlpQuery, nlpPage, setSearchParams]);
 
-
   useEffect(() => {
-  setFilter("all");
-}, [nlpQuery]);
+    setFilter("all");
+  }, [nlpQuery]);
 
   // UI states
   const [viewMode, setViewMode] = useState("grid");
   const [likedProperties, setLikedProperties] = useState(new Set());
   const [showFilters, setShowFilters] = useState(false);
-
 
   const {
     data: normalData,
@@ -66,8 +77,8 @@ const BuyPage = () => {
   const {
     data: nlpData,
     isLoading: nlpLoading,
-    error: nlpError,} = 
-    useNlpProperties({
+    error: nlpError,
+  } = useNlpProperties({
     query: nlpQuery,
     page: nlpPage,
     limit: propertiesPerPage,
@@ -99,21 +110,95 @@ const BuyPage = () => {
   const currentPage = isNlpActive ? nlpPage : normalPage;
   const setPage = isNlpActive ? setNlpPage : setNormalPage;
 
-  // Like toggle handler
-  const toggleLike = (propertyId) => {
-    setLikedProperties((prev) => {
-      const newLiked = new Set(prev);
-      if (newLiked.has(propertyId)) {
-        newLiked.delete(propertyId);
-      } else {
-        newLiked.add(propertyId);
-      }
-      return newLiked;
-    });
+  // UPDATE: Initialize liked properties from the fetched data
+  useEffect(() => {
+    if (properties.length > 0) {
+      const likedIds = new Set(
+        properties
+          .filter(property => property.is_favorite || property.isFavorite)
+          .map(property => property.property_id)
+      );
+      setLikedProperties(likedIds);
+    }
+  }, [properties]);
+
+  const queryClient = useQueryClient();
+  
+  // Like toggle handler with optimistic updates
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteProperty,
+    onMutate: async ({ propertyId, isCurrentlyLiked }) => {
+      // Optimistic update - immediately update the UI
+      setLikedProperties(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyLiked) {
+          newSet.delete(propertyId);
+        } else {
+          newSet.add(propertyId);
+        }
+        return newSet;
+      });
+    },
+    onSuccess: () => {
+      // Invalidate queries to trigger a fresh fetch and update UI across components
+      queryClient.invalidateQueries(['properties']);
+      queryClient.invalidateQueries(['favoriteProperties']);
+      
+      // Show success toast
+      // showToast('Favorites updated!');
+    },
+    onError: (error, { propertyId, isCurrentlyLiked }) => {
+      // Revert the optimistic update on error
+      setLikedProperties(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyLiked) {
+          newSet.add(propertyId);
+        } else {
+          newSet.delete(propertyId);
+        }
+        return newSet;
+      });
+      
+      console.error('Failed to toggle favorite:', error);
+      showToast('Failed to update favorites.', 'error');
+    },
+  });
+
+  // Show toast notification
+  const showToast = (message, type = "success") => {
+    const feedback = document.createElement("div");
+    feedback.textContent = message;
+    feedback.className = `fixed top-4 right-4 px-5 py-2.5 rounded-xl shadow-lg z-50 animate-fade-in-out text-sm font-medium transition-transform transform-gpu ${
+      type === "success"
+        ? "bg-emerald-600 text-white"
+        : "bg-red-600 text-white"
+    }`;
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.remove(), 2500);
+  };
+
+  const handleToggleLike = (propertyId, isCurrentlyLiked) => {
+    if (!userId) {
+      // Handle not logged-in case - you might want to show a login prompt
+      showToast('Please login to save favorites', 'error');
+      return;
+    }
+    toggleFavoriteMutation.mutate({ userId, propertyId, isCurrentlyLiked });
   };
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+      {/* Inline animation styles */}
+      <style jsx>{`
+        @keyframes fade-in-out {
+          0%, 100% { opacity: 0; transform: translateX(100%); }
+          10%, 90% { opacity: 1; transform: translateX(0); }
+        }
+        .animate-fade-in-out {
+          animation: fade-in-out 2.5s ease-out;
+        }
+      `}</style>
+
       {/* Hero Section */}
       <div className="relative z-10 bg-gradient-to-b from-emerald-400/10 to-emerald-700 text-white pt-18 pb-2 overflow-visible">
         <div className="container mx-auto px-4">
@@ -154,28 +239,13 @@ const BuyPage = () => {
               </button>
             </div>
 
-            {/* Existing Search & Filters — disabled if NLP active */}
-            <div
-              className={`max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 transition-opacity`}
-            >
+            {/* Existing Search & Filters */}
+            <div className={`max-w-4xl mx-auto bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 transition-opacity`}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-emerald-900" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Search"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 placeholder-emerald-800 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    // disabled={isNlpActive}
-                  />
-                </div> */}
-
                 <select
                   value={filter}
                   onChange={(e) => setFilter(e.target.value)}
                   className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  // disabled={isNlpActive}
                 >
                   <option value="all">All Properties</option>
                   <option value="sale">For Sale</option>
@@ -186,13 +256,11 @@ const BuyPage = () => {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-4 py-3 bg-white/20 border border-white/30 rounded-lg text-emerald-900 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  // disabled={isNlpActive}
                 >
                   <option value="featured">Featured</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="newest">Newest First</option>
-                  {/* <option value="rating">Highest Rated</option> */}
                 </select>
 
                 <motion.button
@@ -200,7 +268,6 @@ const BuyPage = () => {
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFilters(!showFilters)}
                   className="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                  // disabled={isNlpActive}
                 >
                   <Filter size={20} />
                   Filters
@@ -236,7 +303,6 @@ const BuyPage = () => {
                       : "bg-white text-emerald-600 border-2 border-emerald-200 hover:border-emerald-400"
                   }`}
                   onClick={() => setFilter(type)}
-                  // disabled={isNlpActive}
                 >
                   {type === "all"
                     ? "All"
@@ -311,7 +377,7 @@ const BuyPage = () => {
               properties={properties}
               viewMode={viewMode}
               likedProperties={likedProperties}
-              toggleLike={toggleLike}
+              toggleLike={handleToggleLike}
               navigate={navigate}
             />
           )}

@@ -1,15 +1,16 @@
 // src/components/admin/AdminNavbar.jsx
+
 import React, { useState } from "react";
 import { Home, Users, LogOut, User as UserIcon, Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
-  const { logoutadmin, user } = useAuth();
+  const { logoutAdmin, admin } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await logoutadmin();
+      await logoutAdmin();
       window.location.href = "/admin-panel";
     } catch (err) {
       console.error("Logout failed:", err);
@@ -69,17 +70,17 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
 
           {/* Right - User Info + Logout */}
           <div className="flex items-center space-x-3">
-            {user && (
+            {admin && (
               <div className="flex items-center space-x-2 px-3 py-2 border-emerald-600">
                 <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center border border-emerald-500">
                   <UserIcon className="w-4 h-4 text-emerald-100" />
                 </div>
                 <div className="text-sm">
                   <div className="font-medium text-white truncate max-w-[120px]">
-                    {user.name}
+                    {admin.name}
                   </div>
                   <div className="text-emerald-200 text-xs truncate max-w-[120px]">
-                    {user.email}
+                    {admin.email}
                   </div>
                 </div>
               </div>
@@ -132,14 +133,14 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
             </button>
           </nav>
 
-          {user && (
+          {admin && (
             <div className="flex items-center space-x-2 px-3 py-2 bg-emerald-700 rounded-lg mt-3 border border-emerald-600">
               <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center border border-emerald-500">
                 <UserIcon className="w-4 h-4 text-emerald-100" />
               </div>
               <div className="text-sm">
-                <div className="font-medium text-white">{user.name}</div>
-                <div className="text-emerald-200 text-xs">{user.email}</div>
+                <div className="font-medium text-white">{admin.name}</div>
+                <div className="text-emerald-200 text-xs">{admin.email}</div>
               </div>
             </div>
           )}

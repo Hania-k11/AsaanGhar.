@@ -43,11 +43,12 @@ const AddressAutocomplete = ({ value, onSelect }) => {
     try {
       let results = [];
       if (locationIqToken) {
-        const url = `https://us1.locationiq.com/v1/autocomplete?key=${locationIqToken}&q=${encodeURIComponent(
-          input
-        )}&limit=8&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1`;
-        const res = await axios.get(url);
-        results = Array.isArray(res.data) ? res.data : [];
+     const res = await axios.get("/api/locationiq/autocomplete", {
+        params: { q: input },
+      });
+      console.log("📡 LocationIQ (via backend) raw response:", res.data);
+      results = Array.isArray(res.data) ? res.data : [];
+
       } else {
         const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=PK&viewbox=66.9000,24.7500,67.2000,25.0500&bounded=1&q=${encodeURIComponent(
           input

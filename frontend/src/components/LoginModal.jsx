@@ -14,8 +14,8 @@ const LoginModal = () => {
    const { success, error, warning, info } = useToast();
    
   const {
-    userDetails,
-    setUserDetails,
+  
+    loginuser,
     showLoginModal: show,
     setShowLoginModal: setShow,
   } = useAuth();
@@ -88,18 +88,16 @@ const LoginModal = () => {
     }
 
     try {
-      const res = await axios.post("/api/auth/login", {
-        email: form.email,
-        password: form.password,
-      });
-
-      const user = res.data.user;
-      setUserDetails(user);
-      success(`Welcome ${user.first_name}, successfully logged in!`);
-      setShow(false);
+      const res = await loginuser(form.email, form.password);
+      if (res.success) {
+        success(`Welcome ${res.user.n || res.user.first_name}!`);
+        setShow(false); // close modal
+      } else {
+        error(res.message || "Login failed");
+      }
     } catch (err) {
-      console.error(err);
-      error(err.response?.data?.message || "Login failed");
+      console.error("Login error:", err);
+      error("Something went wrong, please try again.");
     }
   };
   

@@ -101,16 +101,16 @@ const SellPage = () => {
     </div>
   )
 }
-
 const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
-  const { userDetails } = useAuth();
-  const [formData, setFormData] = useState({
-    owner_id: '' , // from auth
-    title: '',
-    address: '',
-    street_address: '',
-    description: '',
-     ownerName: "",
+  const { user } = useAuth();
+
+  const initialFormData = {
+    owner_id: "",
+    title: "",
+    address: "",
+    street_address: "",
+    description: "",
+    ownerName: "",
     ownerEmail: "",
     phoneNumber: "",
     whatsappNumber: "",
@@ -126,57 +126,81 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     maintenance: "",
     deposit: "",
     images: [],
+    documents: [],
     yearBuilt: "",
-   amenities: {
-    Parking: false,
-    Balcony: false,
-    PetFriendly: false,
-    LaundryInUnit: false,
-    Dishwasher: false,
-    AirConditioning: false,
-    Heating: false,
-    SwimmingPool: false,
-    Gym: false,
-    Security: false,
-    GatedCommunity: false,
-    publicTransportAccess: false,
-  },
+    amenities: {
+      Parking: false,
+      Balcony: false,
+      PetFriendly: false,
+      LaundryInUnit: false,
+      Dishwasher: false,
+      AirConditioning: false,
+      Heating: false,
+      SwimmingPool: false,
+      Gym: false,
+      Security: false,
+      GatedCommunity: false,
+      publicTransportAccess: false,
+    },
     nearby_places: "",
     nearbySchools: "",
     nearbyHospitals: "",
     nearbyShopping: "",
     publicTransportAccess: false,
-    listing_type_id: '',
-    price: '',
-    city: 'Karachi',
-    location_id: '',
-    listingType: 'rent', // Default to rent
-    propertyType: '',
-    bedrooms: '',
-    bathrooms: '',
-    area_sqft: '',
-    furnishing_status_id: '',
-    lease_duration: '',
-    available_from: '',
-    maintenance_fee: '',
-    year_built: '',
-    status: 'active',
-    // is_featured: false,
-    created_by: '',
+    listing_type_id: "",
+    price: "",
+    city: "Karachi",
+    location_id: "",
+    listingType: "rent",
+    propertyType: "",
+    bedrooms: "",
+    bathrooms: "",
+    area_sqft: "",
+    furnishing_status_id: "",
+    lease_duration: "",
+    available_from: "",
+    maintenance_fee: "",
+    year_built: "",
+    status: "active",
+    created_by: "",
     latitude: null,
     longitude: null,
-    display_name: ''
+    display_name: "",
+  };
+
+  const [formData, setFormData] = useState(() => {
+    if (user?.user_id) {
+      const savedData = localStorage.getItem(`rentFormData_${user.user_id}`);
+      return savedData ? JSON.parse(savedData) : initialFormData;
+    }
+    return initialFormData;
   });
-  const [currentStep, setCurrentStep] = useState(1)
-  const [errors, setErrors] = useState({})
-  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (user?.user_id) {
+      const savedStep = localStorage.getItem(`rentFormStep_${user.user_id}`);
+      return savedStep ? Number(savedStep) : 1;
+    }
+    return 1;
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Persist form data and current step per-user
+  useEffect(() => {
+    if (!user?.user_id) return;
+    localStorage.setItem(`rentFormData_${user.user_id}`, JSON.stringify(formData));
+    localStorage.setItem(`rentFormStep_${user.user_id}`, currentStep.toString());
+  }, [formData, currentStep, user]);
 
   const steps = [
     { id: 1, title: "Basic Details", icon: "🏠" },
     { id: 2, title: "Property Features", icon: "✨" },
     { id: 3, title: "Amenities", icon: "🏊‍♂️" },
     { id: 4, title: "Contact & Images", icon: "📸" },
-  ]
+    { id: 5, title: "Document Verification", icon: "📄" },
+  ];
 
   const refs = {
     title: useRef(),
@@ -193,16 +217,16 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     phoneNumber: useRef(),
     whatsappNumber: useRef(),
     images: useRef(),
+    documents: useRef(),
     contactPreferences: useRef(),
-  }
+  };
 
- 
   const scrollToFirstError = (errorObj) => {
     const errorOrder = [
-      "title","address","street_address", "location", "rent", "propertyType", "area",
-      "description", "furnishing",
+      "title", "address", "street_address", "location", "rent",
+      "propertyType", "area", "description", "furnishing",
       "ownerName", "ownerEmail", "phoneNumber", "whatsappNumber",
-      "images", "contactPreferences"
+      "images", "documents", "contactPreferences"
     ];
     for (const key of errorOrder) {
       if (errorObj[key] && refs[key] && refs[key].current) {
@@ -211,197 +235,110 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
         break;
       }
     }
-  }
+  };
 
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target
+    const { name, value, type, checked, files } = e.target;
     if (!isLoggedIn) {
-      onLoginClick("input")
-      return
-    }
-
-    if (name === "images") {
-      const fileArray = Array.from(files)
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...fileArray].slice(0, 5), // Max 5 images
-      }))
-    } else if (name.startsWith("contactPreferences.")) {
-      const preference = name.split(".")[1]
-      setFormData((prev) => ({
-        ...prev,
-        contactPreferences: {
-          ...prev.contactPreferences,
-          [preference]: checked,
-        },
-      }))
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      }))
-    }
-
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }))
-    }
-  }
-
-  const removeImage = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }))
-  }
-
-  const validateStep = (step) => {
-      console.log(`validateStep called for step ${step}, 
-  
-    isSubmitting: ${ isSubmitting}` );
-  console.trace(); // Keep for debugging
-    const newErrors = {}
-
-    if (step === 1) {
-  if (!formData.title) newErrors.title = "Property title is required";
-
-  if (!formData.latitude || !formData.longitude) {
-    newErrors.address = "Please make sure you pin the right location on the map.";
-  }
-
-  if (!formData.location) newErrors.location = "Location is required";
-
-  if (!formData.rent) newErrors.rent = "Price is required";
-
-  if (!formData.propertyType) newErrors.propertyType = "Property type is required";
-
-  if (!formData.area) newErrors.area = "Area is required";
-
-    if (!formData.street_address) newErrors.street_address = "Street address is required";
-    
-
-  // Additional address (plot/flat) validation:
-  // const prefix = "Plot/Flat No: ";
-  // const additional = formData.additionalAddress || "";
-  // Check if additionalAddress is empty or just equal to prefix + address (auto-filled)
-  // if (
-  //   additional.trim() === "" || // empty
-  //   additional === prefix + (formData.address || "")
-  // ) {
-  //   newErrors.additionalAddress = "Please enter your plot or flat details.";
-  // }
-
-  // Optional: Check if the map address contains the selected location from dropdown
-  // if (formData.location && formData.address) {
-  //   const selectedLocationLower = formData.location.toLowerCase();
-  //   const addressLower = formData.address.toLowerCase();
-
-  //   if (!addressLower.includes(selectedLocationLower)) {
-  //     newErrors.address = `Selected address does not match the chosen location area (${formData.location}).`;
-  //   }
-  // }
-}
-
-    if (step === 2) {
-      if (!formData.description) newErrors.description = "Description is required"
-      if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required"
-    }
-
-    if (step === 4) {
-      if (!formData.ownerName) newErrors.ownerName = "Owner name is required"
-      if (!formData.ownerEmail) newErrors.ownerEmail = "Email is required"
-      if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required"
-      if (formData.images.length === 0) newErrors.images = "At least one image is required"
-
-      // Check if at least one contact preference is selected
-      const hasContactPreference = Object.values(formData.contactPreferences).some((pref) => pref)
-      if (!hasContactPreference) {
-        newErrors.contactPreferences = "Please select at least one contact method"
-      }
-
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) {
-        newErrors.ownerEmail = "Please enter a valid email address"
-      }
-
-      // Validate phone number format (basic validation)
-      const phoneRegex = /^[+]?[0-9\s\-$$$$]{10,}$/
-      if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-        newErrors.phoneNumber = "Please enter a valid phone number"
-      }
-
-      // Validate WhatsApp number if provided
-      if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber)) {
-        newErrors.whatsappNumber = "Please enter a valid WhatsApp number"
-      }
-    }
-
-    setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) {
-      scrollToFirstError(newErrors)
-    }
-    return Object.keys(newErrors).length === 0
-  }
-
-  const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 4))
-    }
-  }
-
-  const prevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!isLoggedIn) {
-      onLoginClick("submit");
+      onLoginClick("input");
       return;
     }
 
-    if (!validateStep(4)) return;
+    if (name === "images") {
+      const fileArray = Array.from(files);
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...fileArray].slice(0, 5),
+      }));
+    } else if (name === "documents") {
+      const fileArray = Array.from(files).filter(f =>
+        ["application/pdf", "image/jpeg", "image/png"].includes(f.type)
+      );
+      setFormData(prev => ({
+        ...prev,
+        documents: [...prev.documents, ...fileArray].slice(0, 10),
+      }));
+    } else if (name.startsWith("contactPreferences.")) {
+      const preference = name.split(".")[1];
+      setFormData(prev => ({
+        ...prev,
+        contactPreferences: { ...prev.contactPreferences, [preference]: checked },
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+    }
+
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const removeDocument = (index) => {
+    setFormData(prev => ({ ...prev, documents: prev.documents.filter((_, i) => i !== index) }));
+  };
+
+  const removeImage = (index) => {
+    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+  };
+
+  const validateStep = (step) => {
+    const newErrors = {};
+    if (step === 1) {
+      if (!formData.title) newErrors.title = "Property title is required";
+      if (!formData.latitude || !formData.longitude) newErrors.address = "Please pin the location on the map.";
+      if (!formData.location) newErrors.location = "Location is required";
+      if (!formData.rent) newErrors.rent = "Price is required";
+      if (!formData.propertyType) newErrors.propertyType = "Property type is required";
+      if (!formData.area) newErrors.area = "Area is required";
+      if (!formData.street_address) newErrors.street_address = "Street address is required";
+    }
+    if (step === 2) {
+      if (!formData.description) newErrors.description = "Description is required";
+      if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required";
+    }
+    if (step === 4) {
+      if (!formData.ownerName) newErrors.ownerName = "Owner name is required";
+      if (!formData.ownerEmail) newErrors.ownerEmail = "Email is required";
+      if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
+      if (formData.images.length === 0) newErrors.images = "At least one image is required";
+
+      const hasContactPreference = Object.values(formData.contactPreferences).some(pref => pref);
+      if (!hasContactPreference) newErrors.contactPreferences = "Select at least one contact method";
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) newErrors.ownerEmail = "Enter a valid email";
+      const phoneRegex = /^[+]?[0-9\s\-]{10,}$/;
+      if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) newErrors.phoneNumber = "Enter valid phone number";
+      if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber)) newErrors.whatsappNumber = "Enter valid WhatsApp number";
+    }
+    if (step === 5) {
+      if (!formData.documents || formData.documents.length === 0) {
+        newErrors.documents = "Upload at least one document (PDF/JPG/PNG)";
+      }
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) scrollToFirstError(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) setCurrentStep(prev => Math.min(prev + 1, 5));
+  };
+
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isLoggedIn) return onLoginClick("submit");
+
+    if (!validateStep(5)) return;
 
     setIsSubmitting(true);
+    try {
+      const amenitiesList = Object.keys(formData.amenities || {})
+        .filter(key => formData.amenities[key])
+        .join(",");
 
-
-    //commENT hania
-   try {
-    // We are not uploading images for now, so we'll just set imageUrls to an empty array.
-    // const imageUrls = [];
-
-    // The code for uploading images is commented out for now.
-    // const formDataForUpload = new FormData();
-    // formData.images.forEach((image) => {
-    //   formDataForUpload.append('images', image);
-    // });
-    // const imageUploadResponse = await axios.post('/api/upload/images', formDataForUpload);
-    // const imageUrls = imageUploadResponse.data.urls;
-
-    //---------------------------------
-
-      // First upload images (commit hania)
-      // const imageUploadResponse = await axios.post('/api/upload/images', formDataForUpload);
-      // const imageUrls = imageUploadResponse.data.urls;
-
-
-
-const amenitiesList = Object.keys(formData.amenities || {})
-  .filter((key) => formData.amenities[key]) // only true ones
-  .map((key) =>
-    key
-    
-      
-  )
-  .join(","); 
-
-
-  console.log("Amenities List:", amenitiesList);
-
-      // Then create property listing
-      const response = await axios.post('/api/property/insert', {
-        owner_id: userDetails.user_id,
+      const response = await axios.post("/api/property/insert", {
+        owner_id: user.user_id,
         title: formData.title,
         description: formData.description,
         listing_type_name: formData.listingType,
@@ -409,7 +346,7 @@ const amenitiesList = Object.keys(formData.amenities || {})
         address: formData.address,
         street_address: formData.street_address,
         location_area: formData.location,
-        location_city: 'Karachi',
+        location_city: "Karachi",
         property_type_name: formData.propertyType,
         bedrooms: formData.bedrooms || null,
         bathrooms: formData.bathrooms || null,
@@ -428,97 +365,32 @@ const amenitiesList = Object.keys(formData.amenities || {})
         contact_email: formData.ownerEmail,
         contact_phone: formData.phoneNumber,
         contact_whatsapp: formData.whatsappNumber,
-         pref_email: formData.contactPreferences.email ? 1 : 0,
+        pref_email: formData.contactPreferences.email ? 1 : 0,
         pref_phone: formData.contactPreferences.phone ? 1 : 0,
         pref_whatsapp: formData.contactPreferences.whatsapp ? 1 : 0,
         amenities: amenitiesList,
-        
-      
-        
       });
-        //  status: 'active',
-//  is_featured: false,
-//         created_by: userDetails.user_id,
 
-//         images: imageUrls
-console.log(amenitiesList)
       if (response.status === 201 || response.status === 200) {
-        toast.success('Property listing created successfully!', {
-          position: 'top-right',
-          autoClose: 5000
-        });
-        
-        // Update user properties list
+        toast.success("Property listing created successfully!", { position: "top-right", autoClose: 5000 });
         setUserProperties(prev => [...prev, response.data]);
-        
-        // Reset form and go back to step 1
-        setFormData({
-          title: "",
-          address: "",
-          location: "",
-          rent: "",
-          propertyType: "",
-          bedrooms: "",
-          bathrooms: "",
-          area: "",
-          description: "",
-          ownerName: "",
-          ownerEmail: "",
-          phoneNumber: "",
-          whatsappNumber: "",
-          contactPreferences: {
-            email: false,
-            phone: false,
-            whatsapp: false,
-          },
-          furnishing: "",
-          floor: "",
-          leaseDuration: "",
-          availableFrom: "",
-          maintenance: "",
-          deposit: "",
-          images: [],
-          yearBuilt: "",
-         amenities: {
-    Parking: false,
-    Balcony: false,
-    PetFriendly: false,
-    LaundryInUnit: false,
-    Dishwasher: false,
-    AirConditioning: false,
-    Heating: false,
-    SwimmingPool: false,
-    Gym: false,
-    Security: false,
-    GatedCommunity: false,
-    publicTransportAccess: false,
-  },
-          nearby_places: "",
-          nearbySchools: "",
-          nearbyHospitals: "",
-          nearbyShopping: "",
-          publicTransportAccess: false,
-          listingType: "rent",
-          latitude: null,
-          longitude: null
-        });
+
+        // Reset form and clear saved draft
+        setFormData(initialFormData);
         setCurrentStep(1);
+        if (user?.user_id) {
+          localStorage.removeItem(`rentFormData_${user.user_id}`);
+          localStorage.removeItem(`rentFormStep_${user.user_id}`);
+        }
       }
     } catch (error) {
-      console.error('Error creating property listing:', error);
-  // Log the detailed error from the server response
-  console.error('Server error details:', error.response?.data);
-
-
-
-      toast.error(error.response?.data?.message || 'Error creating property listing. Please try again.', {
-        position: 'top-right',
-        autoClose: 5000
-      });
+      console.error("Error creating property listing:", error);
+      toast.error(error.response?.data?.message || "Error creating property listing. Please try again.", { position: "top-right", autoClose: 5000 });
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
+
 
   const amenityIcons = {
     Parking: "🚗",
@@ -532,42 +404,59 @@ console.log(amenitiesList)
     Gym: "💪",
     Security: "🔒",
     GatedCommunity: "🏘️",
-    publicTransportAccess: "🚌",
+    PublicTransportAccess: "🚌",
   }
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Progress Steps */}
-      <div className="mb-12">
-        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-emerald-200 -mx-2 px-2">
-          <div className="flex items-center justify-between mb-8 min-w-[340px] sm:min-w-0">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center flex-shrink-0 min-w-0">
-                <div
-                  className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-base sm:text-lg font-bold transition-all duration-300 ${
-                    currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
-                  }`}
-                >
-                  {currentStep > step.id ? "✓" : step.icon}
-                </div>
-                <div className="ml-2 sm:ml-3 hidden sm:block min-w-0">
-                  <p className={`text-xs sm:text-sm font-medium ${currentStep >= step.id ? "text-emerald-600" : "text-gray-500"}`}>
-                    Step {step.id}
-                  </p>
-                  <p className={`text-[10px] sm:text-xs truncate ${currentStep >= step.id ? "text-gray-900" : "text-gray-400"}`}>{step.title}</p>
-                </div>
-                {index < steps.length - 1 && (
-                  <div
-                    className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
-                      currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+  
+{/* Progress Steps */}
+<div className="mb-12">
+  <div className="flex items-center justify-center mb-8 min-w-[340px] sm:min-w-0 space-x-4 sm:space-x-6">
+    {steps.map((step, index) => (
+      <div key={step.id} className="flex items-center flex-shrink-0 min-w-0">
+        {/* Step Circle */}
+        <div
+          className={`flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full text-base sm:text-lg font-bold transition-all duration-300 ${
+            currentStep >= step.id ? "bg-emerald-600 text-white shadow-lg" : "bg-gray-200 text-gray-500"
+          }`}
+        >
+          {currentStep > step.id ? "✓" : step.icon}
         </div>
+
+        {/* Step Title & Subtitle */}
+        <div className="ml-2 sm:ml-3 hidden sm:block min-w-0">
+          <p
+            className={`text-xs sm:text-sm font-medium ${
+              currentStep >= step.id ? "text-emerald-600" : "text-gray-500"
+            }`}
+          >
+            Step {step.id}
+          </p>
+          <p
+            className={`text-[10px] sm:text-xs truncate ${
+              currentStep >= step.id ? "text-gray-900" : "text-gray-400"
+            }`}
+          >
+            {step.title}
+          </p>
+        </div>
+
+        {/* Connector Line */}
+        {index < steps.length - 1 && (
+          <div
+            className={`w-8 sm:w-16 h-1 mx-2 sm:mx-4 rounded-full transition-all duration-300 ${
+              currentStep > step.id ? "bg-emerald-600" : "bg-gray-200"
+            }`}
+          />
+        )}
       </div>
+    ))}
+  </div>
+</div>
+
+
  <form
   onSubmit={handleSubmit}
   className="bg-white rounded-3xl shadow-2xl overflow-hidden 
@@ -1435,80 +1324,190 @@ console.log(amenitiesList)
                 {errors.contactPreferences && <p className="text-red-500 text-sm mt-2">{errors.contactPreferences}</p>}
               </div>
 
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-4">
-                  Property Images * (Max 5 images)
-                </label>
-                <div
-                  ref={refs.images}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-                    errors.images
-                      ? "border-red-300 bg-red-50"
-                      : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
-                  }`}
-                >
-                  <label htmlFor="image-upload" className="cursor-pointer">
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth={2}
-                          stroke="currentColor"
-                          className="w-8 h-8 text-emerald-600"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
-                          />
-                        </svg>
-                      </div>
-                      <p className="text-lg font-semibold text-gray-700 mb-2">Upload Property Images</p>
-                      <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
-                      <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
-                    </div>
-                  </label>
-                  <input
-                    id="image-upload"
-                    type="file"
-                    name="images"
-                    accept="image/*"
-                    multiple
-                    onChange={handleChange}
-                    className="hidden"
-                  />
-                </div>
-                {errors.images && <p className="text-red-500 text-sm mt-1">{errors.images}</p>}
+             {/* Image Upload */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-4">
+    Property Images * (Max 5 images)
+  </label>
 
-                {/* Image Preview */}
-                {formData.images.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                      Selected Images ({formData.images.length}/5)
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                      {formData.images.map((file, index) => (
-                        <div key={index} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file) || "/placeholder.svg"}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
-                          />
+  <div
+    ref={refs.images}
+    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+      errors.images
+        ? "border-red-300 bg-red-50"
+        : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
+    }`}
+  >
+    {/* Upload Trigger */}
+    <label 
+      htmlFor="image-upload" 
+      className="cursor-pointer"
+    >
+      <div className="flex flex-col items-center">
+        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="w-8 h-8 text-emerald-600"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+            />
+          </svg>
+        </div>
+        <p className="text-lg font-semibold text-gray-700 mb-2">Upload Property Images</p>
+        <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
+        <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
+      </div>
+    </label>
+
+    {/* Hidden File Input */}
+   <input
+  id="image-upload"
+  type="file"
+  accept="image/*"
+  multiple
+  className="hidden"
+  name="images"
+onChange={handleChange}
+onClick={(e) => { e.currentTarget.value = null; }}
+/>
+
+  </div>
+
+  {/* Error */}
+  {errors.images && (
+    <p className="text-red-500 text-sm mt-1">{errors.images}</p>
+  )}
+
+  {/* Image Preview */}
+  {formData.images.length > 0 && (
+    <div className="mt-6">
+      <h4 className="text-sm font-semibold text-gray-700 mb-3">
+        Selected Images ({formData.images.length}/5)
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+        {formData.images.map((file, index) => (
+          <div key={index} className="relative group">
+            <img
+              src={file instanceof File ? URL.createObjectURL(file) : file}
+              alt={`Preview ${index + 1}`}
+              className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
+            />
+
+            <button
+              type="button"
+              onClick={() => removeImage(index)}
+              className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+</div>
+</div>
+        )}
+
+        {/* Step 5: Document Upload */}
+{/* Step 5: Document Verification */}
+        {currentStep === 5 && (
+          <div className="p-8 sm:p-12">
+            <div className="flex items-center space-x-3 text-emerald-600 mb-8">
+              <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900">Document Verification</h2>
+            </div>
+
+            <div className="space-y-6">
+              <p className="text-gray-700 text-sm mb-4">
+                Upload your property documents for verification. Accepted formats: PDF, PNG, JPG. Max size 10MB per file.
+              </p>
+
+              <div
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
+                  errors.documents
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
+                }`}
+              >
+                <label htmlFor="document-upload" className="cursor-pointer">
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8 text-emerald-600">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <p className="text-lg font-semibold text-gray-700 mb-2">Upload Documents</p>
+                    <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
+                  </div>
+                </label>
+               <input
+  id="document-upload"
+  type="file"
+  accept=".pdf,.png,.jpg,.jpeg"
+  multiple
+  name="documents"
+  onChange={handleChange}   
+  className="hidden"
+/>
+
+              </div>
+
+              {errors.documents && <p className="text-red-500 text-sm mt-1">{errors.documents}</p>}
+
+              {formData.documents.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700">
+                    Selected Documents ({formData.documents.length})
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {formData.documents.map((file, index) => {
+                      const isImage = file.type.startsWith("image/")
+                      const fileURL = URL.createObjectURL(file)
+                      return (
+                        <div key={index} className="border p-2 rounded-lg flex flex-col items-center justify-between">
+                          {isImage ? (
+                            <img src={fileURL} alt={file.name} className="w-20 h-20 object-cover mb-2 rounded" />
+                          ) : (
+                            <div className="w-20 h-20 flex items-center justify-center bg-gray-100 rounded mb-2">
+                              <p className="text-xs text-gray-500 text-center">PDF</p>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-600 truncate">{file.name}</p>
+                          <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                           <button
                             type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            onClick={() => removeDocument(index)}
+                            className="text-red-500 hover:text-red-700 text-sm mt-1"
                           >
-                            ×
+                            Remove
                           </button>
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
-                )}
+                </div>
+              )}
+
+              <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-700">
+                <p>Ensure your documents are clear and legible. Verification may take 24–48 hours. The property would not be approved without the verified documents. Accepted documents include:</p>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Property ownership documents</li>
+                  <li>National ID / Passport of owner</li>
+                  <li>Utility bills or rental agreement</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1540,18 +1539,19 @@ console.log(amenitiesList)
             ))}
           </div>
 
-          {currentStep < 4 ? (
+          {currentStep < steps.length ? (
             <button
               type="button"
               onClick={nextStep}
-              className=" px-3 py-3 md:px-6 md:py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="px-3 py-3 md:px-6 md:py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               Next Step
             </button>
           ) : (
             <button
               type="button"
-               onClick={handleSubmit}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
               className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
                 isSubmitting
                   ? "bg-gray-400 text-white cursor-not-allowed"
@@ -1573,5 +1573,5 @@ console.log(amenitiesList)
     </div>
   )
 }
-
+//cuteee
 export default SellPage

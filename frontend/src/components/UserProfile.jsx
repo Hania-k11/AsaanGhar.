@@ -40,49 +40,49 @@ const generatePlaceholderImage = (firstName, lastName) => {
 
 const UserProfile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
-  const { userDetails, updateUserDetails } = useAuth(); 
+  const { user, updateUser } = useAuth(); 
 
   // Initialize editData with safe defaults
   const [editData, setEditData] = useState({
-    first_name: userDetails?.first_name || "",
-    last_name: userDetails?.last_name || "",
-    email: userDetails?.email || "",
-    phone_number: userDetails?.phone_number || "",
-    age: userDetails?.age || 0,
-    gender: userDetails?.gender || "",
-    profileImage: userDetails?.profileImage || "",
-    created_at: userDetails?.created_at || new Date().toISOString(),
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    email: user?.email || "",
+    phone_number: user?.phone_number || "",
+    age: user?.age || 0,
+    gender: user?.gender || "",
+    profileImage: user?.profileImage || "",
+    created_at: user?.created_at || new Date().toISOString(),
   });
 
   const handleEdit = () => {
     setEditData({
-      first_name: userDetails?.first_name || "",
-      last_name: userDetails?.last_name || "",
-      email: userDetails?.email || "",
-      phone_number: userDetails?.phone_number || "",
-      age: userDetails?.age || 0,
-      gender: userDetails?.gender || "",
-      profileImage: userDetails?.profileImage || "",
-      created_at: userDetails?.created_at || new Date().toISOString(),
+      first_name: user?.first_name || "",
+      last_name: user?.last_name || "",
+      email: user?.email || "",
+      phone_number: user?.phone_number || "",
+      age: user?.age || 0,
+      gender: user?.gender || "",
+      profileImage: user?.profileImage || "",
+      created_at: user?.created_at || new Date().toISOString(),
     });
     setShowEditModal(true);
   };
 
   const handleSave = () => {
-    updateUserDetails(editData); 
+    updateUser(editData); 
     setShowEditModal(false);
   };
 
   const handleCancel = () => {
     setEditData({
-      first_name: userDetails?.first_name || "",
-      last_name: userDetails?.last_name || "",
-      email: userDetails?.email || "",
-      phone_number: userDetails?.phone_number || "",
-      age: userDetails?.age || "",
-      gender: userDetails?.gender || "",
-      profileImage: userDetails?.profileImage || "",
-      created_at: userDetails?.created_at || new Date().toISOString(),
+      first_name: user?.first_name || "",
+      last_name: user?.last_name || "",
+      email: user?.email || "",
+      phone_number: user?.phone_number || "",
+      age: user?.age || "",
+      gender: user?.gender || "",
+      profileImage: user?.profileImage || "",
+      created_at: user?.created_at || new Date().toISOString(),
     });
     setShowEditModal(false);
   };
@@ -91,8 +91,8 @@ const UserProfile = () => {
     setEditData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Handle loading state if userDetails is not yet available
-  if (!userDetails) {
+  // Handle loading state if user is not yet available
+  if (!user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
@@ -111,14 +111,14 @@ const UserProfile = () => {
             <div className="flex flex-col sm:flex-row items-center sm:items-end sm:space-x-8">
               {/* Profile Image */}
               <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-white dark:border-gray-800 transform transition-transform duration-300 hover:scale-105 shadow-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
-                {userDetails.profileImage ? (
+                {user.profileImage ? (
                   <img
-                    src={userDetails.profileImage || "/placeholder.svg"}
+                    src={user.profileImage || "/placeholder.svg"}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  generatePlaceholderImage(userDetails.first_name, userDetails.last_name)
+                  generatePlaceholderImage(user.first_name, user.last_name)
                 )}
               </div>
 
@@ -127,10 +127,10 @@ const UserProfile = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-2">
                     <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-gray-100">
-                      {userDetails.first_name} {userDetails.last_name}
+                      {user.first_name} {user.last_name}
                     </h1>
                     <p className="text-lg text-gray-600 dark:text-gray-400 font-medium">
-                      Member since {format(new Date(userDetails?.created_at), " yyyy")}
+                      Member since {format(new Date(user?.created_at), " yyyy")}
                     </p>
                   </div>
                   <button
@@ -161,45 +161,45 @@ const UserProfile = () => {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.email}</p>
+                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.email}</p>
               </div>
             </div>
 
             {/* Phone */}
-            {userDetails.phone_number && (
+            {user.phone_number && (
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
                   <Phone className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Phone Number</p>
-                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.phone_number}</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.phone_number}</p>
                 </div>
               </div>
             )}
 
             {/* Age */}
-            {userDetails.age && (
+            {user.age && (
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
                   <Hash className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Age</p>
-                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.age} years old</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.age} years old</p>
                 </div>
               </div>
             )}
 
             {/* Gender */}
-            {userDetails.gender && (
+            {user.gender && (
               <div className="flex items-start space-x-4">
                 <div className="flex-shrink-0 w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110">
                   <User className="w-6 h-6 text-teal-600 dark:text-teal-400" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Gender</p>
-                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{userDetails.gender}</p>
+                  <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.gender}</p>
                 </div>
               </div>
             )}
@@ -211,7 +211,7 @@ const UserProfile = () => {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Member Since</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{format(new Date(userDetails?.created_at), "dd-MM-yyyy")}</p>
+                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{format(new Date(user?.created_at), "dd-MM-yyyy")}</p>
               </div>
             </div>
           </div>

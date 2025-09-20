@@ -39,8 +39,8 @@ export function useNlpProperties({
   priceRange = [0, 150000000],
   sort = 'featured',
 }) {
-  const { userDetails, isLoggedIn } = useAuth();
-  const userId = userDetails?.user_id;
+  const { user, isLoggedIn } = useAuth();
+  const userId = user?.user_id;
 
   return useQuery({
     queryKey: ['nlpProperties', { isLoggedIn, userId, query, page, limit, filter, priceRange, sort }],

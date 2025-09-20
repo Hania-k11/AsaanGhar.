@@ -1,1263 +1,1427 @@
 /* eslint-disable no-unused-vars */
-
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin,
-  Bed,
-  Bath,
-  Square,
-  ArrowRight,
-  Heart,
-  Share2,
-  Calendar,
-  Star,
-  Edit3,
-  Eye,
-  Trash2,
-  Plus,
-  TrendingUp,
-  CheckCircle,
+  AlertCircle,
+  X,
+  Layers,
   Clock,
+  CheckCircle,
   PauseCircle,
+  Calendar,
   DollarSign,
-  BarChart3,
-  Filter,
+  Eye,
+  Star,
   Search,
+  Filter,
   Grid,
   List,
-  MoreVertical,
-  Camera,
-  Users,
-  MessageSquare,
-  AlertCircle,
+  Plus,
   RefreshCw,
-  Layers,
-  SortDesc,
-  Droplet,
-  Maximize,
-  Sun,
-  Moon,
-  X,
-  User,
-  DollarSign as Dollar,
-  Filter as FilterIcon,
-  Check,
-  ChevronDown,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  Settings,
+  BarChart3,
+  Building2,
+  Tag,
+  MessageSquare,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropertyGrid from "./PropertyGrid";
+import LoadingSpinner from "./LoadingSpinner";
+import {
+  useMyProperties,
+  usePropertyStats,
+  useUpdatePropertyStatus,
+  useUpdatePropertyDetails,
+  useDeleteProperty,
+  useUpdatePropertyListingType,
+} from "../hooks/useMyListings";
+import { useAuth } from "../context/AuthContext";
 
-// Use a self-contained, stylish confirmation dialog instead of alert().
-const CustomAlertDialog = ({ title, message, onConfirm, onCancel }) => {
+/* -----------------------
+   Styled Components
+   ----------------------- */
+
+const Card = ({ children, className = "", ...props }) => (
+  <div
+    className={`bg-white/95 backdrop-blur-xl rounded-2xl shadow-sm border border-gray-100 ${className}`}
+    {...props}
+  >
+    {children}
+  </div>
+);
+
+const Button = ({ variant = "default", size = "md", children, className = "", disabled = false, ...props }) => {
+  const variants = {
+    default: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:bg-gray-100 disabled:text-gray-400",
+    primary: "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700 shadow-sm disabled:from-gray-400 disabled:to-gray-400",
+    ghost: "bg-transparent hover:bg-gray-100 text-gray-700 disabled:text-gray-400",
+    danger: "bg-red-600 text-white hover:bg-red-700 shadow-sm disabled:bg-red-400",
+  };
+
+  const sizes = {
+    sm: "px-3 py-1.5 text-sm",
+    md: "px-4 py-2 text-sm",
+    lg: "px-6 py-3",
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+    <motion.button
+      whileHover={!disabled ? { scale: 1.02 } : {}}
+      whileTap={!disabled ? { scale: 0.98 } : {}}
+      disabled={disabled}
+      className={`${variants[variant]} ${sizes[size]} rounded-xl font-medium transition-all duration-200 inline-flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      {...props}
     >
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onCancel}
-      ></div>
-      <motion.div
-        initial={{ scale: 0.9, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md max-h-[80vh] overflow-y-auto border border-gray-100 dark:border-gray-700 text-center"
-      >
-        <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500 mx-auto mb-4 flex items-center justify-center">
-          <AlertCircle size={32} />
-        </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          {title}
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">{message}</p>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onCancel}
-            className="flex-1 px-6 py-3 rounded-xl font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-          >
-            Cancel
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onConfirm}
-            className="flex-1 px-6 py-3 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-200"
-          >
-            Delete
-          </motion.button>
-        </div>
-      </motion.div>
-    </motion.div>
+      {children}
+    </motion.button>
   );
 };
 
+const Badge = ({ variant = "default", children, className = "" }) => {
+  const variants = {
+    default: "bg-gray-100 text-gray-700",
+    success: "bg-emerald-100 text-emerald-700",
+    warning: "bg-amber-100 text-amber-700",
+    danger: "bg-red-100 text-red-700",
+    info: "bg-blue-100 text-blue-700",
+    sale: "bg-green-100 text-green-700 border border-green-200",
+    rent: "bg-blue-100 text-blue-700 border border-blue-200",
+  };
 
-const mockListings = [
-  {
-    property_id: 1,
-    title: "Modern Downtown Apartment",
-    location_name: "Downtown, Karachi",
-    price: "8500000",
-    priceLabel: "Rs 8,500,000",
-    image:
-      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=600",
-    bedrooms: 3,
-    bathrooms: 2,
-    area_sqft: 1200,
-    status: "active",
-    views: 142,
-    inquiries: 8,
-    daysListed: 12,
-    rating: 4.8,
-    listing_type_name: "sale",
-    year_built: 2020,
-    waterSupply: true,
-    powerBackup: false,
-    security: true,
-  },
-  {
-    property_id: 2,
-    title: "Luxury Villa with Garden",
-    location_name: "Clifton, Karachi",
-    price: "25000000",
-    priceLabel: "Rs 25,000,000",
-    image:
-      "https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=600",
-    bedrooms: 5,
-    bathrooms: 4,
-    area_sqft: 3500,
-    status: "sold",
-    views: 89,
-    inquiries: 15,
-    daysListed: 45,
-    soldDate: "2025-07-15",
-    rating: 4.9,
-    listing_type_name: "sale",
-    year_built: 2018,
-    waterSupply: true,
-    powerBackup: true,
-    security: true,
-  },
-  {
-    property_id: 3,
-    title: "Cozy Studio Apartment",
-    location_name: "Gulshan-e-Iqbal, Karachi",
-    price: "35000",
-    priceLabel: "Rs 35,000/month",
-    image:
-      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=600",
-    bedrooms: 1,
-    bathrooms: 1,
-    area_sqft: 450,
-    status: "active",
-    views: 67,
-    inquiries: 4,
-    daysListed: 8,
-    rating: 4.5,
-    listing_type_name: "rent",
-    year_built: 2019,
-    waterSupply: true,
-    powerBackup: false,
-    security: false,
-  },
-  {
-    property_id: 4,
-    title: "Commercial Office Space",
-    location_name: "I.I. Chundrigar Road, Karachi",
-    price: "12000000",
-    priceLabel: "Rs 12,000,000",
-    image:
-      "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600",
-    bedrooms: null,
-    bathrooms: 3,
-    area_sqft: 2000,
-    status: "paused",
-    views: 234,
-    inquiries: 12,
-    daysListed: 30,
-    rating: 4.7,
-    listing_type_name: "sale",
-    year_built: 2017,
-    waterSupply: false,
-    powerBackup: true,
-    security: true,
-  },
-  {
-    property_id: 5,
-    title: "Beachfront Penthouse",
-    location_name: "Sea View, Karachi",
-    price: "45000000",
-    priceLabel: "Rs 45,000,000",
-    image:
-      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=600",
-    bedrooms: 4,
-    bathrooms: 3,
-    area_sqft: 2800,
-    status: "sold",
-    views: 312,
-    inquiries: 28,
-    daysListed: 60,
-    soldDate: "2025-06-20",
-    rating: 5.0,
-    listing_type_name: "sale",
-    year_built: 2021,
-    waterSupply: true,
-    powerBackup: true,
-    security: true,
-  },
-  {
-    property_id: 6,
-    title: "Spacious Family Home",
-    location_name: "DHA, Karachi",
-    price: "32000000",
-    priceLabel: "Rs 32,000,000",
-    image:
-      "https://images.unsplash.com/photo-1570129477041-3832c3f84394?q=80&w=600",
-    bedrooms: 6,
-    bathrooms: 5,
-    area_sqft: 4000,
-    status: "active",
-    views: 250,
-    inquiries: 20,
-    daysListed: 7,
-    rating: 4.9,
-    listing_type_name: "sale",
-    year_built: 2015,
-    waterSupply: true,
-    powerBackup: true,
-    security: true,
-  },
-  {
-    property_id: 7,
-    title: "Newly Built Townhouse",
-    location_name: "Gulistan-e-Jauhar, Karachi",
-    price: "65000",
-    priceLabel: "Rs 65,000/month",
-    image:
-      "https://images.unsplash.com/photo-1580587771525-78b9dba3b252?q=80&w=600",
-    bedrooms: 3,
-    bathrooms: 3,
-    area_sqft: 1500,
-    status: "active",
-    views: 110,
-    inquiries: 10,
-    daysListed: 15,
-    rating: 4.6,
-    listing_type_name: "rent",
-    year_built: 2023,
-    waterSupply: true,
-    powerBackup: true,
-    security: false,
-  },
-  {
-    id: 8,
-    title: "Charming Cottage",
-    location: "Malir, Karachi",
-    price: "7000000",
-    priceLabel: "Rs 7,000,000",
-    image:
-      "https://images.unsplash.com/photo-1588147575971-897d264a7c13?q=80&w=600",
-    beds: 2,
-    baths: 1,
-    area_sqft: 900,
-    status: "paused",
-    views: 95,
-    inquiries: 6,
-    daysListed: 25,
-    rating: 4.2,
-    listing_type_name: "sale",
-    year_built: 2005,
-    waterSupply: true,
-    powerBackup: false,
-    security: false,
-  },
-];
+  return (
+    <span className={`${variants[variant]} px-2.5 py-1 rounded-lg text-xs font-medium ${className}`}>
+      {children}
+    </span>
+  );
+};
+
+const Input = ({ icon: Icon, className = "", error = false, ...props }) => (
+  <div className="relative w-full">
+    {Icon && (
+      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+    )}
+    <input
+      className={`w-full ${Icon ? "pl-10" : "pl-4"} pr-4 py-2.5 rounded-xl border ${
+        error ? "border-red-300" : "border-gray-200"
+      } bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 disabled:bg-gray-50 disabled:text-gray-500 ${className}`}
+      {...props}
+    />
+  </div>
+);
+
+const Select = ({ children, className = "", error = false, ...props }) => (
+  <select
+    className={`px-4 py-2.5 rounded-xl border ${
+      error ? "border-red-300" : "border-gray-200"
+    } bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 appearance-none cursor-pointer disabled:bg-gray-50 disabled:text-gray-500 ${className}`}
+    {...props}
+  >
+    {children}
+  </select>
+);
+
+/* -----------------------
+   Modal Components
+   ----------------------- */
+
+const Modal = ({ isOpen, onClose, children, size = "md" }) => {
+  const sizes = {
+    sm: "max-w-md",
+    md: "max-w-lg", 
+    lg: "max-w-2xl",
+    xl: "max-w-4xl",
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      document.addEventListener('keydown', handleEscape);
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6"
+      >
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className={`relative w-full ${sizes[size]} max-h-[90vh] sm:max-h-[85vh] my-auto`}
+          style={{ zIndex: 10000 }}
+        >
+          <Card className="overflow-y-auto max-h-[90vh] sm:max-h-[85vh] shadow-2xl border-0">
+            {children}
+          </Card>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+const DeleteConfirmModal = ({ isOpen, onConfirm, onCancel, propertyTitle }) => (
+  <Modal isOpen={isOpen} onClose={onCancel} size="sm">
+    <div className="p-6">
+      <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-red-100">
+        <AlertCircle className="w-6 h-6 text-red-600" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+        Delete Property Listing
+      </h3>
+      <p className="text-sm text-gray-600 text-center mb-2">
+        Are you sure you want to delete "{propertyTitle}"?
+      </p>
+      <p className="text-sm text-red-600 text-center mb-6 font-medium">
+        This action cannot be undone. The property listing will be permanently removed.
+      </p>
+      <div className="flex gap-3">
+        <Button variant="default" className="flex-1" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button variant="danger" className="flex-1" onClick={onConfirm}>
+          Delete Property
+        </Button>
+      </div>
+    </div>
+  </Modal>
+);
+
+const FilterModal = ({ isOpen, filters, onApplyFilters, onClose }) => {
+  const [localFilters, setLocalFilters] = useState(filters);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    setLocalFilters(filters);
+    setErrors({});
+  }, [filters, isOpen]);
+
+  const handleChange = (name, value) => {
+    setLocalFilters(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const validateFilters = () => {
+    const newErrors = {};
+    
+    if (localFilters.minPrice && localFilters.maxPrice) {
+      const min = parseFloat(localFilters.minPrice);
+      const max = parseFloat(localFilters.maxPrice);
+      if (min >= max) {
+        newErrors.maxPrice = "Maximum price must be greater than minimum price";
+      }
+    }
+
+    const numericFields = ['minBeds', 'minBaths', 'minArea', 'minPrice', 'maxPrice'];
+    numericFields.forEach(field => {
+      if (localFilters[field] && (isNaN(localFilters[field]) || parseFloat(localFilters[field]) < 0)) {
+        newErrors[field] = "Must be a positive number";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleApply = () => {
+    if (validateFilters()) {
+      onApplyFilters(localFilters);
+      onClose();
+    }
+  };
+
+  const handleReset = () => {
+    const reset = Object.keys(localFilters).reduce((acc, key) => {
+      acc[key] = "";
+      return acc;
+    }, {});
+    setLocalFilters(reset);
+    setErrors({});
+    onApplyFilters(reset);
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="md">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Advanced Filters</h3>
+            <p className="text-sm text-gray-500 mt-1">Refine your property search</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min Bedrooms</label>
+              <Input
+                type="number"
+                min="0"
+                value={localFilters.minBeds}
+                onChange={(e) => handleChange("minBeds", e.target.value)}
+                placeholder="Any"
+                error={errors.minBeds}
+              />
+              {errors.minBeds && <p className="text-xs text-red-600 mt-1">{errors.minBeds}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min Bathrooms</label>
+              <Input
+                type="number"
+                min="0"
+                value={localFilters.minBaths}
+                onChange={(e) => handleChange("minBaths", e.target.value)}
+                placeholder="Any"
+                error={errors.minBaths}
+              />
+              {errors.minBaths && <p className="text-xs text-red-600 mt-1">{errors.minBaths}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Min Area (sqft)</label>
+            <Input
+              type="number"
+              min="0"
+              value={localFilters.minArea}
+              onChange={(e) => handleChange("minArea", e.target.value)}
+              placeholder="Any size"
+              error={errors.minArea}
+            />
+            {errors.minArea && <p className="text-xs text-red-600 mt-1">{errors.minArea}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Min Price (PKR)</label>
+              <Input
+                type="number"
+                min="0"
+                value={localFilters.minPrice}
+                onChange={(e) => handleChange("minPrice", e.target.value)}
+                placeholder="0"
+                error={errors.minPrice}
+              />
+              {errors.minPrice && <p className="text-xs text-red-600 mt-1">{errors.minPrice}</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Max Price (PKR)</label>
+              <Input
+                type="number"
+                min="0"
+                value={localFilters.maxPrice}
+                onChange={(e) => handleChange("maxPrice", e.target.value)}
+                placeholder="No limit"
+                error={errors.maxPrice}
+              />
+              {errors.maxPrice && <p className="text-xs text-red-600 mt-1">{errors.maxPrice}</p>}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Listing Type</label>
+            <Select
+              value={localFilters.listingType}
+              onChange={(e) => handleChange("listingType", e.target.value)}
+            >
+              <option value="">All Types</option>
+              <option value="sale">For Sale</option>
+              <option value="rent">For Rent</option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+            <Select
+              value={localFilters.propertyType}
+              onChange={(e) => handleChange("propertyType", e.target.value)}
+            >
+              <option value="">All Properties</option>
+              <option value="HOUSE">House</option>
+              <option value="APARTMENT">Apartment</option>
+              <option value="OFFICE">Office</option>
+              <option value="COMMERCIAL">Commercial</option>
+              <option value="ROOM">Room</option>
+              <option value="SHOP">Shop</option>
+              <option value="WAREHOUSE">Warehouse</option>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Furnishing Status</label>
+            <Select
+              value={localFilters.furnishingStatus}
+              onChange={(e) => handleChange("furnishingStatus", e.target.value)}
+            >
+              <option value="">Any Status</option>
+              <option value="fully-furnished">Fully Furnished</option>
+              <option value="semi-furnished">Semi-Furnished</option>
+              <option value="unfurnished">Unfurnished</option>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-200">
+          <Button variant="ghost" className="flex-1" onClick={handleReset}>
+            Reset All
+          </Button>
+          <Button variant="primary" className="flex-1" onClick={handleApply}>
+            Apply Filters
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+const EditPropertyModal = ({ isOpen, property, onSave, onClose }) => {
+  const [formData, setFormData] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  useEffect(() => {
+    if (property) {
+      setFormData({
+        title: property.title || "",
+        address: property.address || "",
+        street_address: property.street_address || "",
+        price: property.price || "",
+        bedrooms: property.bedrooms || "",
+        bathrooms: property.bathrooms || "",
+        area_sqft: property.area_sqft || "",
+      });
+    }
+    setError(null);
+    setValidationErrors({});
+  }, [property, isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    
+    if (validationErrors[name]) {
+      setValidationErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.title?.trim()) {
+      errors.title = "Title is required";
+    }
+    
+    if (!formData.address?.trim()) {
+      errors.address = "Address is required";
+    }
+    
+    if (!formData.price || parseFloat(formData.price) <= 0) {
+      errors.price = "Valid price is required";
+    }
+    
+    const numericFields = ['bedrooms', 'bathrooms', 'area_sqft'];
+    numericFields.forEach(field => {
+      if (formData[field] && (isNaN(formData[field]) || parseFloat(formData[field]) < 0)) {
+        errors[field] = "Must be a positive number";
+      }
+    });
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const updates = { ...formData, property_id: property.property_id };
+      await onSave(updates);
+      onClose();
+    } catch (err) {
+      setError("Failed to save changes. Please try again.");
+      console.error("Save error:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!property) {
+    return (
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <div className="p-6 flex items-center justify-center">
+          <LoadingSpinner />
+          <span className="ml-2 text-gray-600">Loading property details...</span>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+      <form onSubmit={handleSubmit} className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-gray-900">Edit Property Details</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X size={20} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="space-y-6 max-h-[60vh] overflow-y-auto">
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              Property Title <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g., Cozy 2-Bedroom Apartment"
+              error={validationErrors.title}
+              required
+            />
+            {validationErrors.title && (
+              <p className="text-xs text-red-600 mt-1">{validationErrors.title}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+              Main Address <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleChange}
+              placeholder="e.g., Main Street, PECHS Block 6"
+              error={validationErrors.address}
+              required
+            />
+            {validationErrors.address && (
+              <p className="text-xs text-red-600 mt-1">{validationErrors.address}</p>
+            )}
+          </div>
+          
+          <div>
+            <label htmlFor="street_address" className="block text-sm font-medium text-gray-700 mb-1">
+              Street Address
+            </label>
+            <Input
+              id="street_address"
+              name="street_address"
+              value={formData.street_address}
+              onChange={handleChange}
+              placeholder="e.g., Street 5, Block A"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
+              Price (PKR) <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="price"
+              type="number"
+              min="0"
+              step="0.01"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              placeholder="Enter price"
+              error={validationErrors.price}
+              required
+            />
+            {validationErrors.price && (
+              <p className="text-xs text-red-600 mt-1">{validationErrors.price}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700 mb-1">
+                Bedrooms
+              </label>
+              <Input
+                id="bedrooms"
+                type="number"
+                min="0"
+                name="bedrooms"
+                value={formData.bedrooms}
+                onChange={handleChange}
+                placeholder="0"
+                error={validationErrors.bedrooms}
+              />
+              {validationErrors.bedrooms && (
+                <p className="text-xs text-red-600 mt-1">{validationErrors.bedrooms}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700 mb-1">
+                Bathrooms
+              </label>
+              <Input
+                id="bathrooms"
+                type="number"
+                min="0"
+                name="bathrooms"
+                value={formData.bathrooms}
+                onChange={handleChange}
+                placeholder="0"
+                error={validationErrors.bathrooms}
+              />
+              {validationErrors.bathrooms && (
+                <p className="text-xs text-red-600 mt-1">{validationErrors.bathrooms}</p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="area_sqft" className="block text-sm font-medium text-gray-700 mb-1">
+                Area (sqft)
+              </label>
+              <Input
+                id="area_sqft"
+                type="number"
+                min="0"
+                name="area_sqft"
+                value={formData.area_sqft}
+                onChange={handleChange}
+                placeholder="0"
+                error={validationErrors.area_sqft}
+              />
+              {validationErrors.area_sqft && (
+                <p className="text-xs text-red-600 mt-1">{validationErrors.area_sqft}</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            <p>{error}</p>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-4 border-t border-gray-200">
+          <Button 
+            type="button" 
+            variant="default" 
+            className="flex-1" 
+            onClick={onClose} 
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            className="flex-1" 
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <LoadingSpinner size={16} className="text-white" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+/* -----------------------
+   Stat Card Component
+   ----------------------- */
+
+const StatCard = ({ icon: Icon, label, value, trend, color, isLoading }) => {
+  const colors = {
+    emerald: "text-emerald-600 bg-emerald-50",
+    amber: "text-amber-600 bg-amber-50",
+    blue: "text-blue-600 bg-blue-50",
+    purple: "text-purple-600 bg-purple-50",
+    teal: "text-teal-600 bg-teal-50",
+  };
+
+  return (
+    <Card className="p-6 group hover:shadow-md transition-shadow duration-300">
+      <div className="flex items-start justify-between">
+        <div className="space-y-2 flex-1">
+          <p className="text-sm font-medium text-gray-600">{label}</p>
+          <p className="text-3xl font-bold text-gray-900">
+            {isLoading ? (
+              <span className="inline-block w-20 h-8 bg-gray-200 rounded animate-pulse" />
+            ) : (
+              (value || 0).toLocaleString()
+            )}
+          </p>
+          {trend && !isLoading && (
+            <div className="flex items-center gap-1 mt-1">
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+              <span className="text-sm font-medium text-emerald-600">+{trend}%</span>
+              <span className="text-sm text-gray-500">vs last month</span>
+            </div>
+          )}
+        </div>
+
+        <div
+          className={`p-3 rounded-xl ${colors[color]} transition-transform duration-300 group-hover:scale-110`}
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 bg-gray-300 rounded animate-pulse" />
+          ) : (
+            <Icon size={20} />
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+/* -----------------------
+   Filter Chips Component
+   ----------------------- */
+
+const FilterChips = ({ filters, onRemove, onClear }) => {
+  const chips = Object.entries(filters)
+    .filter(([_, value]) => value)
+    .map(([key, value]) => {
+      const labels = {
+        minBeds: `${value}+ Beds`,
+        minBaths: `${value}+ Baths`,
+        minArea: `${value}+ sqft`,
+        minPrice: `Min PKR ${Number(value).toLocaleString()}`,
+        maxPrice: `Max PKR ${Number(value).toLocaleString()}`,
+        listingType: value === "sale" ? "For Sale" : "For Rent",
+        propertyType: value.charAt(0).toUpperCase() + value.slice(1).replace(/([A-Z])/g, ' $1'),
+        furnishingStatus: value.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      };
+      return { key, label: labels[key] || value };
+    });
+
+  if (chips.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      {chips.map(({ key, label }) => (
+        <Badge key={key} variant="default" className="flex items-center gap-1 pr-1">
+          {label}
+          <button
+            onClick={() => onRemove(key)}
+            className="ml-1 hover:bg-gray-200 rounded p-0.5 transition-colors"
+            aria-label={`Remove ${label} filter`}
+          >
+            <X size={12} />
+          </button>
+        </Badge>
+      ))}
+      <button
+        onClick={onClear}
+        className="text-sm text-gray-500 hover:text-gray-700 font-medium px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+      >
+        Clear all
+      </button>
+    </div>
+  );
+};
+
+/* -----------------------
+   Main Component
+   ----------------------- */
+
 
 const tabs = [
-  { id: "all", label: "All", icon: Layers },
+  { id: "all", label: "All Properties", icon: Layers },
   { id: "active", label: "Active", icon: Clock },
   { id: "sold", label: "Sold", icon: CheckCircle },
   { id: "paused", label: "Paused", icon: PauseCircle },
+  { id: "sale", label: "Sale", icon: Tag },
+  { id: "rent", label: "Rent", icon: Building2 },
 ];
 
-const sortOptions = [
-  { id: "newest", label: "Newest First", icon: Calendar },
-  { id: "oldest", label: "Oldest First", icon: Calendar },
-  { id: "price_high", label: "Price: High to Low", icon: Dollar },
-  { id: "price_low", label: "Price: Low to High", icon: Dollar },
-  { id: "views_high", label: "Views: High to Low", icon: Eye },
-  { id: "rating_high", label: "Rating: High to Low", icon: Star },
-];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
-};
-
-const getStatusIcon = (status) => {
-  switch (status) {
-    case "active":
-      return <Clock className="w-4 h-4 text-emerald-500" />;
-    case "sold":
-      return <CheckCircle className="w-4 h-4 text-green-600" />;
-    case "paused":
-      return <PauseCircle className="w-4 h-4 text-yellow-500" />;
-    default:
-      return null;
-  }
-};
-
-const getStatusColor = (status) => {
-  switch (status) {
-    case "active":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900";
-    case "sold":
-      return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-900";
-    case "paused":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300 dark:border-yellow-900";
-    default:
-      return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800";
-  }
-};
-
-const StatCard = ({ icon: Icon, label, value, color }) => (
-  <motion.div
-    variants={itemVariants}
-    className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700"
-  >
-    <div className={`flex items-center gap-4`}>
-      <div
-        className={`w-12 h-12 rounded-full flex items-center justify-center ${color.bg}`}
-      >
-        <Icon className={`w-6 h-6 ${color.text}`} strokeWidth={2} />
-      </div>
-      <div>
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          {label}
-        </p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-          {value.toLocaleString()}
-        </p>
-      </div>
-    </div>
-  </motion.div>
-);
-
-// Main App Component
 const MyListings = () => {
+  const { isLoggedIn,  authLoading } = useAuth();
+  const navigate = useNavigate();
 
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!authLoading && !isLoggedIn) {
+      navigate("/login");
+    }
+  }, [isLoggedIn, navigate, authLoading]);
+
+  // State Management
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("newest");
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [listingToDelete, setListingToDelete] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
-  const [listings, setListings] = useState(mockListings);
-  const [listingToEdit, setListingToEdit] = useState(null);
-  
-
-  const [likedProperties, setLikedProperties] = useState(new Set());
-
-  const navigate = useNavigate();
-
-  const navigateToSellPage = useCallback(() => {
-    navigate("/sell");
-  }, [navigate]);
-
-  // Toggle Like
-  const toggleLike = (id) => {
-    setLikedProperties((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) {
-        updated.delete(id);
-      } else {
-        updated.add(id);
-      }
-      return updated;
-    });
-  };
-  // Filter state for advanced filters
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [modals, setModals] = useState({
+    filter: false,
+    delete: false,
+    edit: false,
+  });
   const [filters, setFilters] = useState({
     minBeds: "",
     minBaths: "",
     minArea: "",
     listingType: "",
+    propertyType: "",
+    furnishingStatus: "",
     minPrice: "",
     maxPrice: "",
   });
 
-  // Derived state from filters and search
-  const filteredAndSortedProperties = useMemo(() => {
-    let filtered = listings;
+  // Price range calculation
+  const priceRange = useMemo(() => [
+    filters.minPrice ? parseFloat(filters.minPrice) : 0,
+    filters.maxPrice ? parseFloat(filters.maxPrice) : 9999999999,
+  ], [filters.minPrice, filters.maxPrice]);
 
-    // Step 1: Filter by Status Tab
-    if (activeTab !== "all") {
-      filtered = filtered.filter((prop) => prop.status === activeTab);
-    }
+  // Advanced filters
+// Replace the existing advancedFilters useMemo (around line 90-100)
+const advancedFilters = useMemo(() => ({
+  minBeds: filters.minBeds,
+  minBaths: filters.minBaths,
+  minArea: filters.minArea,
+  propertyType: filters.propertyType,
+  furnishingStatus: filters.furnishingStatus,
+  status: ['sale', 'rent'].includes(activeTab) ? undefined : (activeTab === "all" ? undefined : activeTab),
+  listingType: ['sale', 'rent'].includes(activeTab) ? activeTab : filters.listingType,
+}), [filters, activeTab]);
 
-    // Step 2: Filter by Search Query
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (prop) =>
-          prop.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          prop.location.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
 
-    // Step 3: Apply Advanced Filters
-    if (filters.minBeds) {
-      filtered = filtered.filter(
-        (prop) => (prop.beds || 0) >= parseInt(filters.minBeds)
-      );
-    }
-    if (filters.minBaths) {
-      filtered = filtered.filter(
-        (prop) => (prop.baths || 0) >= parseInt(filters.minBaths)
-      );
-    }
-    if (filters.minArea) {
-      filtered = filtered.filter(
-        (prop) => (prop.area_sqft || 0) >= parseInt(filters.minArea)
-      );
-    }
-    if (filters.listingType) {
-      filtered = filtered.filter((prop) => prop.listing_type_name === filters.listingType);
-    }
-    if (filters.minPrice) {
-      filtered = filtered.filter(
-        (prop) => (prop.price || 0) >= parseInt(filters.minPrice)
-      );
-    }
-    if (filters.maxPrice) {
-      filtered = filtered.filter(
-        (prop) => (prop.price || 0) <= parseInt(filters.maxPrice)
-      );
-    }
+  // API Hooks
+  const {
+    data: propertiesData,
+    isLoading: propertiesLoading,
+    refetch: refetchProperties,
+    error: propertiesError,
+  } = useMyProperties({
+    filter: filters.listingType || "all",
+    searchTerm: searchQuery,
+    priceRange,
+    sortBy: sortOrder,
+    currentPage,
+    limit: 12,
+    advancedFilters,
+  });
 
-    // Step 4: Sort the results
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortOrder) {
-        case "newest":
-          return b.id - a.id;
-        case "oldest":
-          return a.id - b.id;
-        case "price_high":
-          return (b.price || 0) - (a.price || 0);
-        case "price_low":
-          return (a.price || 0) - (b.price || 0);
-        case "views_high":
-          return (b.views || 0) - (a.views || 0);
-        case "rating_high":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return b.id - a.id;
+  const { data: statsData, isLoading: statsLoading, error: statsError } = usePropertyStats();
+  const updateStatusMutation = useUpdatePropertyStatus();
+  const updateDetailsMutation = useUpdatePropertyDetails();
+  const deletePropertyMutation = useDeleteProperty();
+
+  const updateListingTypeMutation = useUpdatePropertyListingType();
+
+
+
+  const handleListingTypeChange = useCallback(async (propertyId, newListingType) => {
+  try {
+    // You'll need to create this mutation - see backend change below
+    await updateListingTypeMutation.mutateAsync({ propertyId, listingType: newListingType });
+    await refetchProperties();
+  } catch (error) {
+    console.error("Listing type change error:", error);
+  }
+}, [updateListingTypeMutation, refetchProperties]);
+
+
+  // Enhanced refresh handler
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetchProperties();
+    } catch (error) {
+      console.error("Error refreshing properties:", error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  }, [refetchProperties]);
+
+  // Handlers
+  const handleDeleteProperty = useCallback(async () => {
+    if (selectedProperty) {
+      try {
+        await deletePropertyMutation.mutateAsync(selectedProperty.property_id);
+        setModals(prev => ({ ...prev, delete: false }));
+        setSelectedProperty(null);
+        await refetchProperties();
+      } catch (error) {
+        console.error("Delete error:", error);
       }
-    });
-
-    return sorted;
-  }, [listings, activeTab, searchQuery, filters, sortOrder]);
-
-  // Handler for delete confirmation
-  const handleDeleteListing = useCallback((id) => {
-    setListingToDelete(id);
-    setIsDeleteModalOpen(true);
-  }, []);
-
-  const confirmDelete = useCallback(() => {
-    setListings(listings.filter((listing) => listing.id !== listingToDelete));
-    setIsDeleteModalOpen(false);
-    setListingToDelete(null);
-  }, [listings, listingToDelete]);
-
-  const cancelDelete = useCallback(() => {
-    setIsDeleteModalOpen(false);
-    setListingToDelete(null);
-  }, []);
-
-  // Handler for edit - currently a placeholder
- const handleEditListing = useCallback((property) => {
-  setListingToEdit(property); // Change this line
-}, []);
-
-const handleCloseEditModal = useCallback(() => {
-  setListingToEdit(null);
-}, []);
-
-const handleSaveChanges = useCallback((editedListing) => {
-  // Recalculate the priceLabel before saving
-  const newPriceLabel = formatPrice(
-    editedListing.price,
-    editedListing.type
-  );
-
-  setListings((prevListings) =>
-    prevListings.map((listing) =>
-      listing.id === editedListing.id
-        ? { ...editedListing, priceLabel: newPriceLabel }
-        : listing
-    )
-  );
-
-  // Close the modal
-  setListingToEdit(null);
-}, []);
-
-  const handleChangeStatus = useCallback((id, newStatus) => {
-    setListings((prevListings) =>
-      prevListings.map((listing) =>
-        listing.id === id ? { ...listing, status: newStatus } : listing
-      )
-    );
-  }, []);
-
-  const totalListings = listings.length;
-  const activeListings = listings.filter((p) => p.status === "active").length;
-  const soldListings = listings.filter((p) => p.status === "sold").length;
-  const pausedListings = listings.filter((p) => p.status === "paused").length;
-
-  const getTabCount = (tabId) => {
-    switch (tabId) {
-      case "all":
-        return totalListings;
-      case "active":
-        return activeListings;
-      case "sold":
-        return soldListings;
-      case "paused":
-        return pausedListings;
-      default:
-        return 0;
     }
-  };
+  }, [selectedProperty, deletePropertyMutation, refetchProperties]);
 
-  const handleResetFilters = useCallback(() => {
-    setSearchQuery("");
-    setActiveTab("all");
+  const handleUpdateProperty = useCallback(async (updatedData) => {
+    try {
+      const updates = {
+        title: updatedData.title,
+        price: parseFloat(updatedData.price),
+        bedrooms: updatedData.bedrooms ? parseInt(updatedData.bedrooms) : null,
+        bathrooms: updatedData.bathrooms ? parseInt(updatedData.bathrooms) : null,
+        area_sqft: updatedData.area_sqft ? parseFloat(updatedData.area_sqft) : null,
+        address: updatedData.address,
+        street_address: updatedData.street_address,
+      };
+
+      await updateDetailsMutation.mutateAsync({
+        propertyId: updatedData.property_id,
+        updates: updates,
+      });
+      
+      setModals(prev => ({ ...prev, edit: false }));
+      setSelectedProperty(null);
+      await refetchProperties();
+    } catch (error) {
+      console.error("Update error:", error);
+      throw error;
+    }
+  }, [updateDetailsMutation, refetchProperties]);
+
+  const handleStatusChange = useCallback(async (propertyId, newStatus) => {
+    try {
+      await updateStatusMutation.mutateAsync({ propertyId, status: newStatus });
+      await refetchProperties();
+    } catch (error) {
+      console.error("Status change error:", error);
+    }
+  }, [updateStatusMutation, refetchProperties]);
+
+  const handleApplyFilters = useCallback((newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  }, []);
+
+  const handleRemoveFilter = useCallback((key) => {
+    setFilters(prev => ({ ...prev, [key]: "" }));
+    setCurrentPage(1);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
     setFilters({
       minBeds: "",
       minBaths: "",
       minArea: "",
       listingType: "",
+      propertyType: "",
+      furnishingStatus: "",
       minPrice: "",
       maxPrice: "",
     });
+    setCurrentPage(1);
   }, []);
 
-  // Custom dropdown for sorting
-  const SortDropdown = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const selectedOption = sortOptions.find((opt) => opt.id === sortOrder);
+  const handlePropertyDelete = useCallback((property) => {
+    setSelectedProperty(property);
+    setModals(prev => ({ ...prev, delete: true }));
+  }, []);
 
+  const handlePropertyEdit = useCallback((property) => {
+    setSelectedProperty(property);
+    setModals(prev => ({ ...prev, edit: true }));
+  }, []);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery, filters, sortOrder]);
+
+  // Data
+  const properties = propertiesData?.data || [];
+  const totalPages = propertiesData?.pagination?.totalPages || 1;
+  const totalProperties = propertiesData?.pagination?.total || 0;
+  const hasFilters = Object.values(filters).some(v => v);
+
+  // Show loading state during auth check
+  if (authLoading) {
     return (
-      <div className="relative">
-        {/* Sort Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-xs sm:text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
-        >
-          <SortDesc size={16} className="sm:w-[18px] sm:h-[18px]" />
-          <span className="hidden sm:inline">Sort by:</span>
-          <span className="font-bold whitespace-nowrap">
-            {selectedOption.label}
-          </span>
-          <ChevronDown
-            size={14}
-            className={`transition-transform ${isOpen ? "rotate-180" : "rotate-0"}`}
-          />
-        </motion.button>
-
-        {/* Dropdown Menu */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute right-0 mt-2 w-48 sm:w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl z-20 border border-gray-100 dark:border-gray-700 overflow-hidden"
-            >
-              {sortOptions.map((option) => (
-                <button
-                  key={option.id}
-                  onClick={() => {
-                    setSortOrder(option.id);
-                    setIsOpen(false);
-                  }}
-                  className="flex items-center justify-between w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
-                >
-                  <span className="flex items-center gap-1.5 sm:gap-2">
-                    <option.icon size={14} className="sm:w-4 sm:h-4" />
-                    {option.label}
-                  </span>
-                  {sortOrder === option.id && (
-                    <Check size={14} className="sm:w-4 sm:h-4 text-emerald-500" />
-                  )}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size={40} />
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
       </div>
     );
-  };
+  }
 
-  // Advanced Filter Modal
-  const FilterModal = () => {
-    const [tempFilters, setTempFilters] = useState(filters);
-
-    const handleFilterChange = (e) => {
-      const { name, value } = e.target;
-      setTempFilters((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleApplyFilters = () => {
-      setFilters(tempFilters);
-      setIsFilterModalOpen(false);
-    };
-
-    const handleClearFilters = () => {
-      setTempFilters({
-        minBeds: "",
-        minBaths: "",
-        minArea: "",
-        listingType: "",
-        minPrice: "",
-        maxPrice: "",
-      });
-      setFilters({
-        minBeds: "",
-        minBaths: "",
-        minArea: "",
-        listingType: "",
-        minPrice: "",
-        maxPrice: "",
-      });
-      setIsFilterModalOpen(false);
-    };
+  // Enhanced property grid with rent/sale badges
+  const EnhancedPropertyGrid = ({ properties, ...props }) => {
+    const enhancedProperties = properties.map(property => ({
+      ...property,
+      listing_type_name: property.listing_type_name || 
+                        (property.listing_type_id === 1 ? 'rent' : 
+                         property.listing_type_id === 2 ? 'sale' : 'unknown'),
+    }));
 
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          onClick={() => setIsFilterModalOpen(false)}
-        ></div>
-
-        {/* Modal */}
-        <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 sm:p-6 md:p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto border border-gray-100 dark:border-gray-700"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center pb-4 mb-6 border-b border-gray-100 dark:border-gray-700">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-              Advanced Filters
-            </h3>
-            <button
-              onClick={() => setIsFilterModalOpen(false)}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-            >
-              <X size={20} className="sm:w-6 sm:h-6" />
-            </button>
-          </div>
-
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-            {/* Each field */}
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="minBeds"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Min Beds
-              </label>
-              <input
-                type="number"
-                id="minBeds"
-                name="minBeds"
-                value={tempFilters.minBeds}
-                onChange={handleFilterChange}
-                placeholder="e.g., 2"
-                className="px-3 sm:px-4 py-2 sm:py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-sm sm:text-base text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="minBaths"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Min Baths
-              </label>
-              <input
-                type="number"
-                id="minBaths"
-                name="minBaths"
-                value={tempFilters.minBaths}
-                onChange={handleFilterChange}
-                placeholder="e.g., 2"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="minArea"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Min Area (sq ft)
-              </label>
-              <input
-                type="number"
-                id="minArea"
-                name="minArea"
-                value={tempFilters.minArea}
-                onChange={handleFilterChange}
-                placeholder="e.g., 1000"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="listingType"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Type
-              </label>
-              <select
-                id="listingType"
-                name="listingType"
-                value={tempFilters.listingType}
-                onChange={handleFilterChange}
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="">All</option>
-                <option value="sale">For Sale</option>
-                <option value="rent">For Rent</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="minPrice"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Min Price
-              </label>
-              <input
-                type="number"
-                id="minPrice"
-                name="minPrice"
-                value={tempFilters.minPrice}
-                onChange={handleFilterChange}
-                placeholder="e.g., 5000000"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label
-                htmlFor="maxPrice"
-                className="text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Max Price
-              </label>
-              <input
-                type="number"
-                id="maxPrice"
-                name="maxPrice"
-                value={tempFilters.maxPrice}
-                onChange={handleFilterChange}
-                placeholder="e.g., 50000000"
-                className="px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 mt-6 sm:mt-8">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleClearFilters}
-              className="flex-1 px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-semibold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm sm:text-base"
-            >
-              Clear Filters
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleApplyFilters}
-              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold rounded-xl py-2 sm:py-3 px-4 sm:px-6 shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 text-sm sm:text-base"
-            >
-              Apply Filters
-            </motion.button>
-          </div>
-        </motion.div>
-      </motion.div>
+      <PropertyGrid 
+        {...props} 
+        properties={enhancedProperties}
+      />
     );
   };
 
-const formatPrice = (price, type) => {
-  if (!price) return "N/A";
-  const formatter = new Intl.NumberFormat("en-PK", {
-    style: "currency",
-    currency: "PKR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-  const formattedPrice = formatter.format(price).replace("PKR", "Rs").trim();
-  return `${formattedPrice}${type === "rent" ? "/month" : ""}`;
-};
-
-const EditFormModal = ({ listing, onSave, onCancel }) => {
-  const [editedListing, setEditedListing] = useState(listing);
-
-  useEffect(() => {
-    if (listing) {
-      setEditedListing(listing);
-    }
-  }, [listing]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEditedListing((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleStatusChange = (status) => {
-    setEditedListing((prev) => ({ ...prev, status }));
-  };
-
-  const handleSave = () => {
-    onSave(editedListing);
-  };
-
-  if (!listing) return null;
-
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 20 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.95, y: 20 }}
-        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-lg max-h-[80vh] overflow-y-auto transform-gpu border border-gray-100 dark:border-gray-700"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700 mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">
-            ✨ Edit Listing
-          </h3>
-          <button
-            onClick={onCancel}
-            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          >
-            <X size={22} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSave();
-          }}
-        >
-          <div className="space-y-6">
-            {/* Title */}
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-              >
-                Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={editedListing.title}
-                onChange={handleChange}
-                className="block w-full rounded-xl border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white px-3 py-2"
-                placeholder="e.g. Modern Family Home"
-              />
-            </div>
-
-            {/* Price + Status */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="price"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Price
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <span className="text-base font-bold">₨</span>
-                  </span>
-                  <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    value={editedListing.price}
-                    onChange={handleChange}
-                    className="block w-full rounded-xl border-gray-300 pl-9 pr-3 py-2 shadow-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="250000"
-                  />
+    <div className="min-h-screen bg-gray-50">
+      {/* Enhanced Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-3">
+                <Building2 className="w-8 h-8 text-emerald-600" />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Property Dashboard</h1>
+                  <p className="text-sm text-gray-500">Manage your real estate portfolio</p>
                 </div>
               </div>
-              <div>
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  value={editedListing.status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
-                  className="block w-full rounded-xl border-gray-300 shadow-sm py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                >
-                  <option value="active">Active</option>
-                  <option value="sold">Sold</option>
-                  <option value="paused">Paused</option>
-                </select>
-              </div>
+              <h1 className="text-xl font-bold text-gray-900 sm:hidden">My Properties</h1>
             </div>
 
-            {/* Beds/Baths/Area */}
-            {/* Beds/Baths/Area */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-    Details
-  </label>
-  <div className="grid grid-cols-3 gap-6">
-    <div className="flex flex-col">
-      <label htmlFor="beds" className="text-sm text-gray-500 dark:text-gray-400 mb-1">Beds</label>
-      <input
-        type="number"
-        id="beds"
-        name="beds"
-        value={editedListing.beds}
-        onChange={handleChange}
-        className="block w-full rounded-xl border-gray-300 shadow-sm px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        placeholder="Beds"
-      />
-    </div>
-    <div className="flex flex-col">
-      <label htmlFor="baths" className="text-sm text-gray-500 dark:text-gray-400 mb-1">Baths</label>
-      <input
-        type="number"
-        id="baths"
-        name="baths"
-        value={editedListing.baths}
-        onChange={handleChange}
-        className="block w-full rounded-xl border-gray-300 shadow-sm px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        placeholder="Baths"
-      />
-    </div>
-    <div className="flex flex-col">
-      <label htmlFor="area_sqft" className="text-sm text-gray-500 dark:text-gray-400 mb-1">Area (Sqft)</label>
-      <input
-        type="number"
-        id="area_sqft"
-        name="area_sqft"
-        value={editedListing.area_sqft}
-        onChange={handleChange}
-        className="block w-full rounded-xl border-gray-300 shadow-sm px-3 py-2 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        placeholder="Sqft"
-      />
-    </div>
-  </div>
-</div>
-          </div>
-
-          {/* Footer Buttons */}
-          <div className="flex justify-end gap-4 mt-8">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="px-5 py-2.5 rounded-xl font-semibold text-gray-600 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors shadow-sm"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2.5 rounded-xl font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-sm"
-            >
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </motion.div>
-  );
-};
-  // The main component renders the whole page
-  return (
-    <div className={`font-sans`}>
-      <div className="min-h-screen bg-white  p-2 transition-colors duration-500">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-          <motion.header
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
-          >
-            <div className="flex-1">
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-700 dark:text-gray-100 mb-1">
-                My Listings
-              </h1>
-              <p className="text-base text-gray-600 dark:text-gray-400">
-                Manage and track the performance of your property listings.
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={navigateToSellPage}
-                className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2 text-base"
+            <div className="flex items-center gap-3 flex-wrap">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={propertiesLoading || isRefreshing}
+                className="hidden sm:flex"
               >
-                <Plus size={20} />
-                Add New Listing
-              </motion.button>
-              
+                {propertiesLoading || isRefreshing ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <RefreshCw size={16} />
+                )}
+                Refresh
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/sell")}
+                className="whitespace-nowrap"
+              >
+                <Plus size={18} />
+                Add Property
+              </Button>
             </div>
-          </motion.header>
+          </div>
+        </div>
+      </div>
 
-          {/* Stats and Controls Panel */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-100 dark:border-gray-700"
-          >
-            {/* Stats Summary */}
-            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 pb-6 sm:pb-8 border-b border-gray-100 dark:border-gray-700">
-              <StatCard
-                icon={Layers}
-                label="Total Listings"
-                value={totalListings}
-                color={{
-                  bg: "bg-gray-100 dark:bg-gray-700",
-                  text: "text-gray-600 dark:text-gray-300",
-                }}
-              />
-              <StatCard
-                icon={Clock}
-                label="Active Listings"
-                value={activeListings}
-                color={{
-                  bg: "bg-emerald-100 dark:bg-emerald-900/30",
-                  text: "text-emerald-600 dark:text-emerald-300",
-                }}
-              />
-              <StatCard
-                icon={CheckCircle}
-                label="Sold Listings"
-                value={soldListings}
-                color={{
-                  bg: "bg-green-100 dark:bg-green-900/30",
-                  text: "text-green-600 dark:text-green-300",
-                }}
-              />
-              <StatCard
-                icon={PauseCircle}
-                label="Paused Listings"
-                value={pausedListings}
-                color={{
-                  bg: "bg-yellow-100 dark:bg-yellow-900/30",
-                  text: "text-yellow-600 dark:text-yellow-300",
-                }}
-              />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Stats Grid with Error Handling */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard
+            icon={Clock}
+            label="Active Listings"
+            value={statsData?.active}
+            trend={8}
+            color="blue"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            icon={CheckCircle}
+            label="Sold Properties"
+            value={statsData?.sold}
+            trend={23}
+            color="purple"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            icon={PauseCircle}
+            label="Paused Listings"
+            value={statsData?.paused}
+            trend={12}
+            color="emerald"
+            isLoading={statsLoading}
+          />
+          <StatCard
+            icon={Eye}
+            label="Total Views"
+            value={statsData?.views}
+            trend={18}
+            color="amber"
+            isLoading={statsLoading}
+          />
+        </div>
+
+        {/* Error Alert */}
+        {(propertiesError || statsError) && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <div>
+                <h3 className="text-sm font-medium text-red-800">Error Loading Data</h3>
+                <p className="text-sm text-red-600 mt-1">
+                  {propertiesError?.message || statsError?.message || "Please try refreshing the page."}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                className="ml-auto text-red-600 hover:text-red-700"
+              >
+                <RefreshCw size={16} />
+                Retry
+              </Button>
             </div>
+          </div>
+        )}
 
-            {/* Filters, Search, and View Controls */}
-            <div className="flex flex-col gap-3 sm:gap-4">
-              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-thin scrollbar-thumb-emerald-400 snap-x snap-mandatory">
-                {tabs.map((tab) => (
-                  <motion.button
+        {/* Main Content Card */}
+        <Card className="overflow-hidden">
+          {/* Enhanced Toolbar */}
+          <div className="p-4 border-b border-gray-200">
+            {/* Tabs with count badges */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {tabs.map((tab) => {
+                let count = 0;
+                if (!statsLoading && statsData) {
+                  switch (tab.id) {
+                    case 'all':
+                      count = (statsData.active || 0) + (statsData.paused || 0) + (statsData.sold || 0);
+                      break;
+                    case 'active':
+                      count = statsData.active || 0;
+                      break;
+                    case 'sold':
+                      count = statsData.sold || 0;
+                      break;
+                    case 'paused':
+                      count = statsData.paused || 0;
+                      break;
+                  }
+                }
+
+                return (
+                  <Button
                     key={tab.id}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    variant={activeTab === tab.id ? "primary" : "ghost"}
+                    size="sm"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 text-sm ${
-                      activeTab === tab.id
-                        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30"
-                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-600 dark:hover:text-emerald-300"
-                    }`}
+                    className="whitespace-nowrap"
                   >
                     <tab.icon size={16} />
-                    <span className="whitespace-nowrap">{tab.label}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                        activeTab === tab.id
-                          ? "bg-white/20 dark:bg-black/20"
-                          : "bg-white dark:bg-gray-600 text-gray-700 dark:text-gray-200"
-                      }`}
-                    >
-                      {getTabCount(tab.id)}
-                    </span>
-                  </motion.button>
-                ))}
+                    {tab.label}
+                    {!statsLoading && count > 0 && (
+                      <Badge 
+                        variant={activeTab === tab.id ? "default" : "info"}
+                        className="ml-1 px-1.5 py-0.5 text-xs"
+                      >
+                        {count}
+                      </Badge>
+                    )}
+                  </Button>
+                );
+              })}
+            </div>
+
+            {/* Search and Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <Input
+                  icon={Search}
+                  type="text"
+                  placeholder="Search properties by title, location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
 
-              {/* yahan se resonsive hogi filter wali jagah */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 flex-wrap w-full">
-                <div className="relative flex-1 sm:max-w-md">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Search by title or location..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="default"
+                  size="md"
+                  onClick={() => setModals(prev => ({ ...prev, filter: true }))}
+                  className="whitespace-nowrap"
+                >
+                  <Filter size={16} />
+                  Filters
+                  {hasFilters && (
+                    <Badge variant="danger" className="ml-1 px-1.5 py-0.5">
+                      {Object.values(filters).filter(v => v).length}
+                    </Badge>
+                  )}
+                </Button>
 
-                <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setIsFilterModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                <Select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="w-auto min-w-[140px]"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="price_high">Price: High to Low</option>
+                  <option value="price_low">Price: Low to High</option>
+                  <option value="views_high">Most Viewed</option>
+                </Select>
+
+                <div className="flex items-center border border-gray-200 rounded-xl p-1">
+                  <button
+                    onClick={() => setViewMode("grid")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-500"
+                    }`}
+                    aria-label="Grid view"
                   >
-                    <FilterIcon size={18} />
-                    Advanced Filters
-                  </motion.button>
-                  <SortDropdown />
-                  <div className="flex items-center rounded-xl bg-gray-100 dark:bg-gray-700 p-1">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setViewMode("grid")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === "grid"
-                          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300"
-                          : "text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300"
-                      }`}
-                    >
-                      <Grid size={20} />
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setViewMode("list")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        viewMode === "list"
-                          ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300"
-                          : "text-gray-400 dark:text-gray-500 hover:text-emerald-600 dark:hover:text-emerald-300"
-                      }`}
-                    >
-                      <List size={20} />
-                    </motion.button>
-                  </div>
+                    <Grid size={18} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-500"
+                    }`}
+                    aria-label="List view"
+                  >
+                    <List size={18} />
+                  </button>
                 </div>
               </div>
             </div>
-          </motion.div>
+
+            {/* Active Filters */}
+            {hasFilters && (
+              <div className="mt-3">
+                <FilterChips
+                  filters={filters}
+                  onRemove={handleRemoveFilter}
+                  onClear={handleClearFilters}
+                />
+              </div>
+            )}
+          </div>
 
           {/* Properties Grid/List */}
-          <AnimatePresence mode="wait">
-            {filteredAndSortedProperties.length > 0 ? (
-              <PropertyGrid
-                properties={filteredAndSortedProperties}
-                viewMode={viewMode}
-                likedProperties={likedProperties}
-                toggleLike={toggleLike}
-                isOwner={true}
-                onDelete={handleDeleteListing}
-                onEdit={handleEditListing}
-                onChangeStatus={handleChangeStatus}
-              />
-            ) : (
-              <motion.div
-                key="empty-state"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className={`col-span-full text-center py-12 sm:py-16 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700`}
-              >
-                <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <AlertCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-300" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  No listings found
+          <div className="p-4">
+            {propertiesLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner />
+                <span className="ml-3 text-gray-600">Loading your properties...</span>
+              </div>
+            ) : properties.length === 0 ? (
+              <div className="text-center py-12">
+                <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {hasFilters || searchQuery ? "No properties match your criteria" : "No properties found"}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm sm:text-base px-4 max-w-sm mx-auto">
-                  There are no listings that match your current filters. Try
-                  adjusting your search.
+                <p className="text-sm text-gray-500 mb-6">
+                  {hasFilters || searchQuery
+                    ? "Try adjusting your filters or search terms to see more results"
+                    : "Start by adding your first property listing to begin managing your portfolio"}
                 </p>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleResetFilters}
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-3 rounded-xl font-semibold shadow-lg shadow-emerald-200 dark:shadow-emerald-900/30 hover:shadow-xl transition-all duration-300 text-base"
-                >
-                  <RefreshCw className="inline-block w-4 h-4 mr-2" />
-                  Reset Filters
-                </motion.button>
-              </motion.div>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <Button variant="primary" onClick={() => navigate("/sell")}>
+                    <Plus size={16} />
+                    Add First Property
+                  </Button>
+                  {(hasFilters || searchQuery) && (
+                    <Button 
+                      variant="default" 
+                      onClick={() => {
+                        handleClearFilters();
+                        setSearchQuery("");
+                      }}
+                    >
+                      Clear All Filters
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Results Summary */}
+                <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+                  <p>
+                    Showing <span className="font-medium">{properties.length}</span> of{" "}
+                    <span className="font-medium">{totalProperties}</span> properties
+                  </p>
+                  {totalProperties > properties.length && (
+                    <p>
+                      Page {currentPage} of {totalPages}
+                    </p>
+                  )}
+                </div>
+
+                <EnhancedPropertyGrid
+                  properties={properties}
+                  viewMode={viewMode}
+                  isOwner={true}
+                  onDelete={handlePropertyDelete}
+                  onEdit={handlePropertyEdit}
+                  onChangeStatus={handleStatusChange}
+                  onChangeListingType={handleListingTypeChange}
+                />
+
+                {/* Enhanced Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-8 pt-6 border-t border-gray-200 gap-4">
+                    <div className="text-sm text-gray-600 text-center sm:text-left">
+                      Page <span className="font-medium">{currentPage}</span> of{" "}
+                      <span className="font-medium">{totalPages}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="px-3"
+                      >
+                        <ChevronLeft size={16} />
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1 overflow-x-auto max-w-xs">
+                        <button
+                          onClick={() => setCurrentPage(1)}
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                            currentPage === 1
+                              ? "bg-emerald-600 text-white"
+                              : "hover:bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          1
+                        </button>
+
+                        {currentPage > 3 && (
+                          <span className="px-1 text-gray-400">...</span>
+                        )}
+
+                        {Array.from({ length: Math.min(3, totalPages - 2) }, (_, i) => {
+                          const pageNum = Math.max(2, Math.min(totalPages - 1, currentPage - 1 + i));
+                          if (pageNum === 1 || pageNum === totalPages) return null;
+                          
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                                currentPage === pageNum
+                                  ? "bg-emerald-600 text-white"
+                                  : "hover:bg-gray-100 text-gray-700"
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        {currentPage < totalPages - 2 && (
+                          <span className="px-1 text-gray-400">...</span>
+                        )}
+
+                        {totalPages > 1 && (
+                          <button
+                            onClick={() => setCurrentPage(totalPages)}
+                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                              currentPage === totalPages
+                                ? "bg-emerald-600 text-white"
+                                : "hover:bg-gray-100 text-gray-700"
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        )}
+                      </div>
+
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="px-3"
+                      >
+                        Next
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-          </AnimatePresence>
-        </div>
+          </div>
+        </Card>
       </div>
-      <AnimatePresence>
-        {isFilterModalOpen && <FilterModal />}
-        {isDeleteModalOpen && (
-          <CustomAlertDialog
-            title="Delete Listing?"
-            message="Are you sure you want to permanently delete this listing? This action cannot be undone."
-            onConfirm={confirmDelete}
-            onCancel={cancelDelete}
-          />
-        )}
-          {listingToEdit && (
-    <EditFormModal
-      listing={listingToEdit}
-      onSave={handleSaveChanges}
-      onCancel={handleCloseEditModal}
-    />
-  )}
-        
-      </AnimatePresence>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        .font-sans { font-family: 'Inter', sans-serif; }
-      `}</style>
+
+      {/* Enhanced Modals */}
+      <FilterModal
+        isOpen={modals.filter}
+        filters={filters}
+        onApplyFilters={handleApplyFilters}
+        onClose={() => setModals(prev => ({ ...prev, filter: false }))}
+      />
+
+      <DeleteConfirmModal
+        isOpen={modals.delete}
+        propertyTitle={selectedProperty?.title}
+        onConfirm={handleDeleteProperty}
+        onCancel={() => {
+          setModals(prev => ({ ...prev, delete: false }));
+          setSelectedProperty(null);
+        }}
+      />
+
+      <EditPropertyModal
+        isOpen={modals.edit}
+        property={selectedProperty}
+        onSave={handleUpdateProperty}
+        onClose={() => {
+          setModals(prev => ({ ...prev, edit: false }));
+          setSelectedProperty(null);
+        }}
+      />
     </div>
   );
 };
