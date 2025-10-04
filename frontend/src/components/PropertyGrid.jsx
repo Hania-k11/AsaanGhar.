@@ -581,7 +581,9 @@ const PropertyGrid = ({
               </div>
 
               {/* Action Buttons (Owner or View) */}
-              {isOwner ? (
+              {property.adminActions ? (
+                <div className="mt-3">{property.adminActions}</div>
+              ) : isOwner ? (
                 <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-2 border-t border-gray-100/50 dark:border-gray-700/50">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
