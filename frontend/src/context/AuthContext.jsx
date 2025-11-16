@@ -23,6 +23,8 @@ export const AuthProvider = ({ children }) => {
         ]);
 console.log("Admin check response:", adminRes);
 console.log("user check response:", userRes);
+console.log("---hahha", userRes.value?.data);
+
 
         // If backend returns user/admin in response body, set state accordingly.
         if (userRes.status === "fulfilled" && userRes.value?.data?.user) {

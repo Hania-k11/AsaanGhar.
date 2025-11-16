@@ -1,7 +1,12 @@
 // routes/property.js
+
+const { upload } = require("../utils/cloudinary.js");
+
+
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+
 
 // ----------------------
 // Helpers
@@ -707,6 +712,8 @@ router.post('/:propertyId/views', async (req, res) => {
     res.status(500).json({ error: 'Failed to update view count' });
   }
 });
+
+
 router.post('/:propertyId/inquiries', async (req, res) => {
   const propertyId = parseInt(req.params.propertyId, 10);
   try {
@@ -745,6 +752,219 @@ router.post('/insert', async (req, res) => {
     console.error('sp_insert_full_property error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
+
+
+
+
+  
 });
+
+
+router.post(
+  "/insert-all",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "cnicFront", maxCount: 1 },
+    { name: "cnicBack", maxCount: 1 },
+    { name: "propertyPapers", maxCount: 10 },
+    { name: "utilityBill", maxCount: 10 },
+    { name: "otherDocs", maxCount: 10 },
+  ]),
+  async (req, res) => {
+    const data = req.body || {};
+
+    const connection = await pool.getConnection();
+
+    console.log("🔥 Received POST on /api/property/insert-all (multipart)");
+    console.log("fields:", Object.keys(data));
+    console.log("files keys:", req.files ? Object.keys(req.files) : []);
+
+    await connection.beginTransaction();
+
+    try {
+      // Normalize booleans/ints coming from multipart fields
+      const toInt = (v) => (v === undefined || v === null || v === '' ? null : Number(v));
+      const toNum = (v) => (v === undefined || v === null || v === '' ? null : Number(v));
+
+      // 1️⃣ Insert the property via stored procedure
+      const [rows] = await connection.query(
+        `CALL sp_insert_full_property(
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )`,
+        [
+          toInt(data.owner_id), data.title, data.description, data.listing_type_name, toNum(data.price),
+          data.address, data.street_address, data.location_area, data.location_city,
+          data.property_type_name, toInt(data.bedrooms), toInt(data.bathrooms), toNum(data.area_sqft),
+          data.furnishing_status_name, data.floor, data.lease_duration, data.available_from,
+          toNum(data.maintenance_fee), toNum(data.deposit), toInt(data.year_built), data.nearby_places,
+          data.latitude, data.longitude, data.contact_name, data.contact_email,
+          data.contact_phone, data.contact_whatsapp, toInt(data.pref_email), toInt(data.pref_phone),
+          toInt(data.pref_whatsapp), data.amenities
+        ]
+      );
+
+      const result = rows[0][0];
+      const propertyId = result.inserted_property_id;
+
+      // 2️⃣ Collect property images from uploaded files and body URLs
+      const imageRows = [];
+      if (req.files && req.files.images) {
+        req.files.images.forEach((file, index) => {
+          imageRows.push([propertyId, file.path, index === 0]);
+        });
+      }
+      if (data.images) {
+        const urls = Array.isArray(data.images) ? data.images : [data.images];
+        urls.filter(Boolean).forEach((url) => imageRows.push([propertyId, url, imageRows.length === 0]));
+      }
+      if (imageRows.length > 0) {
+        await connection.query(
+          "INSERT INTO property_images (property_id, image_url, is_main) VALUES ?",
+          [imageRows]
+        );
+      }
+
+      // 3️⃣ Collect property documents from uploaded files and body URLs
+      const docRows = [];
+      const pushDocsFromField = (fieldName, docType) => {
+        if (req.files && req.files[fieldName]) {
+          req.files[fieldName].forEach((file) => docRows.push([propertyId, docType, file.path]));
+        }
+        const val = data[fieldName];
+        if (val) {
+          const urls = Array.isArray(val) ? val : [val];
+          urls.filter(Boolean).forEach((url) => docRows.push([propertyId, docType, url]));
+        }
+      };
+
+      pushDocsFromField("cnicFront", "cnic_front");
+      pushDocsFromField("cnicBack", "cnic_back");
+      pushDocsFromField("propertyPapers", "property_papers");
+      pushDocsFromField("utilityBill", "utility_bill");
+      pushDocsFromField("otherDocs", "other");
+
+      // Fallback generic documents[]
+      if (data.documents) {
+        const urls = Array.isArray(data.documents) ? data.documents : [data.documents];
+        urls.filter(Boolean).forEach((url) => docRows.push([propertyId, "other", url]));
+      }
+
+      if (docRows.length > 0) {
+        await connection.query(
+          "INSERT INTO property_documents (property_id, doc_type, doc_url) VALUES ?",
+          [docRows]
+        );
+      }
+
+      await connection.commit();
+
+      res.status(201).json({
+        success: true,
+        message: "Property inserted successfully with images and categorized documents",
+        property_id: propertyId,
+        contact_id: result.inserted_contact_id,
+        images_uploaded: imageRows.length,
+        documents_uploaded: docRows.length,
+      });
+    } catch (error) {
+      await connection.rollback();
+      console.error("insert-all (multipart) error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to insert property and related data",
+        error: error.message,
+      });
+    } finally {
+      connection.release();
+    }
+  }
+);
+
+
+
+
+router.post(
+  "/upload-all/:property_id",
+  upload.fields([
+    { name: "images", maxCount: 5 },
+    { name: "cnicFront", maxCount: 1 },
+    { name: "cnicBack", maxCount: 1 },
+    { name: "propertyPapers", maxCount: 5 },
+    { name: "utilityBill", maxCount: 5 },
+    { name: "otherDocs", maxCount: 5 },
+  ]),
+  async (req, res) => {
+    const propertyId = req.params.property_id;
+
+    try {
+      if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).json({ success: false, message: "No files uploaded" });
+      }
+
+      const imageData = [];
+      const docData = [];
+
+      // Handle property images
+      if (req.files.images) {
+        for (const file of req.files.images) {
+          imageData.push([propertyId, file.path, false]);
+        }
+      }
+
+      // Handle documents
+      const docFields = ["cnicFront", "cnicBack", "propertyPapers", "utilityBill", "otherDocs"];
+
+      for (const field of docFields) {
+        if (req.files[field]) {
+          const docType =
+            field === "cnicFront"
+              ? "cnic_front"
+              : field === "cnicBack"
+              ? "cnic_back"
+              : field === "propertyPapers"
+              ? "property_papers"
+              : field === "utilityBill"
+              ? "utility_bill"
+              : "other";
+
+          for (const file of req.files[field]) {
+            docData.push([propertyId, docType, file.path]);
+          }
+        }
+      }
+
+      // Insert into property_images
+      if (imageData.length > 0) {
+        await pool.query(
+          "INSERT INTO property_images (property_id, image_url, is_main) VALUES ?",
+          [imageData]
+        );
+      }
+
+      // Insert into property_documents
+      if (docData.length > 0) {
+        await pool.query(
+          "INSERT INTO property_documents (property_id, doc_type, doc_url) VALUES ?",
+          [docData]
+        );
+      }
+
+      return res.status(200).json({
+        success: true,
+        images_uploaded: imageData.length,
+        documents_uploaded: docData.length,
+        message: "All files uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      res.status(500).json({
+        success: false,
+        message: "File upload failed",
+        error: error.message,
+      });
+    }
+  }
+);
+
 //.
 module.exports = router;
