@@ -5,30 +5,36 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
-import Terms from "./Terms"; // Import the new Terms component
+import Terms from "./Terms"; 
 import { useToast } from "./ToastProvider";
+import VerificationModal from "./VerificationModal";
+
+import { GoogleLogin } from '@react-oauth/google'; 
+
+const API_BASE_URL = "http://localhost:3001/api"; 
 
 const LoginModal = () => {
-
-
    const { success, error, warning, info } = useToast();
    
   const {
-  
     loginuser,
     showLoginModal: show,
     setShowLoginModal: setShow,
   } = useAuth();
 
   const [isSignup, setIsSignup] = useState(false);
-  const [showTerms, setShowTerms] = useState(false); // State to control Terms modal
+  const [showTerms, setShowTerms] = useState(false); 
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationData, setVerificationData] = useState({ email: "", phone: "" });
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
     gender: "",
     phone: "",
+    jobTitle: "",
     agree: false,
   });
 
@@ -52,11 +58,11 @@ const LoginModal = () => {
     }
   }, [show]);
 
-  // Effect for toggling body overflow
+  // Effect for managing body overflow
   useEffect(() => {
-    document.body.classList.toggle("overflow-hidden", show || showTerms);
+    document.body.classList.toggle("overflow-hidden", show || showTerms || showVerification);
     return () => document.body.classList.remove("overflow-hidden");
-  }, [show, showTerms]);
+  }, [show, showTerms, showVerification]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -66,32 +72,83 @@ const LoginModal = () => {
     }));
   };
 
+  //  GOOGLE LOGIN SUCCESS HANDLER
+  const handleGoogleSuccess = async (response) => {
+    const idToken = response.credential;
+    
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/google-login`, {
+        token: idToken,
+      }, {
+        withCredentials: true 
+      });
+      
+      success(`Welcome ${res.data.user.first_name || res.data.user.email}!`);
+      setShow(false); 
+      loginuser();
+
+    } catch (err) {
+      const msg = err.response?.data?.error || "Google login failed on server.";
+      console.error("Google Login Server Error:", msg);
+      error(msg);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
-      error("Please enter email and password");
-      return;
-    }
-
+    
     if (isSignup) {
-      // Basic validation
-      if (form.password !== form.confirmPassword) {
-      error("Passwords do not match.");
+      // Signup validation
+      if (!form.firstName || !form.lastName || !form.email || !form.password || !form.gender || !form.phone) {
+        error("Please fill in all required fields");
         return;
       }
+      
+      if (form.password !== form.confirmPassword) {
+        error("Passwords do not match.");
+        return;
+      }
+      
       if (!form.agree) {
         error("You must agree to the Terms and Conditions to sign up.");
         return;
       }
-      error("Signup logic not implemented yet");
+
+      try {
+        const res = await axios.post(`${API_BASE_URL}/auth/signup`, {
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          password: form.password,
+          gender: form.gender,
+          phone: form.phone,
+          jobTitle: form.jobTitle,
+        }, {
+          withCredentials: true
+        });
+
+        success("Verification codes sent! Please check your email and phone.");
+        setVerificationData({ email: form.email, phone: form.phone });
+        setShowVerification(true);
+        setShow(false);
+      } catch (err) {
+        const msg = err.response?.data?.error || "Signup failed. Please try again.";
+        error(msg);
+      }
+      return;
+    }
+
+    // Login logic
+    if (!form.email || !form.password) {
+      error("Please enter email and password");
       return;
     }
 
     try {
       const res = await loginuser(form.email, form.password);
       if (res.success) {
-        success(`Welcome ${res.user.n || res.user.first_name}!`);
-        setShow(false); // close modal
+        success(`Welcome ${res.user.first_name || res.user.email}!`);
+        setShow(false);
       } else {
         error(res.message || "Login failed");
       }
@@ -136,16 +193,17 @@ const LoginModal = () => {
 
                 {/* Social Logins */}
                 <div className="flex flex-col gap-3 mb-4">
-                  {/* Google Button */}
-                  <button className="w-full border border-gray-300 rounded-full py-2 text-sm font-medium flex items-center justify-center gap-2 hover:shadow-md transition-shadow duration-200">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                    Continue with Google
-                  </button>
-                  {/* Facebook Button */}
-                  <button className="w-full border border-gray-300 rounded-full py-2 text-sm font-medium flex items-center justify-center gap-2 hover:shadow-md transition-shadow duration-200">
-                    <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" className="w-5 h-5" />
-                    Continue with Facebook
-                  </button>
+                  <div className="w-full">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={() => error("Google login failed. Please try again.")}
+                      useOneTap
+                      theme="outline"
+                      text="continue_with"
+                      shape="pill"
+                      width="300"
+                    />
+                  </div>
                 </div>
 
                 <div className="text-center text-gray-500 text-sm font-bold uppercase my-4 flex items-center">
@@ -156,11 +214,15 @@ const LoginModal = () => {
 
                 {/* Main Form */}
                 <form onSubmit={handleSubmit} className="space-y-4 text-sm">
+                  
                   {isSignup && (
                     <>
-                      <input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleChange} className={inputBaseClass} required />
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" name="firstName" placeholder="First Name" value={form.firstName} onChange={handleChange} className={inputBaseClass} required />
+                        <input type="text" name="lastName" placeholder="Last Name" value={form.lastName} onChange={handleChange} className={inputBaseClass} required />
+                      </div>
                       <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} className={inputBaseClass} required />
-                      <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} className={inputBaseClass} required />
+                      <input type="password" name="password" placeholder="Password (min 6 characters)" value={form.password} onChange={handleChange} className={inputBaseClass} required />
                       <input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} className={inputBaseClass} required />
                       
                       {/* Gender Select */}
@@ -180,8 +242,11 @@ const LoginModal = () => {
                       <div className="flex items-center border rounded-lg px-4 py-2 focus-within:ring-2 focus-within:ring-emerald-500 transition-shadow">
                         <img src="https://flagcdn.com/w40/pk.png" alt="PK Flag" className="w-5 h-auto mr-2 rounded-sm" />
                         <span className="text-sm mr-2 text-gray-700">+92</span>
-                        <input type="tel" name="phone" placeholder="3001234567" value={form.phone} onChange={handleChange} className="flex-1 outline-none bg-transparent text-gray-900 placeholder-gray-400" required />
+                        <input type="tel" name="phone" placeholder="3001234567" value={form.phone} onChange={handleChange} className="flex-1 outline-none bg-transparent text-gray-900 placeholder-gray-400" pattern="[0-9]{10}" required />
                       </div>
+
+                      {/* Job Title (Optional) */}
+                      <input type="text" name="jobTitle" placeholder="Job Title (Optional)" value={form.jobTitle} onChange={handleChange} className={inputBaseClass} />
 
                       {/* Terms and Conditions Checkbox */}
                       <label className="flex items-start space-x-3 text-sm">
@@ -198,7 +263,7 @@ const LoginModal = () => {
                           <span
                             className="text-emerald-600 underline cursor-pointer font-medium hover:text-emerald-800 transition-colors"
                             onClick={(e) => {
-                              e.preventDefault(); // This is the key change
+                              e.preventDefault(); 
                               setShowTerms(true);
                             }}
                           >
@@ -223,7 +288,7 @@ const LoginModal = () => {
 
                 {/* Toggle between Login and Signup */}
                 <div className="text-center text-sm mt-6 text-gray-600">
-                  {isSignup ? "Already have an account? " : "Don’t have an account? "}
+                  {isSignup ? "Already have an account? " : "Don't have an account? "}
                   <span
                     className="text-emerald-600 font-medium cursor-pointer hover:text-emerald-800 transition-colors"
                     onClick={() => setIsSignup(!isSignup)}
@@ -239,6 +304,14 @@ const LoginModal = () => {
 
       {/* Render the Terms modal */}
       <Terms show={showTerms} onClose={() => setShowTerms(false)} />
+      
+      {/* Render the Verification modal */}
+      <VerificationModal 
+        show={showVerification} 
+        onClose={() => setShowVerification(false)}
+        email={verificationData.email}
+        phone={verificationData.phone}
+      />
     </>
   );
 };

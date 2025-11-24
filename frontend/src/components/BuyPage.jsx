@@ -143,6 +143,7 @@ const BuyPage = () => {
       // Invalidate queries to trigger a fresh fetch and update UI across components
       queryClient.invalidateQueries(['properties']);
       queryClient.invalidateQueries(['favoriteProperties']);
+      queryClient.invalidateQueries(['overview']);
       
       // Show success toast
       // showToast('Favorites updated!');

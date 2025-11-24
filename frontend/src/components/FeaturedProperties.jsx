@@ -1,119 +1,144 @@
 // src/components/FeaturedProperties.jsx
 /* eslint-disable no-unused-vars */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import PropertyGrid from "./PropertyGrid";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useAuth } from "../context/AuthContext";
+import LoadingSpinner from "./LoadingSpinner";
+
+// API function for fetching featured properties
+const fetchFeaturedProperties = async ({ userId }) => {
+  const params = {
+    type: 'all',
+    sort: 'featured',
+    page: 1,
+    limit: 6,
+  };
+
+  if (userId) {
+    const { data } = await axios.get(`/api/property/getallnew/${userId}`, { params });
+    return data;
+  } else {
+    const { data } = await axios.get(`/api/property/getall`, { params });
+    return data;
+  }
+};
+
+// API function for toggling favorite
+const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
+  if (isCurrentlyLiked) {
+    await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+  } else {
+    await axios.post('/api/property/favorites', { userId, propertyId });
+  }
+};
+
+// API function for checking favorite status
+const checkFavoriteStatus = async (userId, propertyIds) => {
+  if (!userId || !propertyIds.length) return { favoriteIds: [] };
+  const { data } = await axios.get(`/api/property/favorites/check/${userId}`, {
+    params: { propertyIds: propertyIds.join(',') }
+  });
+  return data;
+};
 
 const FeaturedProperties = () => {
   const navigate = useNavigate();
+  const { user, isLoggedIn } = useAuth();
+  const userId = user?.user_id;
+  const queryClient = useQueryClient();
 
   const [likedProperties, setLikedProperties] = useState(new Set());
+
+  // Fetch featured properties
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['featuredProperties', userId],
+    queryFn: () => fetchFeaturedProperties({ userId }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+
+  const properties = data?.data || [];
+
+  // Fetch favorite status for logged-in users
+  const { data: favoritesData } = useQuery({
+    queryKey: ['checkFavorites', userId, properties.map(p => p.property_id)],
+    queryFn: () => checkFavoriteStatus(userId, properties.map(p => p.property_id)),
+    enabled: isLoggedIn && properties.length > 0,
+    staleTime: 30 * 1000,
+  });
+
+  // Update liked properties when favorites data changes
+  useEffect(() => {
+    if (favoritesData?.favoriteIds) {
+      setLikedProperties(new Set(favoritesData.favoriteIds));
+    }
+  }, [favoritesData]);
+
+  // Toggle favorite mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteProperty,
+    onMutate: async ({ propertyId, isCurrentlyLiked }) => {
+      // Optimistic update
+      setLikedProperties(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyLiked) {
+          newSet.delete(propertyId);
+        } else {
+          newSet.add(propertyId);
+        }
+        return newSet;
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['featuredProperties']);
+      queryClient.invalidateQueries(['checkFavorites']);
+      queryClient.invalidateQueries(['favoriteProperties']);
+    },
+    onError: (error, { propertyId, isCurrentlyLiked }) => {
+      // Revert optimistic update
+      setLikedProperties(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyLiked) {
+          newSet.add(propertyId);
+        } else {
+          newSet.delete(propertyId);
+        }
+        return newSet;
+      });
+      console.error('Failed to toggle favorite:', error);
+      showToast('Failed to update favorites.', 'error');
+    },
+  });
+
+  const showToast = (message, type = "success") => {
+    const feedback = document.createElement("div");
+    feedback.textContent = message;
+    feedback.className = `fixed top-20 right-4 px-5 py-2.5 rounded-xl shadow-lg z-50 text-sm font-medium transition-all duration-300 ${
+      type === "success"
+        ? "bg-emerald-600 text-white"
+        : "bg-red-600 text-white"
+    }`;
+    document.body.appendChild(feedback);
+    setTimeout(() => feedback.remove(), 2500);
+  };
+
+  const handleToggleLike = (propertyId, isCurrentlyLiked) => {
+    if (!isLoggedIn) {
+      showToast('Please login to save favorites', 'error');
+      return;
+    }
+    toggleFavoriteMutation.mutate({ userId, propertyId, isCurrentlyLiked });
+  };
 
   const handleClick = () => {
     navigate("/buy");
   };
-
-  const toggleLike = (propertyId) => {
-    setLikedProperties((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(propertyId)) {
-        updated.delete(propertyId);
-      } else {
-        updated.add(propertyId);
-      }
-      return updated;
-    });
-  };
-
-  const properties = [
-    {
-      property_id: 1,
-      title: "Modern Family Home",
-      price: "20000000",
-      location_name: "DHA",
-      listing_type_name: "sale",
-      bedrooms: "4",
-      bathrooms: "3",
-      area_sqft: "2400",
-      year_built: "2021",
-      rating: 4.5,
-      image:
-        "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop&crop=center",
-    },
-    {
-      property_id: 2,
-      title: "Luxury Apartment",
-      price: "PKR 85 Lac",
-      location_name: "Gulshan-e-Iqbal",
-      listingg_type_name: "rent",
-      bedrooms: "3",
-      bathrooms: "2",
-      area_sqft: "1800 ",
-      year_built: "2021",
-      rating: 4.1,
-      image:
-        "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop&crop=center",
-    },
-    {
-      property_id: 3,
-      title: "Penthouse Suite",
-      price: "25000000",
-      location_name: "Clifton, Karachi",
-      listing_type_name: "sale",
-      bedrooms: "5",
-      bathrooms: "4",
-      area_sqft: "3200 ",
-      year_built: "2021",
-      rating: 4.8,
-      image:
-        "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?w=600&h=400&fit=crop&crop=center",
-    },
-    {
-      property_id: 4,
-      title: "Cozy Studio Apartment",
-      price: "4500000",
-      location_name: "Gulberg, Lahore",
-      listing_type_name: "rent",
-      bedrooms: "1",
-      bathrooms: "1",
-      area_sqft: "850",
-      rating: 4.2,
-      year_built: "2021",
-      image:
-        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=600&h=400&fit=crop&crop=center",
-    },
-    {
-      property_id: 5,
-      title: "Countryside Villa",
-      price: "3800000",
-      location_name: "Murree Hills",
-      listing_type_name: "sale",
-      bedrooms: "6",
-      bathrooms: "5",
-      area_sqft: "4500",
-      year_built: "2021",
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1600607688960-e095effe7b22?w=600&h=400&fit=crop&crop=center",
-    },
-    {
-      property_id: 6,
-      title: "Commercial Space",
-      price: "10000000",
-      location: "Blue Area, Islamabad",
-      type: "sale",
-      bedrooms: "N/A",
-      bathrooms: "2",
-      area_sqft: "2000 ",
-      year_built: "2021",
-      rating: 3.9,
-      image:
-        "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=600&h=400&fit=crop&crop=center",
-    },
-  ];
 
   return (
     <section className="relative py-32 bg-gradient-to-br from-slate-200 via-emerald-50/30 to-teal-50/50 overflow-hidden">
@@ -132,7 +157,7 @@ const FeaturedProperties = () => {
         </svg>
       </div>
 
-      {/* botTOMMMMMMMMMMMMMMMM */}
+      {/* Bottom Wave */}
       <div className="absolute -bottom-2 left-0 w-full overflow-hidden leading-none rotate-180">
         <svg
           className="relative block w-full h-20"
@@ -188,32 +213,66 @@ const FeaturedProperties = () => {
 
         {/* Property Grid */}
         <AnimatePresence mode="wait">
-          <PropertyGrid
-            properties={properties}
-            likedProperties={likedProperties}
-            toggleLike={toggleLike}
-            navigate={navigate}
-            viewMode="grid" // ✅ Force grid view
-          />
+          {isLoading ? (
+            <div className="pt-12 pb-36">
+              <LoadingSpinner 
+                variant="inline" 
+                message="Loading featured properties..." 
+              />
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="text-red-500 text-lg mb-4">Error loading properties</p>
+              <button
+                onClick={() => queryClient.invalidateQueries(['featuredProperties'])}
+                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-2xl font-bold mb-4">No Featured Properties Available</p>
+              <p className="text-gray-600 mb-6">
+                Check back soon for new featured listings.
+              </p>
+              <button
+                onClick={handleClick}
+                className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                View All Properties
+              </button>
+            </div>
+          ) : (
+            <PropertyGrid
+              properties={properties}
+              likedProperties={likedProperties}
+              toggleLike={handleToggleLike}
+              navigate={navigate}
+              viewMode="grid"
+            />
+          )}
         </AnimatePresence>
 
         {/* CTA */}
-        <div className="text-center mt-20">
-          <button
-            onClick={handleClick}
-            className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl shadow-xl group"
-          >
-            View All Properties
-            <ArrowRight
-              size={22}
-              className="ml-3 transform group-hover:translate-x-1 transition-transform duration-300"
-            />
-          </button>
+        {properties.length > 0 && (
+          <div className="text-center mt-20">
+            <button
+              onClick={handleClick}
+              className="inline-flex items-center px-10 py-5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-2xl font-bold text-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-2xl shadow-xl group"
+            >
+              View All Properties
+              <ArrowRight
+                size={22}
+                className="ml-3 transform group-hover:translate-x-1 transition-transform duration-300"
+              />
+            </button>
 
-          <p className="text-gray-500 mt-6 text-xs md:text-sm font-medium">
-            • Asaan Ghar is Pakistan's first easy property site •
-          </p>
-        </div>
+            <p className="text-gray-500 mt-6 text-xs md:text-sm font-medium">
+              • Asaan Ghar is Pakistan's first easy property site •
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

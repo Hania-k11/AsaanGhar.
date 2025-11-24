@@ -819,7 +819,7 @@ const MyListings = () => {
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
-      navigate("/login");
+      navigate("/");
     }
   }, [isLoggedIn, navigate, authLoading]);
 

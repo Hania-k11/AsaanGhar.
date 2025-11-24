@@ -12,7 +12,22 @@ export const AuthProvider = ({ children }) => {
 
   const axiosOpts = { withCredentials: true };
 
-  
+  // NEW: Function to fetch current user session
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await axios.get("/api/auth/me", axiosOpts);
+      if (res?.data?.user) {
+        setUser(res.data.user);
+        return { success: true, user: res.data.user };
+      }
+      return { success: false, message: "No user data found" };
+    } catch (err) {
+      console.error("fetchCurrentUser error:", err.response?.data ?? err.message);
+      setUser(null);
+      return { success: false, message: err.response?.data?.message || "Server error" };
+    }
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       setLoading(true);
@@ -21,10 +36,9 @@ export const AuthProvider = ({ children }) => {
           axios.get("/api/auth/me", axiosOpts),
           axios.get("/api/admin/me", axiosOpts),
         ]);
-console.log("Admin check response:", adminRes);
-console.log("user check response:", userRes);
-console.log("---hahha", userRes.value?.data);
-
+        console.log("Admin check response:", adminRes);
+        console.log("user check response:", userRes);
+        console.log("---hahha", userRes.value?.data);
 
         // If backend returns user/admin in response body, set state accordingly.
         if (userRes.status === "fulfilled" && userRes.value?.data?.user) {
@@ -50,8 +64,14 @@ console.log("---hahha", userRes.value?.data);
     checkSession();
   }, []);
 
-  // USER login
+  // USER login - now handles both email/password AND refreshing session
   const loginuser = async (email, password) => {
+    // If called without parameters (e.g., after Google login), just fetch current user
+    if (!email || !password) {
+      return await fetchCurrentUser();
+    }
+
+    // Otherwise, proceed with email/password login
     try {
       const res = await axios.post(
         "/api/auth/login",
@@ -75,46 +95,43 @@ console.log("---hahha", userRes.value?.data);
   };
 
   // ADMIN login
-const loginadmin = async (email, password) => {
-  try {
-    console.log("📤 Sending admin login request with:", { email, password });
+  const loginadmin = async (email, password) => {
+    try {
+      console.log("📤 Sending admin login request with:", { email, password });
 
-    const res = await axios.post(
-      "/api/admin/login",
-      { email, password },
-      axiosOpts
-    );
+      const res = await axios.post(
+        "/api/admin/login",
+        { email, password },
+        axiosOpts
+      );
 
-    console.log("📥 Raw admin login response:", res);
+      console.log("🔥 Raw admin login response:", res);
+      console.log("🔥 Response data:", res.data);
 
-    // Check the response body shape
-    console.log("📥 Response data:", res.data);
+      const adminObj =
+        res?.data?.admin ?? (res?.data?.success ? res.data.admin : null);
 
-    const adminObj =
-      res?.data?.admin ?? (res?.data?.success ? res.data.admin : null);
+      console.log("✅ Parsed admin object:", adminObj);
 
-    console.log("✅ Parsed admin object:", adminObj);
+      if (adminObj) {
+        setAdmin(adminObj);
+        console.log("🎉 Admin state set:", adminObj);
+        return { success: true, admin: adminObj };
+      }
 
-    if (adminObj) {
-      setAdmin(adminObj);
-      console.log("🎉 Admin state set:", adminObj);
-      return { success: true, admin: adminObj };
+      console.warn("⚠️ No admin object found in response");
+      return { success: false, message: res?.data?.message || "Login failed" };
+    } catch (err) {
+      console.error(
+        "❌ loginAdmin error:",
+        err.response?.data ?? err.message
+      );
+      return {
+        success: false,
+        message: err.response?.data?.message || "Server error",
+      };
     }
-
-    console.warn("⚠️ No admin object found in response");
-    return { success: false, message: res?.data?.message || "Login failed" };
-  } catch (err) {
-    console.error(
-      "❌ loginAdmin error:",
-      err.response?.data ?? err.message
-    );
-    return {
-      success: false,
-      message: err.response?.data?.message || "Server error",
-    };
-  }
-};
-
+  };
 
   // USER logout
   const logoutUser = async () => {
@@ -156,6 +173,7 @@ const loginadmin = async (email, password) => {
         logoutAdmin,
         isLoggedIn,
         isLoggedInAdmin,
+        fetchCurrentUser, // Export this if you need it elsewhere
       }}
     >
       {children}

@@ -215,8 +215,8 @@ const Favourites = () => {
     keepPreviousData: true,
     staleTime: 60 * 1000, // Increased to 60 seconds
     cacheTime: 5 * 60 * 1000, // 5 minutes cache
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 2,
     notifyOnChangeProps: ['data', 'error', 'isLoading'], // Only notify on specific prop changes
   });
@@ -345,6 +345,7 @@ const Favourites = () => {
       // Invalidate and refetch
       queryClient.invalidateQueries(['favoriteProperties']);
       queryClient.invalidateQueries(['properties']); // Also invalidate main properties
+      queryClient.invalidateQueries(['overview']);
 
       if (result.action === 'removed') {
         showToast(

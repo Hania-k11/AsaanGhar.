@@ -123,8 +123,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     documents: [], // kept for UI previews only
     cnicFront: null, // kept for UI previews only
     cnicBack: null, // kept for UI previews only
-    propertyPapers: null, // kept for UI previews only
-    utilityBill: null, // kept for UI previews only
+    propertyPapers: [], // kept for UI previews only
+    utilityBill: [], // kept for UI previews only
     otherDocs: [], // kept for UI previews only
     yearBuilt: "",
     amenities: {
@@ -282,17 +282,18 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
           ...prev,
           otherDocs: [...(prev.otherDocs || []), ...fileArray].slice(0, 10),
         }));
-      } else if (
-        name === "cnicFront" ||
-        name === "cnicBack" ||
-        name === "propertyPapers" ||
-        name === "utilityBill"
-      ) {
+      } else if (name === "cnicFront" || name === "cnicBack") {
         const file = files && files[0] ? files[0] : null;
-        const allow = name.includes("cnic") ? ALLOW_IMG_TYPES : ALLOW_DOC_TYPES;
+        const allow = ALLOW_IMG_TYPES;
         setFormData((prev) => ({
           ...prev,
           [name]: file && allow.includes(file.type) ? file : null,
+        }));
+      } else if (name === "propertyPapers" || name === "utilityBill") {
+        const fileArray = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        setFormData((prev) => ({
+          ...prev,
+          [name]: [...(prev[name] || []), ...fileArray].slice(0, 10),
         }));
       }
 
@@ -331,11 +332,28 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   // Small helpers for Step-5 previews/removals
   const isImg = (file) => file && file.type && file.type.startsWith("image/");
   const fileURL = (file) => (file instanceof File ? URL.createObjectURL(file) : null);
-  const clearSingleFile = (field) => setFormData((prev) => ({ ...prev, [field]: null }));
+  const clearSingleFile = (field) => {
+    // For array fields, clear the array; for single file fields, set to null
+    if (field === "propertyPapers" || field === "utilityBill") {
+      setFormData((prev) => ({ ...prev, [field]: [] }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: null }));
+    }
+  };
   const removeOtherDoc = (index) =>
     setFormData((prev) => ({
       ...prev,
       otherDocs: (prev.otherDocs || []).filter((_, i) => i !== index),
+    }));
+  const removePropertyPaper = (index) =>
+    setFormData((prev) => ({
+      ...prev,
+      propertyPapers: (prev.propertyPapers || []).filter((_, i) => i !== index),
+    }));
+  const removeUtilityBill = (index) =>
+    setFormData((prev) => ({
+      ...prev,
+      utilityBill: (prev.utilityBill || []).filter((_, i) => i !== index),
     }));
 
   const validateStep = (step) => {
@@ -1535,6 +1553,7 @@ const handleSubmit = async (e) => {
                     id="property-papers"
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
+                    multiple
                     name="propertyPapers"
                     onChange={handleChange}
                     onClick={(e) => {
@@ -1543,22 +1562,30 @@ const handleSubmit = async (e) => {
                     className="hidden"
                   />
                 </div>
-                {formData.propertyPapers && (
-                  <div className="mt-3 flex items-center gap-3">
-                    {isImg(formData.propertyPapers) ? (
-                      <img src={fileURL(formData.propertyPapers)} alt="Property Papers" className="h-16 w-28 object-cover rounded border" />
-                    ) : (
-                      <div className="h-16 w-28 flex items-center justify-center rounded border text-xs px-2 text-center">
-                        {formData.propertyPapers.name}
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => clearSingleFile("propertyPapers")}
-                      className="px-2 py-1 text-sm bg-red-500 text-white rounded"
-                    >
-                      Remove
-                    </button>
+
+                {(formData.propertyPapers || []).length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected ({formData.propertyPapers.length})</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {formData.propertyPapers.map((f, i) => (
+                        <div key={i} className="relative group">
+                          {isImg(f) ? (
+                            <img src={fileURL(f)} alt={f.name} className="w-full h-24 object-cover rounded border" />
+                          ) : (
+                            <div className="w-full h-24 rounded border flex items-center justify-center text-xs px-2 text-center">
+                              {f.name}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removePropertyPaper(i)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {errors.propertyPapers && <p className="text-red-500 text-sm mt-1">{errors.propertyPapers}</p>}
@@ -1586,6 +1613,7 @@ const handleSubmit = async (e) => {
                     id="utility-bill"
                     type="file"
                     accept=".pdf,.png,.jpg,.jpeg"
+                    multiple
                     name="utilityBill"
                     onChange={handleChange}
                     onClick={(e) => {
@@ -1594,18 +1622,30 @@ const handleSubmit = async (e) => {
                     className="hidden"
                   />
                 </div>
-                {formData.utilityBill && (
-                  <div className="mt-3 flex items-center gap-3">
-                    {isImg(formData.utilityBill) ? (
-                      <img src={fileURL(formData.utilityBill)} alt="Utility Bill" className="h-16 w-28 object-cover rounded border" />
-                    ) : (
-                      <div className="h-16 w-28 flex items-center justify-center rounded border text-xs px-2 text-center">
-                        {formData.utilityBill.name}
-                      </div>
-                    )}
-                    <button type="button" onClick={() => clearSingleFile("utilityBill")} className="px-2 py-1 text-sm bg-red-500 text-white rounded">
-                      Remove
-                    </button>
+
+                {(formData.utilityBill || []).length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected ({formData.utilityBill.length})</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                      {formData.utilityBill.map((f, i) => (
+                        <div key={i} className="relative group">
+                          {isImg(f) ? (
+                            <img src={fileURL(f)} alt={f.name} className="w-full h-24 object-cover rounded border" />
+                          ) : (
+                            <div className="w-full h-24 rounded border flex items-center justify-center text-xs px-2 text-center">
+                              {f.name}
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeUtilityBill(i)}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 {errors.utilityBill && <p className="text-red-500 text-sm mt-1">{errors.utilityBill}</p>}

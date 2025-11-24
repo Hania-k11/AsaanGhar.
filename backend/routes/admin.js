@@ -96,54 +96,52 @@ router.get("/pending-properties", async (req, res) => {
 
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: "Email and password required" });
-  }
-
   try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password are required" });
+    }
+
     const [rows] = await pool.query(
-      "SELECT user_id, first_name, last_name, email, password_hash, role FROM users WHERE email = ? AND role='admin' AND is_deleted=0 LIMIT 1",
+      `SELECT user_id, email, role, password_hash FROM users WHERE email = ? AND is_deleted = FALSE LIMIT 1`,
       [email]
     );
 
     if (rows.length === 0) {
-      // Email not found
-      return res.status(401).json({ success: false, message: "Email does not exist" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     const admin = rows[0];
-    const isMatch = await bcrypt.compare(password, admin.password_hash);
-    if (!isMatch) {
-      // Password incorrect
-      return res.status(401).json({ success: false, message: "Password is incorrect" });
+
+    if (admin.role !== 'admin') {
+        return res.status(403).json({ error: "Access denied. Not an admin." });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ user_id: admin.user_id, email: admin.email, role: admin.role }, JWT_SECRET, { expiresIn: "8h" });
+    const match = await bcrypt.compare(password, admin.password_hash);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
 
-    // Send token as HttpOnly cookie
+    // Create JWT
+    const token = jwt.sign(
+      { id: admin.user_id, role: admin.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie
     res.cookie("token", token, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // true in prod, false in dev
-  sameSite: "strict",
-  maxAge: 8 * 60 * 60 * 1000, // 8 hours
-});
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
-return res.json({
-  success: true,
-  admin: {
-    user_id: admin.user_id,
-    name: `${admin.first_name} ${admin.last_name}`,
-    email: admin.email,
-    role: admin.role
-  }
-});
-
+    return res.json({ success: true, message: "Admin Login successful" });
   } catch (err) {
-    console.error("Admin login error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Admin Login error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
@@ -157,21 +155,25 @@ router.post("/logout", (req, res) => {
 router.get("/me", authenticateAdmin, async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT user_id, first_name, last_name, email, role FROM users WHERE user_id = ? AND role='admin' AND is_deleted=0",
-      [req.admin.user_id]
+      `SELECT user_id, first_name, last_name, email, profile_picture_url, role 
+       FROM users 
+       WHERE user_id = ? AND is_deleted = FALSE AND role = 'admin' LIMIT 1`,
+      [req.admin.id]
     );
 
-    if (!rows.length) {
-      return res.json({ success: false, message: "Admin not found" });
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
     }
 
     const admin = rows[0];
+
     res.json({
       success: true,
       admin: {
-        user_id: admin.user_id,
-        name: `${admin.first_name} ${admin.last_name}`,
+        id: admin.user_id,
         email: admin.email,
+        name: `${admin.first_name} ${admin.last_name}`,
+        profile_picture_url: admin.profile_picture_url,
         role: admin.role
       }
     });

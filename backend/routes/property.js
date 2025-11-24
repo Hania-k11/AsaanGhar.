@@ -279,7 +279,17 @@ router.get('/favorites/:userId', async (req, res) => {
         lt.name AS listing_type_name,
         f.created_at AS favorited_at,
         COALESCE(fav_count.favorite_count, 0) AS favorite_count,
-        pi.image_url AS image
+        pi.image_url AS image,
+        -- Add amenities as comma-separated string
+        GROUP_CONCAT(DISTINCT a.name ORDER BY a.name SEPARATOR ', ') AS amenities,
+        -- Add contact information
+        c.contact_name,
+        c.contact_email,
+        c.contact_phone,
+        c.contact_whatsapp,
+        pc.pref_email,
+        pc.pref_phone,
+        pc.pref_whatsapp
       FROM favorites f
       JOIN properties p ON f.property_id = p.property_id
       LEFT JOIN locations l ON p.location_id = l.location_id
@@ -292,6 +302,12 @@ router.get('/favorites/:userId', async (req, res) => {
         GROUP BY property_id
       ) fav_count ON p.property_id = fav_count.property_id
       LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      -- Join amenities
+      LEFT JOIN property_amenities pa ON p.property_id = pa.property_id
+      LEFT JOIN amenities a ON pa.amenity_id = a.amenity_id
+      -- Join contact information
+      LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
+      LEFT JOIN contacts c ON pc.contact_id = c.contact_id
       WHERE f.user_id = ?
         AND p.status = 'active'
         AND p.is_deleted = 0
@@ -312,6 +328,9 @@ router.get('/favorites/:userId', async (req, res) => {
     query += ' AND p.price BETWEEN ? AND ?';
     params.push(minPriceNum, maxPriceNum);
 
+    // GROUP BY clause (required because of GROUP_CONCAT for amenities)
+    query += ' GROUP BY p.property_id, f.created_at, pi.image_url';
+
     switch (sort) {
       case 'newest':     query += ' ORDER BY f.created_at DESC'; break;
       case 'oldest':     query += ' ORDER BY f.created_at ASC';  break;
@@ -328,7 +347,7 @@ router.get('/favorites/:userId', async (req, res) => {
 
     // count (same where)
     let countQuery = `
-      SELECT COUNT(*) AS total
+      SELECT COUNT(DISTINCT p.property_id) AS total
       FROM favorites f
       JOIN properties p ON f.property_id = p.property_id
       LEFT JOIN locations l ON p.location_id = l.location_id
@@ -363,7 +382,6 @@ router.get('/favorites/:userId', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve favorite properties' });
   }
 });
-
 // Update listing type (🔒 ignore deleted)
 router.put('/:propertyId/listing-type', async (req, res) => {
   const propertyId = parseInt(req.params.propertyId, 10);
@@ -649,6 +667,15 @@ router.get('/getall', async (req, res) => {
     let base = `
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.location_id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
+      LEFT JOIN furnishing_statuses fs ON p.furnishing_status_id = fs.furnishing_status_id
+      LEFT JOIN listing_types lt ON p.listing_type_id = lt.listing_type_id
+      -- Join amenities
+      LEFT JOIN property_amenities pa ON p.property_id = pa.property_id
+      LEFT JOIN amenities a ON pa.amenity_id = a.amenity_id
+      -- Join contact information
+      LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
+      LEFT JOIN contacts c ON pc.contact_id = c.contact_id
       WHERE p.is_deleted = 0
     `;
     const params = [];
@@ -667,6 +694,9 @@ router.get('/getall', async (req, res) => {
     base += ' AND p.price BETWEEN ? AND ?';
     params.push(minPriceNum, maxPriceNum);
 
+    // Add GROUP BY before ORDER BY
+    const groupBy = ' GROUP BY p.property_id';
+
     let orderBy = '';
     switch (sort) {
       case 'featured':   orderBy = ' ORDER BY p.is_featured DESC'; break;
@@ -676,12 +706,31 @@ router.get('/getall', async (req, res) => {
       default:           orderBy = '';
     }
 
-    const final = `SELECT p.*, l.city AS location_city, l.area AS location_name ${base}${orderBy} LIMIT ? OFFSET ?`;
+    const final = `
+      SELECT 
+        p.*,
+        l.city AS location_city,
+        l.area AS location_name,
+        pt.name AS property_type_name,
+        fs.name AS furnishing_status_name,
+        lt.name AS listing_type_name,
+        -- Add amenities as comma-separated string
+        GROUP_CONCAT(DISTINCT a.name ORDER BY a.name SEPARATOR ', ') AS amenities,
+        -- Add contact information
+        c.contact_name,
+        c.contact_email,
+        c.contact_phone,
+        c.contact_whatsapp,
+        pc.pref_email,
+        pc.pref_phone,
+        pc.pref_whatsapp
+      ${base}${groupBy}${orderBy} LIMIT ? OFFSET ?
+    `;
     const finalParams = [...params, limitNum, offset];
 
     const [rows] = await pool.query(final, finalParams);
 
-    const countQuery = `SELECT COUNT(*) AS count ${base}`;
+    const countQuery = `SELECT COUNT(DISTINCT p.property_id) AS count ${base}`;
     const [countRows] = await pool.query(countQuery, params);
 
     const total = countRows?.[0]?.count || 0;
@@ -696,7 +745,6 @@ router.get('/getall', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve properties' });
   }
 });
-
 // Counters (🔒 ignore deleted)
 router.post('/:propertyId/views', async (req, res) => {
   const propertyId = parseInt(req.params.propertyId, 10);
@@ -880,6 +928,126 @@ router.post(
   }
 );
 
+// Get overview statistics for a user
+router.get('/overview/:userId', async (req, res) => {
+  const userId = parseInt(req.params.userId, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+  try {
+    // Get property statistics
+    const [propertyStats] = await pool.query(
+      `SELECT
+          COUNT(CASE WHEN status = 'active' THEN 1 END) AS active_properties,
+          COUNT(CASE WHEN status = 'paused' THEN 1 END) AS paused_properties,
+          COUNT(CASE WHEN status = 'sold' THEN 1 END) AS sold_properties,
+          SUM(views) AS total_views,
+          SUM(inquiries) AS total_inquiries
+       FROM properties
+       WHERE owner_id = ?
+         AND is_deleted = 0`,
+      [userId]
+    );
+
+    // Get favorite properties count
+    const [favStats] = await pool.query(
+      `SELECT COUNT(*) AS saved_properties
+       FROM favorites
+       WHERE user_id = ?`,
+      [userId]
+    );
+
+    // Get recent activity (last 10 activities)
+    const [recentActivity] = await pool.query(
+      `(
+        SELECT 
+          'view' AS type,
+          p.property_id,
+          p.title AS property_name,
+          p.price,
+          p.updated_at AS activity_time,
+          l.area AS location
+        FROM properties p
+        LEFT JOIN locations l ON p.location_id = l.location_id
+        WHERE p.owner_id = ? AND p.is_deleted = 0
+        ORDER BY p.updated_at DESC
+        LIMIT 5
+      )
+      UNION ALL
+      (
+        SELECT 
+          'save' AS type,
+          p.property_id,
+          p.title AS property_name,
+          p.price,
+          f.created_at AS activity_time,
+          l.area AS location
+        FROM favorites f
+        JOIN properties p ON f.property_id = p.property_id
+        LEFT JOIN locations l ON p.location_id = l.location_id
+        WHERE f.user_id = ? AND p.is_deleted = 0
+        ORDER BY f.created_at DESC
+        LIMIT 5
+      )
+      UNION ALL
+      (
+        SELECT 
+          'inquiry' AS type,
+          p.property_id,
+          p.title AS property_name,
+          p.price,
+          i.inquiry_timestamp AS activity_time,
+          l.area AS location
+        FROM inquiries i
+        JOIN properties p ON i.property_id = p.property_id
+        LEFT JOIN locations l ON p.location_id = l.location_id
+        WHERE p.owner_id = ? AND p.is_deleted = 0
+        ORDER BY i.inquiry_timestamp DESC
+        LIMIT 5
+      )
+      ORDER BY activity_time DESC
+      LIMIT 10`,
+      [userId, userId, userId]
+    );
+
+    // Format the response
+    const stats = {
+      activeProperties: propertyStats[0]?.active_properties || 0,
+      pausedProperties: propertyStats[0]?.paused_properties || 0,
+      soldProperties: propertyStats[0]?.sold_properties || 0,
+      totalViews: propertyStats[0]?.total_views || 0,
+      totalInquiries: propertyStats[0]?.total_inquiries || 0,
+      savedProperties: favStats[0]?.saved_properties || 0,
+      recentActivity: recentActivity.map(activity => ({
+        id: activity.property_id,
+        type: activity.type,
+        property: activity.property_name,
+        price: activity.price ? `$${Number(activity.price).toLocaleString()}` : null,
+        time: formatTimeAgo(activity.activity_time),
+        location: activity.location,
+      })),
+    };
+
+    res.status(200).json(stats);
+  } catch (err) {
+    console.error('Error fetching overview statistics:', err);
+    res.status(500).json({ error: 'Failed to retrieve overview statistics' });
+  }
+});
+
+// Helper function to format time ago
+function formatTimeAgo(date) {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now - past;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+  return past.toLocaleDateString();
+}
 
 
 

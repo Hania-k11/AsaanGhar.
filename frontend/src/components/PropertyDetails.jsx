@@ -69,6 +69,8 @@ const PropertyDetails = () => {
   
   console.log("Amenities data received:", property?.amenities);
 
+  const queryClient = useQueryClient();
+
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [liked, setLiked] = useState(false);
   const [reviewText, setReviewText] = useState("");
@@ -165,7 +167,7 @@ const PropertyDetails = () => {
   }, [isLoggedIn, property?.property_id, userId]);
 
   // API function for toggling favorite
-  const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
+    const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
     try {
       if (isCurrentlyLiked) {
         await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
@@ -182,9 +184,14 @@ const PropertyDetails = () => {
         : [...likedProperties, propertyId];
       localStorage.setItem(`liked_${userId}`, JSON.stringify(updatedLiked));
       
+      // Invalidate queries to update overview
+      queryClient.invalidateQueries(['properties']);
+      queryClient.invalidateQueries(['favoriteProperties']);
+      queryClient.invalidateQueries(['overview']); // ⬅️ ADD THIS
+      
     } catch (error) {
       console.error('Error toggling favorite:', error);
-      displayToast("Failed to update favorites", 'error');
+      displayToast("Failed to update favorites", "error");
     }
   };
 
