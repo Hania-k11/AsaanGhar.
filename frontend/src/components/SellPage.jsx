@@ -370,6 +370,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     if (step === 2) {
       if (!formData.description) newErrors.description = "Description is required";
       if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required";
+            if (!formData.maintenance) newErrors.maintenance = "Monthly Maintenance is required";
+
     }
     if (step === 4) {
       if (!formData.ownerName) newErrors.ownerName = "Owner name is required";
@@ -388,12 +390,48 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber))
         newErrors.whatsappNumber = "Enter valid WhatsApp number";
     }
+    if (step === 5) {
+  // CNIC Front (required)
+  if (
+    (!formData.cnicFront || formData.cnicFront.length === 0) &&
+    (!formData.cnicFrontUrl || formData.cnicFrontUrl.length === 0)
+  ) {
+    newErrors.cnicFront = "CNIC front image is required";
+  }
+
+  // CNIC Back (required)
+  if (
+    (!formData.cnicBack || formData.cnicBack.length === 0) &&
+    (!formData.cnicBackUrl || formData.cnicBackUrl.length === 0)
+  ) {
+    newErrors.cnicBack = "CNIC back image is required";
+  }
+
+  // Property Papers (required)
+  if (
+    (!formData.propertyPapers || formData.propertyPapers.length === 0) &&
+    (!formData.propertyPapersUrl || formData.propertyPapersUrl.length === 0)
+  ) {
+    newErrors.propertyPapers = "Property papers are required";
+  }
+
+  // Utility Bill (required)
+  if (
+    (!formData.utilityBill || formData.utilityBill.length === 0) &&
+    (!formData.utilityBillUrl || formData.utilityBillUrl.length === 0)
+  ) {
+    newErrors.utilityBill = "Latest utility bill is required";
+  }
+
+}
+
     // Step 5: make documents optional so publishing works without uploading files
     // (We keep the UI but do not block submission.)
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) scrollToFirstError(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const nextStep = () => {
     if (validateStep(currentStep)) setCurrentStep((prev) => Math.min(prev + 1, 5));
@@ -1016,21 +1054,27 @@ const handleSubmit = async (e) => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">PKR</span>
-                    <input
-                      type="number"
-                      name="maintenance"
-                      value={formData.maintenance}
-                      onChange={handleChange}
-                      placeholder="5,000"
-                      min="0"
-                      className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
-                    />
-                  </div>
-                </div>
+              
+             <div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance *</label>
+  <div className="relative">
+    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">PKR</span>
+    <input
+      type="number"
+      name="maintenance"
+      value={formData.maintenance}
+      onChange={handleChange}
+      placeholder="5,000"
+      min="0"
+      className={`w-full pl-16 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200
+        ${errors.maintenance ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"}
+      `}
+    />
+  </div>
+  {errors.maintenance && (
+    <p className="text-red-500 text-sm mt-1">{errors.maintenance}</p>
+  )}
+</div>
 
                 {formData.listingType === "rent" && (
                   <>

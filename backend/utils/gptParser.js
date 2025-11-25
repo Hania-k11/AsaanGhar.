@@ -29,23 +29,21 @@ async function parseSearchQuery(userInput) {
   }
 
  const prompt = `
-You are an intelligent, no-nonsense JSON generator for a property search engine in Pakistan.
+You are an intelligent JSON generator for a property search engine in Pakistan.
 
-Your task is to extract ONLY the constraints that are explicitly or implicitly mentioned in a user's natural language query. Return a clean, raw, valid JSON object.
+Extract ONLY the constraints explicitly or implicitly mentioned in the user's query.
 
-Never add, guess, or assume anything that wasn't clearly mentioned.
+Return ONLY a valid JSON object with properly quoted keys and values.
 
-Only include fields that match the user's query. If something is not mentioned, omit it.
-
-Valid keys you can extract (ONLY IF MENTIONED):
+Valid keys (ONLY include if mentioned):
 
 - location (e.g. "Gulshan-e-Iqbal", "DHA", "Scheme 33","Malir" ,"PECHS" etc.)
 - listing_type (e.g. "rent", "sale","kiraya", "bechna")
-- price (e.g. 30000 or monthly rent 3000 as 'price 3000' or min max range like { "min": 20000, "max": 40000, exact:"4000" })
-- bedrooms (e.g. 2, 3, "three rooms",min max range like { "min": 2, "max": 4, exact:"7" }) "teen kamray/kamre/kamra")
+- price (e.g. 30000 or monthly rent 3000 as 'price 3000' or min max range like { "min": 20000, "max": 40000, "exact":"4000" })
+- bedrooms (e.g. 2, 3, "three rooms",min max range like { "min": 2, "max": 4, "exact":"7" }) "teen kamray/kamre/kamra")
 - bathrooms (e.g. 1, 2)
 - property_type (e.g. "flat","work place as 'office' ", "house","makan/house" "portion", "commercial", "room","shop", "warehouse","factory" etc.)
-- area_range (e.g. 8 or min max range like { "min": 5, "max": 10, "exact":34 unit": "sq ft" })
+- area_range (e.g. 8 or min max range like { "min": 5, "max": 10, "exact":34 "unit": "sq ft" })
 - year_built (e.g. 2018 or min max range like { "min": 2015, "max": 2020, "exact":2020  })
 - furnishing_status (e.g. "furnished", "semi furnished", "unfurnished")
 - floor_level (e.g. "ground", "top", "second", "penthouse")
@@ -57,14 +55,10 @@ Valid keys you can extract (ONLY IF MENTIONED):
 - places_not_near (e.g. ["graveyard", "factory"])
 - radiusInKm: number (e.g., "near"=10, "5 min drive"=2.5)
 
-Respond with ONLY raw JSON.
-No quotes, labels, or explanation outside the JSON.
-JSON MUST be valid. Ensure **commas between all key-value pairs**.  
-
-"Translate Urdu/Roman Urdu terms to English before extracting."
+CRITICAL: All keys and string values MUST be in double quotes.
+Translate Urdu/Roman Urdu terms to English.
 
 User Query: "${userInput}"
-JSON:
 `;
   console.log("---- OpenAI Prompt ----");
   
@@ -73,6 +67,7 @@ JSON:
   const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
     temperature: 0.3,
     max_tokens: 600,
   });
@@ -94,13 +89,29 @@ JSON:
     throw new Error("Budget limit reached.");
   }
 
-  const responseText = response.choices[0].message.content;
+  let responseText = response.choices[0].message.content.trim();
 
   try {
     return JSON.parse(responseText);
   } catch (e) {
     console.error("❌ JSON Parse Error:\n", responseText);
-    throw new Error("Failed to parse OpenAI response");
+    
+    // Fallback: Try to fix common JSON issues
+    try {
+      // Remove any markdown code blocks
+      responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      
+      // Try to fix unquoted keys by adding quotes
+      const fixedText = responseText.replace(/(\w+):/g, '"$1":');
+      
+      console.log("🔧 Attempting to fix JSON...");
+      const parsed = JSON.parse(fixedText);
+      console.log("✅ JSON fixed successfully");
+      return parsed;
+    } catch (fixError) {
+      console.error("❌ Failed to fix JSON:", fixError.message);
+      throw new Error("Failed to parse OpenAI response");
+    }
   }
 }
 

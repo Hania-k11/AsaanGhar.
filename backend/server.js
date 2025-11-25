@@ -52,6 +52,9 @@ app.use('/api/property', propertyRoutes);
 const searchRoutes = require('./routes/search');
 app.use('/api/search', searchRoutes);
 
+const searchUserRoutes = require('./routes/searchuser');
+app.use('/api/searchuser', searchUserRoutes);
+
 const locationRoutes = require('./routes/location');
 app.use('/api/location', locationRoutes);
 

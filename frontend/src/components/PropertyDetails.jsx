@@ -33,6 +33,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from "../context/AuthContext";
 
 const DetailItem = ({ label, value }) => (

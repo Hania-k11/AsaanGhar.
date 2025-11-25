@@ -123,7 +123,10 @@ async function processNearbyPlaces(properties, clean, radiusKm = 5) {
   await Promise.all(inProgress);
   return results;
 }
-router.post('/nlp-search', async (req, res) => {
+router.post("/nlp-search/:user_id", async (req, res) => {
+ const user_id = parseInt(req.params.user_id, 10);
+  if (isNaN(user_id)) return res.status(400).json({ error: "Invalid user ID" });
+
   const { error, value } = searchSchema.validate(req.body);
   if (error) {
     logger.warn({ body: req.body, err: error.message }, "Validation failed");
@@ -216,7 +219,7 @@ if (Array.isArray(clean.lease_duration)) {
 
     
     const [rows] = await pool.query(
-      `CALL GetFilteredPropertiesByFieldsGuest(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      `CALL GetFilteredPropertiesByFields(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         location,
         minBedrooms,
@@ -246,7 +249,7 @@ if (Array.isArray(clean.lease_duration)) {
         maxYearBuilt,
         exactYearBuilt,
         amenities,
-       
+        user_id,
       ]
     );
 

@@ -112,7 +112,6 @@ const PropertyGrid = ({
   onChangeStatus,
   onChangeListingType,
 }) => {
-  console.log("Properties received in PropertyGrid:", properties);
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState(null);
 
