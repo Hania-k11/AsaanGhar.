@@ -3,14 +3,18 @@
 import { Search, Mic, MapPin, HomeIcon, Home, DollarSign } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useVoiceRecording } from "../hooks/useVoiceRecording";
 
 
 import FloatingElements from "./FloatingElements";
 
 const Hero = () => {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [placeholder, setPlaceholder] = useState('Search for your desired property location...');
+  const { isRecording, isProcessing, startRecording, stopRecording, cancelRecording } = useVoiceRecording();
 
 useEffect(() => {
     const updatePlaceholder = () => {
@@ -31,16 +35,31 @@ useEffect(() => {
     return () => window.removeEventListener('resize', updatePlaceholder);
   }, []);
 
-  const handleSearch = async () => {
-    try {
-      const response = await axios.post("/api/search", { query });
-      console.log("Parsed NLP Response:", response.data);
+  const handleSearch = () => {
+    if (query.trim()) {
+      // Navigate to BuyPage with the search query as a URL parameter
+      navigate(`/buy?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
-      // Example:
-      // const { intent, location, propertyType } = response.data;
-      // You can use this for filtering listings
-    } catch (error) {
-      console.error("NLP search error:", error);
+  const handleMicClick = async () => {
+    if (isRecording) {
+      // Stop recording and get transcription
+      try {
+        const transcribedText = await stopRecording();
+        setQuery(transcribedText);
+      } catch (error) {
+        console.error('Error transcribing audio:', error);
+        alert('Failed to transcribe audio. Please try again.');
+      }
+    } else {
+      // Start recording
+      try {
+        await startRecording();
+      } catch (error) {
+        console.error('Error starting recording:', error);
+        alert('Failed to access microphone. Please check permissions.');
+      }
     }
   };
 
@@ -291,8 +310,14 @@ useEffect(() => {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={placeholder}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
+                  }}
+                  placeholder={isRecording ? "Listening..." : isProcessing ? "Processing..." : placeholder}
                   className="relative z-10 w-full pl-3 pr-3 md:pl-12  py-3 md:pr-4 md:py-4 rounded-xl border-2 border-gray-200 focus:outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all duration-300 bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-400 font-medium shadow-sm"
+                  disabled={isRecording || isProcessing}
                 />
               </motion.div>
             </div>
@@ -302,45 +327,80 @@ useEffect(() => {
           <div className="flex flex-row gap-4 items-center w-full md:w-auto">
             {/* Enhanced mic button */}
             <motion.button
+              onClick={handleMicClick}
+              disabled={isProcessing}
               whileHover={{
-                scale: 1.1,
-                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                scale: isProcessing ? 1 : 1.1,
+                backgroundColor: isRecording ? "rgba(239, 68, 68, 0.1)" : "rgba(16, 185, 129, 0.1)",
               }}
               whileTap={{ scale: 0.9 }}
-              className="flex-1 md:flex-none py-2 md:p-4 md:py-4 bg-gray-50 hover:bg-black rounded-xl transition-all duration-300 shadow-md border border-gray-200 hover:border-emerald-200 group relative"
+              className={`flex-1 md:flex-none py-2 md:p-4 md:py-4 rounded-xl transition-all duration-300 shadow-md border group relative ${
+                isRecording 
+                  ? 'bg-red-50 border-red-300 hover:border-red-400' 
+                  : isProcessing
+                  ? 'bg-gray-100 border-gray-300 cursor-not-allowed'
+                  : 'bg-gray-50 border-gray-200 hover:bg-black hover:border-emerald-200'
+              }`}
             >
               <div className="flex items-center justify-center">
-                <Mic className="text-gray-600 group-hover:text-black w-5 h-5 transition-colors duration-300" />
+                <Mic className={`w-5 h-5 transition-colors duration-300 ${
+                  isRecording 
+                    ? 'text-red-600' 
+                    : isProcessing
+                    ? 'text-gray-400'
+                    : 'text-gray-600 group-hover:text-black'
+                }`} />
               </div>
-              {/* Pulse animation for mic */}
-              <motion.div
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0, 0.5],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatType: "loop",
-                }}
-                className="absolute inset-0 rounded-xl bg-emerald-400/30 pointer-events-none"
-              />
+              {/* Pulse animation for mic when recording */}
+              {isRecording && (
+                <motion.div
+                  animate={{
+                    scale: [1, 1.3, 1],
+                    opacity: [0.7, 0, 0.7],
+                  }}
+                  transition={{
+                    duration: 1.5,
+                    repeat: Infinity,
+                    repeatType: "loop",
+                  }}
+                  className="absolute inset-0 rounded-xl bg-red-400/50 pointer-events-none"
+                />
+              )}
+              {/* Processing spinner */}
+              {isProcessing && (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    ease: "linear",
+                  }}
+                  className="absolute inset-0 rounded-xl border-2 border-transparent border-t-emerald-500 pointer-events-none"
+                />
+              )}
             </motion.button>
 
             {/* Search button */}
             <motion.button
               onClick={handleSearch}
+              disabled={isRecording || isProcessing}
               whileHover={{
-                scale: 1.05,
-                boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
+                scale: (isRecording || isProcessing) ? 1 : 1.05,
+                boxShadow: (isRecording || isProcessing) ? undefined : "0 10px 25px -5px rgba(16, 185, 129, 0.4)",
               }}
               whileTap={{ scale: 0.95 }}
-              className="flex-1 md:flex-none bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-2 md:py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
+              className={`flex-1 md:flex-none px-8 py-2 md:py-4 rounded-xl font-semibold shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${
+                isRecording || isProcessing
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800'
+              } text-white`}
             >
               <span className="relative z-10">Search</span>
               <Search className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
               {/* Button shine effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              {!isRecording && !isProcessing && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              )}
             </motion.button>
           </div>
         </div>
