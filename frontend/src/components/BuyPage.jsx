@@ -110,17 +110,33 @@ const BuyPage = () => {
   const currentPage = isNlpActive ? nlpPage : normalPage;
   const setPage = isNlpActive ? setNlpPage : setNormalPage;
 
-  // UPDATE: Initialize liked properties from the fetched data
-  useEffect(() => {
-    if (properties.length > 0) {
-      const likedIds = new Set(
-        properties
-          .filter(property => property.is_favorite || property.isFavorite)
-          .map(property => property.property_id)
-      );
-      setLikedProperties(likedIds);
+ useEffect(() => {
+  if (!properties.length) return;
+
+  setLikedProperties((prev) => {
+    const likedIds = new Set(
+      properties
+        .filter((property) => property.is_favorite || property.isFavorite)
+        .map((property) => property.property_id)
+    );
+
+    // If the contents are the same, don't trigger another render
+    if (prev.size === likedIds.size) {
+      let same = true;
+      for (const id of likedIds) {
+        if (!prev.has(id)) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return prev; // no change → React will NOT re-render
     }
-  }, [properties]);
+
+    return likedIds;
+  });
+}, [properties]);
+
+
 
   const queryClient = useQueryClient();
   
