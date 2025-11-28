@@ -110,7 +110,8 @@ const BuyPage = () => {
   const currentPage = isNlpActive ? nlpPage : normalPage;
   const setPage = isNlpActive ? setNlpPage : setNormalPage;
 
- useEffect(() => {
+  // UPDATE: changedddz
+useEffect(() => {
   if (!properties.length) return;
 
   setLikedProperties((prev) => {
@@ -135,7 +136,6 @@ const BuyPage = () => {
     return likedIds;
   });
 }, [properties]);
-
 
 
   const queryClient = useQueryClient();

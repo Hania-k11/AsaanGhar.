@@ -138,7 +138,27 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    return res.json({ success: true, message: "Admin Login successful" });
+    // Fetch full admin details to return
+    const [adminDetails] = await pool.query(
+      `SELECT user_id, first_name, last_name, email, profile_picture_url, role 
+       FROM users 
+       WHERE user_id = ? AND is_deleted = FALSE LIMIT 1`,
+      [admin.user_id]
+    );
+
+    const adminData = adminDetails[0];
+
+    return res.json({ 
+      success: true, 
+      message: "Admin Login successful",
+      admin: {
+        id: adminData.user_id,
+        email: adminData.email,
+        name: `${adminData.first_name} ${adminData.last_name}`,
+        profile_picture_url: adminData.profile_picture_url,
+        role: adminData.role
+      }
+    });
   } catch (err) {
     console.error("Admin Login error:", err);
     return res.status(500).json({ error: "Internal server error" });

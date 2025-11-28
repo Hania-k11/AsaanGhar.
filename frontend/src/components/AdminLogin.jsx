@@ -3,20 +3,30 @@ import React, { useState } from 'react';
 import { Building, Home } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from 'react-router-dom';
 
 const AdminLogin = () => {
    const { loginadmin } = useAuth();
+   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+    
     const result = await loginadmin(email, password);
     if (!result.success) {
       setError(result.message);
     } else {
-      setError("");
+      setSuccess("Admin Login successful");
+      // Navigate to admin panel after a brief delay
+      setTimeout(() => {
+        navigate('/admin-panel');
+      }, 500);
     }
   };
 
@@ -63,6 +73,12 @@ const handleSubmit = async (e) => {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              {success}
             </div>
           )}
 

@@ -676,7 +676,11 @@ router.get('/getall', async (req, res) => {
       -- Join contact information
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+
+      LEFT JOIN user_settings us ON p.owner_id = us.user_id
+
       WHERE p.is_deleted = 0
+      AND us.show_listings = TRUE
     `;
     const params = [];
 
