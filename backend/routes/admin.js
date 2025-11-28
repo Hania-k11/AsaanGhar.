@@ -18,15 +18,26 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
       limit = 10,
       sort_by = "posted_at",
       sort_order = "DESC",
-      status = "all",
+      status,
     } = req.query;
 
-    const adminId = req.admin.user_id;
+    const adminId = req.admin.id;
 
+    // If status is undefined or 'undefined', use 'all'
+    const filterStatus = (!status || status === 'undefined') ? 'all' : status;
   
+    console.log('GetPropertiesByModeration params:', {
+      adminId,
+      page: Number(page),
+      limit: Number(limit),
+      sort_by,
+      sort_order,
+      filterStatus
+    });
+
     const [results] = await pool.query(
       "CALL GetPropertiesByModeration(?, ?, ?, ?, ?, ?)",
-      [adminId, Number(page), Number(limit), sort_by, sort_order, status]
+      [adminId, Number(page), Number(limit), sort_by, sort_order, filterStatus]
     );
 
     
@@ -205,9 +216,9 @@ router.get("/me", authenticateAdmin, async (req, res) => {
 
 
 
-router.post('/properties/:id/approve', async (req, res) => {
+router.post('/properties/:id/approve', authenticateAdmin, async (req, res) => {
   const propertyId = req.params.id;
-  const adminId = req.body.adminId;
+  const adminId = req.admin.id; // Get from authenticated session
   try {
     await pool.query(
       `UPDATE properties SET approval_status = 'approved' WHERE property_id = ?`,
@@ -225,9 +236,10 @@ router.post('/properties/:id/approve', async (req, res) => {
 });
 
 // Reject property
-router.post('/properties/:id/reject', async (req, res) => {
+router.post('/properties/:id/reject', authenticateAdmin, async (req, res) => {
   const propertyId = req.params.id;
-  const { adminId, reason } = req.body;
+  const adminId = req.admin.id; // Get from authenticated session
+  const { reason } = req.body;
   try {
     await pool.query(
       `UPDATE properties SET approval_status = 'rejected', rejection_reason = ? WHERE property_id = ?`,
@@ -240,6 +252,25 @@ router.post('/properties/:id/reject', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get property documents
+router.get('/properties/:id/documents', authenticateAdmin, async (req, res) => {
+  const propertyId = req.params.id;
+  try {
+    const [documents] = await pool.query(
+      `SELECT document_id, property_id, doc_type, doc_url, uploaded_at 
+       FROM property_documents 
+       WHERE property_id = ? 
+       ORDER BY uploaded_at DESC`,
+      [propertyId]
+    );
+    
+    res.json({ success: true, documents });
+  } catch (err) {
+    console.error('Error fetching property documents:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });

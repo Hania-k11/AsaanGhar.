@@ -43,7 +43,7 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
         <div className="hidden sm:flex flex-1 items-center justify-between">
           {/* Center - Nav Links */}
           <nav className="flex space-x-2 mx-auto">
-            <button
+            {/* <button
               onClick={() => setNavbarActive("properties")}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 navbarActive === "properties"
@@ -53,8 +53,8 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
             >
               <Home className="w-4 h-4 mr-2" />
               Properties
-            </button>
-
+            </button> */}
+{/* 
             <button
               onClick={() => setNavbarActive("admins")}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -65,7 +65,8 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
             >
               <Users className="w-4 h-4 mr-2" />
               Admin Users
-            </button>
+            </button> */}
+
           </nav>
 
           {/* Right - User Info + Logout */}

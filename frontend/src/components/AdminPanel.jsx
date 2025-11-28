@@ -27,14 +27,14 @@ const AdminPanel = () => {
   // convert activeTab -> status param
   const status =
     activeTab === "all"
-      ? undefined
+      ? "all"
       : activeTab === "pending"
       ? "pending"
       : activeTab === "approved"
       ? "approved"
       : activeTab === "rejected"
       ? "rejected"
-      : undefined;
+      : "all";
 
   // Fetch properties with React Query (useAdmin) - only when user is logged in
   const {
@@ -60,6 +60,12 @@ const totalPages = data?.pagination?.totalPages || 1;
   useEffect(() => {
     setPage(1);
   }, [activeTab, sortByDate, listingType]);
+
+  // Handle view documents
+  const handleViewDocuments = (property) => {
+    setSelectedProperty(property);
+    setShowDocuments(true);
+  };
 
   if (loading) {
     return (
@@ -116,6 +122,7 @@ const totalPages = data?.pagination?.totalPages || 1;
   listingType={listingType}
   onListingTypeChange={setListingType}  
               currentAdmin={admin}
+              onViewDocuments={handleViewDocuments}
             />
           </>
         )}

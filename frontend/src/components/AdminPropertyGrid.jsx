@@ -33,7 +33,7 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/30  bg-opacity-30">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
         <h2 className="text-lg font-semibold mb-2">Reject {propertyTitle}</h2>
         <textarea
@@ -104,8 +104,8 @@ const AdminPropertyGrid = ({
   // Approve property API call
   const handleApprove = async (property) => {
     try {
-      await axios.post(`/api/admin/properties/${property.property_id}/approve`, {
-        adminId: currentAdmin?.user_id,
+      await axios.post(`/api/admin/properties/${property.property_id}/approve`, {}, {
+        withCredentials: true // Ensure cookies are sent
       });
       setLocalProperties((prev) =>
         prev.map((p) =>
@@ -124,8 +124,9 @@ const AdminPropertyGrid = ({
   const handleReject = async (property, reason) => {
     try {
       await axios.post(`/api/admin/properties/${property.property_id}/reject`, {
-        adminId: currentAdmin?.user_id,
         reason,
+      }, {
+        withCredentials: true // Ensure cookies are sent
       });
       setLocalProperties((prev) =>
         prev.map((p) =>
