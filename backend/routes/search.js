@@ -136,7 +136,11 @@ router.post('/nlp-search', async (req, res) => {
 
     const nlpOutput = await parseSearchQuery(userQuery);
     if (!nlpOutput)
-      return res.status(400).json({ error: "Failed to parse query" });
+      return res.status(400).json({ 
+        error: "Not a real estate query", 
+        message: "Please do relevant search in domain of real estate only",
+        isNotRealEstate: true 
+      });
 
     const clean = postProcess({ ...nlpOutput, query: userQuery });
     console.log("CLEANEDDDDD:",clean)

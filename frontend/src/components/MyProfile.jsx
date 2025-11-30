@@ -48,7 +48,7 @@ const NAVBAR_HEIGHT = "3.7rem";
 const SIDEBAR_WIDTH = "20rem";
 
 const MyProfile = () => {
-  const { user, logout } = useAuth();
+  const { user, logoutUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -110,7 +110,7 @@ const MyProfile = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     try {
-      await logout();
+      await logoutUser();
       navigate("/");
     } catch (error) {
       console.error('Logout error:', error);

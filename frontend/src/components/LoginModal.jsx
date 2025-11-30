@@ -192,19 +192,19 @@ const LoginModal = () => {
                 </h2>
 
                 {/* Social Logins */}
-                <div className="flex flex-col gap-3 mb-4">
-                  <div className="w-full">
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={() => error("Google login failed. Please try again.")}
-                      useOneTap
-                      theme="outline"
-                      text="continue_with"
-                      shape="pill"
-                      width="300"
-                    />
-                  </div>
-                </div>
+       <div className="flex flex-col gap-3 mb-4">
+  <div className="w-full max-w-sm mx-auto"> 
+    <GoogleLogin
+      onSuccess={handleGoogleSuccess}
+      onError={() => error("Google login failed. Please try again.")}
+      useOneTap
+      theme="outline"
+      text="continue_with"
+      shape="pill"
+      width="100%"    
+    />
+  </div>
+</div>
 
                 <div className="text-center text-gray-500 text-sm font-bold uppercase my-4 flex items-center">
                   <span className="flex-grow h-px bg-gray-300 mr-2"></span>

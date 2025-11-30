@@ -18,15 +18,65 @@ function convertUSDToPKR(usd, exchangeRate = 285) {
   return Math.ceil(usd * exchangeRate);
 }
 
+// Preprocess and normalize query to clean English
+async function normalizeQuery(userInput) {
+  const prompt = `You are a query normalizer for a Pakistani real estate search engine.
+
+Your task:
+1. If the input is in Urdu (اردو) or Roman Urdu, translate it to English
+2. Fix any spelling mistakes or typos
+3. Return ONLY the corrected English query, nothing else
+4. Keep the meaning and intent exactly the same
+5. If it's already in correct English, return it as is
+
+Examples:
+- "mujhe dha me ghar chahiye" → "I want a house in DHA"
+- "gulshan me flat kiraye pe" → "flat for rent in Gulshan"
+- "hous in johar" → "house in Johar"
+- "3 bed room apartmnt" → "3 bedroom apartment"
+
+User Query: "${userInput}"
+
+Normalized Query:`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+      max_tokens: 150,
+    });
+
+    const normalizedQuery = response.choices[0].message.content.trim();
+    console.log(`📝 Original query: "${userInput}"`);
+    console.log(`✨ Normalized query: "${normalizedQuery}"`);
+    
+    return normalizedQuery;
+  } catch (error) {
+    console.error("Error normalizing query:", error.message);
+    // Fallback to original query if normalization fails
+    return userInput;
+  }
+}
+
 function isRealEstateQuery(input) {
-  return /ghar|house|flat|apartment|bangla|ghr|ghar|kamra|area|bedroom|karachi|lahore|rent|sale|buy|کرایہ|بیچنا/i.test(input);
+  // Check for real estate related keywords in English, Urdu, and Roman Urdu
+  const realEstateKeywords = /\b(ghar|house|flat|home|apartment|property|bangla|ghr|kamra|room|bedroom|bathroom|area|karachi|lahore|islamabad|dha|defence|defense|gulshan|johar|rent|sale|buy|purchase|lease|kiraya|kiray|bechna|khareedna|makan|plot|land|commercial|residential|office|shop|warehouse|marla|kanal|sqft|square|furnished|unfurnished|کرایہ|بیچنا|گھر|مکان|فلیٹ)\b/i;
+  return realEstateKeywords.test(input);
 }
 
 async function parseSearchQuery(userInput) {
-  if (!isRealEstateQuery(userInput)) {
-    console.warn("Query skipped — not real estate related:", userInput);
+  // Step 1: Normalize the query (translate Urdu/Roman Urdu, fix typos)
+  const normalizedQuery = await normalizeQuery(userInput);
+  
+  // Step 2: Check if the normalized query is real estate related
+  if (!isRealEstateQuery(normalizedQuery)) {
+    console.warn("Query skipped — not real estate related:", normalizedQuery);
     return null;
   }
+  
+  // Step 3: Use the normalized query for parsing
+  const queryToProcess = normalizedQuery;
 
  const prompt = `
 You are an intelligent JSON generator for a property search engine in Pakistan.
@@ -58,7 +108,7 @@ Valid keys (ONLY include if mentioned):
 CRITICAL: All keys and string values MUST be in double quotes.
 Translate Urdu/Roman Urdu terms to English.
 
-User Query: "${userInput}"
+User Query: "${queryToProcess}"
 `;
   console.log("---- OpenAI Prompt ----");
   
