@@ -139,7 +139,7 @@ const SettingsTab = () => {
   const [savedMessage, setSavedMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [savingNotifications, setSavingNotifications] = useState(false);
+  // const [savingNotifications, setSavingNotifications] = useState(false);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
@@ -149,10 +149,10 @@ const SettingsTab = () => {
     confirmPassword: "",
   });
 
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    propertyAlerts: true,
-  });
+  // const [notificationSettings, setNotificationSettings] = useState({
+  //   emailNotifications: true,
+  //   propertyAlerts: true,
+  // });
 
   const [privacySettings, setPrivacySettings] = useState({
     profileVisibility: "public",
@@ -177,10 +177,10 @@ const SettingsTab = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.settings) {
-          setNotificationSettings({
-            emailNotifications: data.settings.email_notifications,
-            propertyAlerts: data.settings.property_alerts,
-          });
+          // setNotificationSettings({
+          //   emailNotifications: data.settings.email_notifications,
+          //   propertyAlerts: data.settings.property_alerts,
+          // });
           setPrivacySettings({
             profileVisibility: data.settings.profile_visibility,
             showContactInfo: data.settings.show_contact_info,
@@ -252,38 +252,38 @@ const SettingsTab = () => {
     }
   };
 
-  const handleSaveNotification = async () => {
-    try {
-      setSavingNotifications(true);
-      const response = await fetch(`${API_BASE_URL}/settings/notifications`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email_notifications: notificationSettings.emailNotifications,
-          property_alerts: notificationSettings.propertyAlerts,
-        }),
-      });
+  // const handleSaveNotification = async () => {
+  //   try {
+  //     setSavingNotifications(true);
+  //     const response = await fetch(`${API_BASE_URL}/settings/notifications`, {
+  //       method: "PUT",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       credentials: "include",
+  //       body: JSON.stringify({
+  //         email_notifications: notificationSettings.emailNotifications,
+  //         property_alerts: notificationSettings.propertyAlerts,
+  //       }),
+  //     });
 
-      const data = await response.json();
+  //     const data = await response.json();
 
-      if (response.ok && data.success) {
-        setSavedMessage("Notification settings saved!");
-        setTimeout(() => setSavedMessage(""), 3000);
-      } else {
-        setPasswordError("Failed to save notification settings");
-        setTimeout(() => setPasswordError(""), 3000);
-      }
-    } catch (error) {
-      console.error("Error saving notification settings:", error);
-      setPasswordError("Failed to save notification settings");
-      setTimeout(() => setPasswordError(""), 3000);
-    } finally {
-      setSavingNotifications(false);
-    }
-  };
+  //     if (response.ok && data.success) {
+  //       setSavedMessage("Notification settings saved!");
+  //       setTimeout(() => setSavedMessage(""), 3000);
+  //     } else {
+  //       setPasswordError("Failed to save notification settings");
+  //       setTimeout(() => setPasswordError(""), 3000);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving notification settings:", error);
+  //     setPasswordError("Failed to save notification settings");
+  //     setTimeout(() => setPasswordError(""), 3000);
+  //   } finally {
+  //     setSavingNotifications(false);
+  //   }
+  // };
 
   const handleSavePrivacy = async () => {
     try {
@@ -419,7 +419,7 @@ const SettingsTab = () => {
           />
         </motion.div>
 
-        {/* Notifications */}
+        {/* Notifications
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -463,7 +463,7 @@ const SettingsTab = () => {
             loading={savingNotifications}
             className="bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm"
           />
-        </motion.div>
+        </motion.div> */}
 
         {/* Privacy */}
         <motion.div
