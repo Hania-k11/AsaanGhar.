@@ -20,7 +20,7 @@ const AdminModals = ({
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [verifying, setVerifying] = useState(false);
-  const { showToast } = useToast();
+  const toast = useToast();
   const queryClient = useQueryClient();
 
   // Fetch documents when modal opens
@@ -62,13 +62,15 @@ const AdminModals = ({
       );
       
       if (res.data.success) {
-        showToast(res.data.message || 'CNIC verified successfully', 'success');
-        queryClient.invalidateQueries(['admin-users']);
+        toast.success(res.data.message || 'CNIC verified successfully');
+        // Wait for the query to refetch before closing modal
+        await queryClient.invalidateQueries(['admin-users']);
+        await queryClient.refetchQueries(['admin-users']);
         setShowUserDetails(false);
       }
     } catch (err) {
       console.error('Error verifying CNIC:', err);
-      showToast(err.response?.data?.message || 'Failed to verify CNIC', 'error');
+      toast.error(err.response?.data?.message || 'Failed to verify CNIC');
     } finally {
       setVerifying(false);
     }
@@ -87,13 +89,15 @@ const AdminModals = ({
       );
       
       if (res.data.success) {
-        showToast(res.data.message || 'CNIC rejected', 'success');
-        queryClient.invalidateQueries(['admin-users']);
+        toast.success(res.data.message || 'CNIC rejected');
+        // Wait for the query to refetch before closing modal
+        await queryClient.invalidateQueries(['admin-users']);
+        await queryClient.refetchQueries(['admin-users']);
         setShowUserDetails(false);
       }
     } catch (err) {
       console.error('Error rejecting CNIC:', err);
-      showToast(err.response?.data?.message || 'Failed to reject CNIC', 'error');
+      toast.error(err.response?.data?.message || 'Failed to reject CNIC');
     } finally {
       setVerifying(false);
     }
