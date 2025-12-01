@@ -119,8 +119,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     deposit: "",
     images: [], // kept for UI previews only
     documents: [], // kept for UI previews only
-    cnicFront: null, // kept for UI previews only
-    cnicBack: null, // kept for UI previews only
     propertyPapers: [], // kept for UI previews only
     utilityBill: [], // kept for UI previews only
     otherDocs: [], // kept for UI previews only
@@ -328,22 +326,9 @@ const handleChange = (e) => {
           ...prev,
           documents: [...(prev.documents || []), ...validSizeFiles].slice(0, 10),
         }));
-      } else if (name === "otherDocs") {
-        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
-        const validSizeFiles = validTypeFiles.filter(validateFileSize);
-        
         setFormData((prev) => ({
           ...prev,
           otherDocs: [...(prev.otherDocs || []), ...validSizeFiles].slice(0, 10),
-        }));
-      } else if (name === "cnicFront" || name === "cnicBack") {
-        const file = files && files[0] ? files[0] : null;
-        const allow = ALLOW_IMG_TYPES;
-        const isValidFile = file && allow.includes(file.type) && validateFileSize(file);
-        
-        setFormData((prev) => ({
-          ...prev,
-          [name]: isValidFile ? file : null,
         }));
       } else if (name === "propertyPapers" || name === "utilityBill") {
         const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
@@ -589,25 +574,13 @@ const handleChange = (e) => {
         newErrors.phoneNumber = "Phone number is required. Please add it in your profile.";
         console.log("❌ Phone validation failed: missing");
       } else {
-        // Validate phone format
-        const phoneRegexPakistan = /^3[0-9]{9}$/; // Starts with '3' and is exactly 10 digits total
-        const cleanPhone = (num) => num ? num.replace(/[^0-9]/g, '') : '';
-        const cleaned = cleanPhone(formData.phoneNumber);
-        
-        console.log("📞 Phone validation - cleaned:", cleaned, "matches regex:", phoneRegexPakistan.test(cleaned));
-        
-        if (!phoneRegexPakistan.test(cleaned)) {
-          newErrors.phoneNumber = "Enter a valid 10-digit phone number starting with '3' (e.g., 3001234567).";
-          console.log("❌ Phone validation failed: invalid format");
+        // Check if phone is verified
+        console.log("📞 Checking phone verification. user.phone_verified:", user?.phone_verified);
+        if (!user?.phone_verified || user.phone_verified !== 1) {
+          newErrors.phoneNumber = "Phone number must be verified. Please go to your profile to verify.";
+          console.log("❌ Phone validation failed: not verified");
         } else {
-          // Check if phone is verified (only if phone number exists and is valid format)
-          console.log("📞 Phone format valid, checking verification. user.phone_verified:", user?.phone_verified);
-          if (!user?.phone_verified || user.phone_verified !== 1) {
-            newErrors.phoneNumber = "Phone number must be verified. Please go to your profile to verify.";
-            console.log("❌ Phone validation failed: not verified");
-          } else {
-            console.log("✅ Phone validation passed");
-          }
+          console.log("✅ Phone validation passed");
         }
       }
       
@@ -631,21 +604,20 @@ const handleChange = (e) => {
       console.log("📋 Step 4 validation errors:", newErrors);
     }
     if (step === 5) {
-      // (Document validation checks remain unchanged)
-      // CNIC Front (required)
-      if (
-        (!formData.cnicFront || formData.cnicFront.length === 0) &&
-        (!formData.cnicFrontUrl || formData.cnicFrontUrl.length === 0)
-      ) {
-        newErrors.cnicFront = "CNIC front image is required";
-      }
-
-      // CNIC Back (required)
-      if (
-        (!formData.cnicBack || formData.cnicBack.length === 0) &&
-        (!formData.cnicBackUrl || formData.cnicBackUrl.length === 0)
-      ) {
-        newErrors.cnicBack = "CNIC back image is required";
+      console.log("🔍 Validating Step 5 - CNIC Status:", user?.cnic_verified);
+      
+      // Check CNIC verification status from user table
+      if (user?.cnic_verified === 1) {
+        // CNIC is verified - no need to upload CNIC images
+        console.log("✅ CNIC already verified, skipping CNIC upload validation");
+      } else if (user?.cnic_verified === 0 || !user?.cnic_verified) {
+        // CNIC not verified - direct to profile
+        newErrors.cnicVerification = "CNIC verification required. Please verify your CNIC in your profile.";
+        console.log("❌ CNIC not verified");
+      } else if (user?.cnic_verified === 3) {
+        // CNIC rejected - direct to profile to update
+        newErrors.cnicVerification = "Your CNIC was rejected. Please update your CNIC in your profile.";
+        console.log("❌ CNIC rejected");
       }
 
       // Property Papers (required)
@@ -754,8 +726,6 @@ const handleSubmit = async (e) => {
       amenities: amenitiesList,
       // No file URLs here; files will be uploaded in step 3
       images: [],
-      cnicFront: null,
-      cnicBack: null,
       propertyPapers: [],
       utilityBill: [],
       otherDocs: [],
@@ -776,15 +746,13 @@ const handleSubmit = async (e) => {
     // Add files
     console.log("📎 Adding files to FormData:");
     console.log("  - Images:", (formData.images || []).length);
-    console.log("  - CNIC Front:", formData.cnicFront ? "Yes" : "No");
-    console.log("  - CNIC Back:", formData.cnicBack ? "Yes" : "No");
     console.log("  - Property Papers:", (formData.propertyPapers || []).length);
     console.log("  - Utility Bills:", (formData.utilityBill || []).length);
     console.log("  - Other Docs:", (formData.otherDocs || []).length);
+    console.log("  - CNIC: Verified through user profile (not uploaded here)");
 
     (formData.images || []).forEach((img) => form.append("images", img));
-    if (formData.cnicFront) form.append("cnicFront", formData.cnicFront);
-    if (formData.cnicBack) form.append("cnicBack", formData.cnicBack);
+    // CNIC files are no longer uploaded here - CNIC verification is handled in user profile
     (formData.propertyPapers || []).forEach((doc) => form.append("propertyPapers", doc));
     (formData.utilityBill || []).forEach((doc) => form.append("utilityBill", doc));
     (formData.otherDocs || []).forEach((doc) => form.append("otherDocs", doc));
@@ -1769,98 +1737,73 @@ const handleSubmit = async (e) => {
             <div className="space-y-10">
               <p className="text-gray-700 text-sm mb-4">Upload your property documents for verification. Accepted formats: PDF, PNG, JPG. Max size 10MB per file.</p>
 
-              {/* CNIC Front */}
+              {/* CNIC Verification Status */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">CNIC Front</h3>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-                    errors.cnicFront ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
-                  }`}
-                >
-                  <label htmlFor="cnic-front" className="cursor-pointer">
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8 text-emerald-600">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">CNIC Verification</h3>
+                
+                {user?.cnic_verified === 1 ? (
+                  // CNIC Verified
+                  <div className="p-6 bg-emerald-50 border-2 border-emerald-500 rounded-xl">
+                    <div className="flex items-center gap-3 mb-2">
+                      <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <p className="text-lg font-semibold text-emerald-700">CNIC Verified ✓</p>
+                        <p className="text-sm text-emerald-600">Your CNIC has been verified successfully.</p>
                       </div>
-                      <p className="text-sm text-gray-500">Click to upload CNIC Front</p>
                     </div>
-                  </label>
-                  <input
-                    id="cnic-front"
-                    type="file"
-                    accept=".png,.jpg,.jpeg"
-                    name="cnicFront"
-                    onChange={handleChange}
-                    onClick={(e) => {
-                      e.currentTarget.value = null;
-                    }}
-                    className="hidden"
-                  />
-                </div>
-                {formData.cnicFront && (
-                  <div className="mt-3 flex items-center gap-3">
-                    {isImg(formData.cnicFront) ? (
-                      <img src={fileURL(formData.cnicFront)} alt="CNIC Front" className="h-16 w-28 object-cover rounded border" />
-                    ) : (
-                      <div className="h-16 w-28 flex items-center justify-center rounded border text-xs px-2 text-center">
-                        {formData.cnicFront.name}
+                  </div>
+                ) : user?.cnic_verified === 3 ? (
+                  // CNIC Rejected
+                  <div className="p-6 bg-red-50 border-2 border-red-500 rounded-xl">
+                    <div className="flex items-start gap-3 mb-3">
+                      <svg className="w-8 h-8 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold text-red-700 mb-1">CNIC Rejected ✗</p>
+                        <p className="text-sm text-red-600 mb-3">
+                          Your CNIC verification was rejected. Please update your CNIC information in your profile to continue.
+                        </p>
+                        <a
+                          href="http://localhost:5173/my-profile?tab=profile"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Go to Profile to Update CNIC
+                        </a>
                       </div>
-                    )}
-                    <button type="button" onClick={() => clearSingleFile("cnicFront")} className="px-2 py-1 text-sm bg-red-500 text-white rounded">
-                      Remove
-                    </button>
+                    </div>
+                  </div>
+                ) : (
+                  // CNIC Not Verified (status 0 or null)
+                  <div className="p-6 bg-amber-50 border-2 border-amber-500 rounded-xl">
+                    <div className="flex items-start gap-3 mb-3">
+                      <svg className="w-8 h-8 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold text-amber-700 mb-1">CNIC Verification Required ⚠️</p>
+                        <p className="text-sm text-amber-600 mb-3">
+                          You need to verify your CNIC before publishing a property listing. Please go to your profile to upload and verify your CNIC.
+                        </p>
+                        <a
+                          href="http://localhost:5173/my-profile?tab=profile"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Go to Profile to Verify CNIC
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 )}
-                {errors.cnicFront && <p className="text-red-500 text-sm mt-1">{errors.cnicFront}</p>}
-              </div>
-
-              {/* CNIC Back */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">CNIC Back</h3>
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
-                    errors.cnicBack ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
-                  }`}
-                >
-                  <label htmlFor="cnic-back" className="cursor-pointer">
-                    <div className="flex flex-col items-center">
-                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8 text-emerald-600">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                      </div>
-                      <p className="text-sm text-gray-500">Click to upload CNIC Back</p>
-                    </div>
-                  </label>
-                  <input
-                    id="cnic-back"
-                    type="file"
-                    accept=".png,.jpg,.jpeg"
-                    name="cnicBack"
-                    onChange={handleChange}
-                    onClick={(e) => {
-                      e.currentTarget.value = null;
-                    }}
-                    className="hidden"
-                  />
-                </div>
-                {formData.cnicBack && (
-                  <div className="mt-3 flex items-center gap-3">
-                    {isImg(formData.cnicBack) ? (
-                      <img src={fileURL(formData.cnicBack)} alt="CNIC Back" className="h-16 w-28 object-cover rounded border" />
-                    ) : (
-                      <div className="h-16 w-28 flex items-center justify-center rounded border text-xs px-2 text-center">
-                        {formData.cnicBack.name}
-                      </div>
-                    )}
-                    <button type="button" onClick={() => clearSingleFile("cnicBack")} className="px-2 py-1 text-sm bg-red-500 text-white rounded">
-                      Remove
-                    </button>
-                  </div>
-                )}
-                {errors.cnicBack && <p className="text-red-500 text-sm mt-1">{errors.cnicBack}</p>}
+                {errors.cnicVerification && <p className="text-red-500 text-sm mt-2">{errors.cnicVerification}</p>}
               </div>
 
               {/* Property Papers */}
@@ -2046,10 +1989,10 @@ const handleSubmit = async (e) => {
               <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-700">
                 <p>
                   Ensure your documents are clear and legible. Verification may take 24–48 hours. The property would not be approved without the verified
-                  documents. Accepted documents include:
+                  documents. Required documents include:
                 </p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>CNIC Front and Back</li>
+                  <li>CNIC verification (completed in your profile)</li>
                   <li>Property ownership documents</li>
                   <li>Utility bills</li>
                   <li>Other supporting papers if required</li>
