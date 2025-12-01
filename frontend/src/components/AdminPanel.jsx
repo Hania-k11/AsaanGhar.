@@ -4,10 +4,12 @@ import AdminLogin from "./AdminLogin";
 import AdminStats from "./AdminStats";
 import AdminFilters from "./AdminFilters";
 import AdminPropertyGrid from "./AdminPropertyGrid";
+import AdminUserGrid from "./AdminUserGrid";
 import AdminModals from "./AdminModals";
 import AdminNavbar from "./AdminNavbar";
 import axios from "axios";
 import { useAdmin } from "../hooks/useAdmin";
+import { useUsers } from "../hooks/useUsers";
 
 
 const AdminPanel = () => {
@@ -22,6 +24,13 @@ const AdminPanel = () => {
   const [listingType, setListingType] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+
+  // User management state
+  const [showUserDetails, setShowUserDetails] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userPage, setUserPage] = useState(1);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [userVerificationFilter, setUserVerificationFilter] = useState("all");
 
 
   // convert activeTab -> status param
@@ -55,6 +64,27 @@ const totalCount = data?.pagination?.totalCount || 0;
 const totalPages = data?.pagination?.totalPages || 1;
   const stats = data?.stats || {};
 
+  // Fetch users with React Query
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    isError: usersError,
+    error: usersErrorMsg,
+  } = useUsers({
+    page: userPage,
+    limit,
+    sort_by: "created_at",
+    sort_order: "DESC",
+    verification_status: userVerificationFilter,
+    search: userSearchTerm,
+    enabled: !!admin && navbarActive === "users",
+  });
+
+  const users = usersData?.data || [];
+  const userTotalCount = usersData?.pagination?.totalCount || 0;
+  const userTotalPages = usersData?.pagination?.totalPages || 1;
+  const userStats = usersData?.stats || {};
+
 
   // keep filter tab synced
   useEffect(() => {
@@ -65,6 +95,12 @@ const totalPages = data?.pagination?.totalPages || 1;
   const handleViewDocuments = (property) => {
     setSelectedProperty(property);
     setShowDocuments(true);
+  };
+
+  // Handle view user details
+  const handleViewUserDetails = (user) => {
+    setSelectedUser(user);
+    setShowUserDetails(true);
   };
 
   if (loading) {
@@ -126,6 +162,69 @@ const totalPages = data?.pagination?.totalPages || 1;
             />
           </>
         )}
+
+        {navbarActive === "users" && (
+          <>
+            {/* User Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="text-sm font-medium text-gray-600">Total Users</div>
+                <div className="text-3xl font-bold text-gray-900 mt-2">{userStats.totalUsers || 0}</div>
+              </div>
+              <div className="bg-yellow-50 rounded-xl shadow-md p-6 border border-yellow-200">
+                <div className="text-sm font-medium text-yellow-700">Pending Verification</div>
+                <div className="text-3xl font-bold text-yellow-900 mt-2">{userStats.pendingVerifications || 0}</div>
+              </div>
+              <div className="bg-green-50 rounded-xl shadow-md p-6 border border-green-200">
+                <div className="text-sm font-medium text-green-700">Verified</div>
+                <div className="text-3xl font-bold text-green-900 mt-2">{userStats.verifiedUsers || 0}</div>
+              </div>
+              <div className="bg-red-50 rounded-xl shadow-md p-6 border border-red-200">
+                <div className="text-sm font-medium text-red-700">Rejected</div>
+                <div className="text-3xl font-bold text-red-900 mt-2">{userStats.rejectedUsers || 0}</div>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">User Management</h2>
+              <div className="flex flex-wrap gap-4 mb-4">
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+                <select
+                  value={userVerificationFilter}
+                  onChange={(e) => setUserVerificationFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="all">All Users</option>
+                  <option value="pending">Pending Verification</option>
+                  <option value="verified">Verified</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="not_submitted">Not Submitted</option>
+                </select>
+              </div>
+            </div>
+
+            {usersError && <p className="text-red-500">{usersErrorMsg?.message || "Error fetching users"}</p>}
+            {usersLoading && <p className="text-gray-500">Loading users...</p>}
+
+            {!usersError && !usersLoading && (
+              <AdminUserGrid
+                users={users}
+                page={userPage}
+                totalPages={userTotalPages}
+                onPageChange={setUserPage}
+                onViewUserDetails={handleViewUserDetails}
+                currentAdmin={admin}
+                startIndex={(userPage - 1) * limit}
+              />
+            )}
+          </>
+        )}
       </div>
 
       <AdminModals
@@ -134,6 +233,10 @@ const totalPages = data?.pagination?.totalPages || 1;
         showDocuments={showDocuments}
         setShowDocuments={setShowDocuments}
         selectedProperty={selectedProperty}
+        showUserDetails={showUserDetails}
+        setShowUserDetails={setShowUserDetails}
+        selectedUser={selectedUser}
+        refetchUsers={() => usersData?.refetch?.()}
       />
     </div>
   );

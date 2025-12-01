@@ -1,7 +1,9 @@
 // src/components/admin/AdminModals.jsx
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Download, ZoomIn, Loader } from 'lucide-react';
+import { X, FileText, Download, ZoomIn, Loader, Check } from 'lucide-react';
 import axios from 'axios';
+import { useToast } from './ToastProvider';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AdminModals = ({
   showPropertyDetails,
@@ -9,11 +11,17 @@ const AdminModals = ({
   showDocuments,
   setShowDocuments,
   selectedProperty,
+  showUserDetails,
+  setShowUserDetails,
+  selectedUser,
 }) => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch documents when modal opens
   useEffect(() => {
@@ -41,6 +49,56 @@ const AdminModals = ({
     }
   };
 
+  // Handle CNIC verification
+  const handleVerifyCNIC = async () => {
+    if (!selectedUser) return;
+    
+    setVerifying(true);
+    try {
+      const res = await axios.post(
+        `/api/admin/users/${selectedUser.user_id}/verify-cnic`,
+        {},
+        { withCredentials: true }
+      );
+      
+      if (res.data.success) {
+        showToast(res.data.message || 'CNIC verified successfully', 'success');
+        queryClient.invalidateQueries(['admin-users']);
+        setShowUserDetails(false);
+      }
+    } catch (err) {
+      console.error('Error verifying CNIC:', err);
+      showToast(err.response?.data?.message || 'Failed to verify CNIC', 'error');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  // Handle CNIC rejection
+  const handleRejectCNIC = async () => {
+    if (!selectedUser) return;
+    
+    setVerifying(true);
+    try {
+      const res = await axios.post(
+        `/api/admin/users/${selectedUser.user_id}/reject-cnic`,
+        {},
+        { withCredentials: true }
+      );
+      
+      if (res.data.success) {
+        showToast(res.data.message || 'CNIC rejected', 'success');
+        queryClient.invalidateQueries(['admin-users']);
+        setShowUserDetails(false);
+      }
+    } catch (err) {
+      console.error('Error rejecting CNIC:', err);
+      showToast(err.response?.data?.message || 'Failed to reject CNIC', 'error');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   // Get friendly name for document type
   const getDocTypeName = (docType) => {
     const typeMap = {
@@ -61,6 +119,22 @@ const AdminModals = ({
     acc[doc.doc_type].push(doc);
     return acc;
   }, {});
+
+  // Get status badge for CNIC verification
+  const getStatusBadge = (cnicVerified) => {
+    switch (cnicVerified) {
+      case 0:
+        return { text: 'Not Submitted', className: 'bg-gray-100 text-gray-700 border border-gray-300' };
+      case 1:
+        return { text: 'Verified', className: 'bg-green-100 text-green-700 border border-green-300' };
+      case 2:
+        return { text: 'Pending', className: 'bg-yellow-100 text-yellow-700 border border-yellow-300' };
+      case 3:
+        return { text: 'Rejected', className: 'bg-red-100 text-red-700 border border-red-300' };
+      default:
+        return { text: 'Unknown', className: 'bg-gray-100 text-gray-700 border border-gray-300' };
+    }
+  };
 
   return (
     <>
@@ -219,6 +293,163 @@ const AdminModals = ({
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Details Modal */}
+      {showUserDetails && selectedUser && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-800">User Details</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {selectedUser.first_name} {selectedUser.last_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowUserDetails(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* User Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">First Name</label>
+                    <p className="mt-1 text-gray-900">{selectedUser.first_name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Last Name</label>
+                    <p className="mt-1 text-gray-900">{selectedUser.last_name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Email</label>
+                    <p className="mt-1 text-gray-900">{selectedUser.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Phone Number</label>
+                    <p className="mt-1 text-gray-900">{selectedUser.phone_number || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">CNIC</label>
+                    <p className="mt-1 text-gray-900 font-mono">{selectedUser.cnic || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Verification Status</label>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mt-1 ${
+                        getStatusBadge(selectedUser.cnic_verified).className
+                      }`}
+                    >
+                      {getStatusBadge(selectedUser.cnic_verified).text}
+                    </span>
+                  </div>
+                </div>
+
+                {/* CNIC Images */}
+                {(selectedUser.cnic_front_url || selectedUser.cnic_back_url) && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-800 mb-4">CNIC Documents</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedUser.cnic_front_url && (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="bg-gray-100 px-4 py-2">
+                            <p className="text-sm font-medium text-gray-700">CNIC Front</p>
+                          </div>
+                          <div className="relative aspect-video bg-gray-50">
+                            <img
+                              src={selectedUser.cnic_front_url}
+                              alt="CNIC Front"
+                              className="w-full h-full object-contain cursor-pointer"
+                              onClick={() => setSelectedImage(selectedUser.cnic_front_url)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {selectedUser.cnic_back_url && (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="bg-gray-100 px-4 py-2">
+                            <p className="text-sm font-medium text-gray-700">CNIC Back</p>
+                          </div>
+                          <div className="relative aspect-video bg-gray-50">
+                            <img
+                              src={selectedUser.cnic_back_url}
+                              alt="CNIC Back"
+                              className="w-full h-full object-contain cursor-pointer"
+                              onClick={() => setSelectedImage(selectedUser.cnic_back_url)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Verification Actions */}
+                <div className="border-t pt-6">
+                  {selectedUser.cnic_verified === 1 ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center">
+                      <Check className="w-6 h-6 text-green-600 mr-3" />
+                      <div>
+                        <p className="font-semibold text-green-900">Already Verified</p>
+                        <p className="text-sm text-green-700">This user's CNIC has been verified</p>
+                      </div>
+                    </div>
+                  ) : selectedUser.cnic_verified === 2 ? (
+                    <div className="flex gap-4">
+                      <button
+                        onClick={handleVerifyCNIC}
+                        disabled={verifying}
+                        className="flex-1 flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {verifying ? (
+                          <>
+                            <Loader className="w-5 h-5 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-5 h-5 mr-2" />
+                            Approve CNIC
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={handleRejectCNIC}
+                        disabled={verifying}
+                        className="flex-1 flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {verifying ? (
+                          <>
+                            <Loader className="w-5 h-5 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-5 h-5 mr-2" />
+                            Reject CNIC
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-gray-700">
+                        {selectedUser.cnic_verified === 0
+                          ? 'CNIC not submitted yet'
+                          : 'CNIC has been rejected'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

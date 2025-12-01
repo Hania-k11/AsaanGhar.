@@ -43,7 +43,7 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
         <div className="hidden sm:flex flex-1 items-center justify-between">
           {/* Center - Nav Links */}
           <nav className="flex space-x-2 mx-auto">
-            {/* <button
+            <button
               onClick={() => setNavbarActive("properties")}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 navbarActive === "properties"
@@ -53,19 +53,19 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
             >
               <Home className="w-4 h-4 mr-2" />
               Properties
-            </button> */}
-{/* 
+            </button>
+
             <button
-              onClick={() => setNavbarActive("admins")}
+              onClick={() => setNavbarActive("users")}
               className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                navbarActive === "admins"
+                navbarActive === "users"
                   ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
                   : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
               }`}
             >
               <Users className="w-4 h-4 mr-2" />
-              Admin Users
-            </button> */}
+              Users
+            </button>
 
           </nav>
 
@@ -120,17 +120,17 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
 
             <button
               onClick={() => {
-                setNavbarActive("admins");
+                setNavbarActive("users");
                 setMobileOpen(false);
               }}
               className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                navbarActive === "admins"
+                navbarActive === "users"
                   ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
                   : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
               }`}
             >
               <Users className="w-4 h-4 mr-2" />
-              Admin Users
+              Users
             </button>
           </nav>
 

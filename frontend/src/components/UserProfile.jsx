@@ -440,6 +440,164 @@ const UserProfile = () => {
         onSuccess={handlePhoneVerificationSuccess}
         currentPhone={user?.phone_number}
       />
+
+       {/* Edit Profile Modal */}
+            <AnimatePresence>
+              {showEditModal && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-50 flex justify-center p-4 pt-20 sm:pt-24 md:pt-18 overflow-y-auto"
+                  style={{ backdropFilter: "blur(10px)", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 20 }}
+                    className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl text-gray-900 dark:text-gray-100"
+                  >
+                    <div className="flex items-center justify-between mb-8">
+                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Profile</h3>
+                      <button
+                        onClick={handleCancel}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    </div>
+      
+                    <div className="space-y-6">
+                      {/* Profile Image */}
+                      <div className="flex items-center space-x-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
+                        <div className="w-24 h-24 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                          {editData.profileImage ? (
+                            <img
+                              src={editData.profileImage || "/placeholder.svg"}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            generatePlaceholderImage(editData.first_name, editData.last_name)
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Photo URL</p>
+                          <input
+                            type="text"
+                            value={editData.profileImage}
+                            onChange={(e) => handleInputChange("profileImage", e.target.value)}
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="Enter image URL"
+                          />
+                        </div>
+                      </div>
+      
+                      {/* Name Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            First Name
+                          </label>
+                          <input
+                            type="text"
+                            value={editData.first_name}
+                            onChange={(e) => handleInputChange("first_name", e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="First Name"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                          <input
+                            type="text"
+                            value={editData.last_name}
+                            onChange={(e) => handleInputChange("last_name", e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="Last Name"
+                          />
+                        </div>
+                      </div>
+      
+                      {/* Contact Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Email Address
+                          </label>
+                          <input
+                            type="email"
+                            value={editData.email}
+                            onChange={(e) => handleInputChange("email", e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="Email Address"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            value={editData.phone_number}
+                            onChange={(e) => handleInputChange("phone_number", e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="Phone Number"
+                          />
+                        </div>
+                      </div>
+      
+                      {/* Age and Gender */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Age</label>
+                          <input
+                            type="number"
+                            value={editData.age}
+                            onChange={(e) => handleInputChange("age", Number.parseInt(e.target.value) || 0)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                            placeholder="Age"
+                            min="1"
+                            max="120"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gender</label>
+                          <select
+                            value={editData.gender}
+                            onChange={(e) => handleInputChange("gender", e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                          >
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Prefer not to say">Prefer not to say</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+      
+                    {/* Modal Actions */}
+                    <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={handleCancel}
+                        className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-3 px-6 rounded-full font-medium transition-colors transform hover:-translate-y-0.5"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-6 rounded-full flex items-center justify-center space-x-2 font-medium transition-colors transform hover:-translate-y-0.5"
+                      >
+                        <Save className="w-5 h-5" />
+                        <span>Save Changes</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
       </div>
 
           )

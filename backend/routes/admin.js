@@ -45,6 +45,26 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
     const totalCount = results[1]?.[0]?.total_count || 0;
     const totalPages = Math.ceil(totalCount / limit);
 
+    // Enrich properties with user verification status
+    const enrichedProperties = await Promise.all(
+      properties.map(async (property) => {
+        const [userRows] = await pool.query(
+          `SELECT first_name, last_name, cnic_verified 
+           FROM users 
+           WHERE user_id = ? AND is_deleted = FALSE`,
+          [property.owner_id]
+        );
+        
+        const user = userRows[0] || {};
+        
+        return {
+          ...property,
+          owner_first_name: user.first_name || 'N/A',
+          owner_last_name: user.last_name || 'N/A',
+          owner_cnic_verified: user.cnic_verified || 0,
+        };
+      })
+    );
 
     const [statsRows] = await pool.query(
       `
@@ -73,7 +93,7 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
 
     res.json({
       success: true,
-      data: properties,
+      data: enrichedProperties,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -271,6 +291,206 @@ router.get('/properties/:id/documents', authenticateAdmin, async (req, res) => {
     res.json({ success: true, documents });
   } catch (err) {
     console.error('Error fetching property documents:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// ============= USER MANAGEMENT ENDPOINTS =============
+
+// Get all users with pagination and filtering
+router.get('/users', authenticateAdmin, async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      sort_by = 'created_at',
+      sort_order = 'DESC',
+      verification_status,
+      search = ''
+    } = req.query;
+
+    // Build WHERE clause for filtering
+    let whereClause = 'WHERE u.is_deleted = FALSE';
+    const queryParams = [];
+
+    // Filter by verification status
+    if (verification_status && verification_status !== 'all') {
+      if (verification_status === 'pending') {
+        whereClause += ' AND u.cnic_verified = 2';
+      } else if (verification_status === 'verified') {
+        whereClause += ' AND u.cnic_verified = 1';
+      } else if (verification_status === 'rejected') {
+        whereClause += ' AND u.cnic_verified = 3';
+      } else if (verification_status === 'not_submitted') {
+        whereClause += ' AND u.cnic_verified = 0';
+      }
+    }
+
+    // Search filter
+    if (search) {
+      whereClause += ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ? OR u.cnic LIKE ?)';
+      const searchPattern = `%${search}%`;
+      queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+
+    // Get total count
+    const [countResult] = await pool.query(
+      `SELECT COUNT(*) as total FROM users u ${whereClause}`,
+      queryParams
+    );
+    const totalCount = countResult[0].total;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Validate sort_by to prevent SQL injection
+    const allowedSortFields = ['created_at', 'first_name', 'last_name', 'email', 'cnic_verified'];
+    const sortField = allowedSortFields.includes(sort_by) ? sort_by : 'created_at';
+    const sortOrder = sort_order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
+    // Calculate offset
+    const offset = (Number(page) - 1) * Number(limit);
+
+    // Get users with pagination
+    const [users] = await pool.query(
+      `SELECT 
+        u.user_id,
+        u.first_name,
+        u.last_name,
+        u.email,
+        u.phone_number,
+        u.cnic,
+        u.cnic_front_url,
+        u.cnic_back_url,
+        u.cnic_verified,
+        u.created_at,
+        u.status,
+        u.city,
+        u.is_verified
+      FROM users u
+      ${whereClause}
+      ORDER BY u.${sortField} ${sortOrder}
+      LIMIT ? OFFSET ?`,
+      [...queryParams, Number(limit), offset]
+    );
+
+    // Get stats
+    const [statsRows] = await pool.query(
+      `SELECT 
+        COUNT(*) as totalUsers,
+        SUM(CASE WHEN cnic_verified = 2 THEN 1 ELSE 0 END) as pendingVerifications,
+        SUM(CASE WHEN cnic_verified = 1 THEN 1 ELSE 0 END) as verifiedUsers,
+        SUM(CASE WHEN cnic_verified = 3 THEN 1 ELSE 0 END) as rejectedUsers,
+        SUM(CASE WHEN cnic_verified = 0 THEN 1 ELSE 0 END) as notSubmittedUsers
+      FROM users 
+      WHERE is_deleted = FALSE`
+    );
+
+    const stats = statsRows[0] || {};
+
+    res.json({
+      success: true,
+      data: users,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        totalCount,
+        totalPages,
+      },
+      stats,
+    });
+  } catch (err) {
+    console.error('Error fetching users:', err);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+// Approve CNIC verification
+router.post('/users/:id/verify-cnic', authenticateAdmin, async (req, res) => {
+  const userId = req.params.id;
+  
+  try {
+    // Check current verification status
+    const [userRows] = await pool.query(
+      'SELECT cnic_verified, first_name, last_name FROM users WHERE user_id = ? AND is_deleted = FALSE',
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = userRows[0];
+
+    // If already verified, return success with a message
+    if (user.cnic_verified === 1) {
+      return res.json({ 
+        success: true, 
+        message: 'CNIC is already verified',
+        alreadyVerified: true 
+      });
+    }
+
+    // Only allow verification if status is pending (2)
+    if (user.cnic_verified !== 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'CNIC verification can only be approved for pending requests' 
+      });
+    }
+
+    // Update to verified
+    await pool.query(
+      'UPDATE users SET cnic_verified = 1 WHERE user_id = ?',
+      [userId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: `CNIC verified for ${user.first_name} ${user.last_name}` 
+    });
+  } catch (err) {
+    console.error('Error verifying CNIC:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Reject CNIC verification
+router.post('/users/:id/reject-cnic', authenticateAdmin, async (req, res) => {
+  const userId = req.params.id;
+  
+  try {
+    // Check current verification status
+    const [userRows] = await pool.query(
+      'SELECT cnic_verified, first_name, last_name FROM users WHERE user_id = ? AND is_deleted = FALSE',
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = userRows[0];
+
+    // Only allow rejection if status is pending (2)
+    if (user.cnic_verified !== 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'CNIC verification can only be rejected for pending requests' 
+      });
+    }
+
+    // Update to rejected
+    await pool.query(
+      'UPDATE users SET cnic_verified = 3 WHERE user_id = ?',
+      [userId]
+    );
+
+    res.json({ 
+      success: true, 
+      message: `CNIC rejected for ${user.first_name} ${user.last_name}` 
+    });
+  } catch (err) {
+    console.error('Error rejecting CNIC:', err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
