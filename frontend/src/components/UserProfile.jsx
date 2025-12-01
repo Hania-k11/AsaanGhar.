@@ -290,7 +290,7 @@ const UserProfile = () => {
                         alt="CNIC Front"
                         className="w-full h-48 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-600"
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-xl flex items-center justify-center pointer-events-none">
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all rounded-xl flex items-center justify-center pointer-events-none">
                         <span className="text-white opacity-0 group-hover:opacity-100 font-medium">Front</span>
                       </div>
                     </div>
@@ -300,7 +300,7 @@ const UserProfile = () => {
                         alt="CNIC Back"
                         className="w-full h-48 object-cover rounded-xl border-2 border-gray-200 dark:border-gray-600"
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-xl flex items-center justify-center pointer-events-none">
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all rounded-xl flex items-center justify-center pointer-events-none">
                         <span className="text-white opacity-0 group-hover:opacity-100 font-medium">Back</span>
                       </div>
                     </div>
