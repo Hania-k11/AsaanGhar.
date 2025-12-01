@@ -358,7 +358,7 @@ const UserProfile = () => {
         </div>
 
         {/* Phone Verification Card */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+        <div id="phone-verification" className="mt-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8 scroll-mt-24">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8 flex items-center space-x-3">
             <Shield className="w-6 h-6 text-emerald-500" />
             <span>Phone Verification</span>

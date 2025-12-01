@@ -107,11 +107,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     ownerName: "",
     ownerEmail: "",
     phoneNumber: "",
-    whatsappNumber: "",
     contactPreferences: {
       email: false,
       phone: false,
-      whatsapp: false,
     },
     furnishing: "",
     floor: "",
@@ -186,6 +184,33 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Auto-populate email, phone, and name from user data
+  useEffect(() => {
+    if (user) {
+      const updates = {};
+      
+      if (user.email) {
+        updates.ownerEmail = user.email;
+      }
+      
+      if (user.phone_number) {
+        updates.phoneNumber = user.phone_number;
+      }
+      
+      // Auto-populate owner name from first_name and last_name
+      if (user.first_name || user.last_name) {
+        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+        if (fullName) {
+          updates.ownerName = fullName;
+        }
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        setFormData((prev) => ({ ...prev, ...updates }));
+      }
+    }
+  }, [user]);
+
   // Persist form data and current step per-user
   useEffect(() => {
     if (!user?.user_id) return;
@@ -214,7 +239,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     ownerName: useRef(),
     ownerEmail: useRef(),
     phoneNumber: useRef(),
-    whatsappNumber: useRef(),
     images: useRef(),
     documents: useRef(),
     contactPreferences: useRef(),
@@ -234,7 +258,6 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       "ownerName",
       "ownerEmail",
       "phoneNumber",
-      "whatsappNumber",
       "images",
       "documents",
       "contactPreferences",
@@ -465,32 +488,46 @@ const handleChange = (e) => {
     }
 
     if (step === 2) {
-      //  Description (Min/Max already good)
+      console.log("Validating Step 2 with formData:", {
+        description: formData.description,
+        furnishing: formData.furnishing,
+        maintenance: formData.maintenance,
+        bedrooms: formData.bedrooms,
+        bathrooms: formData.bathrooms,
+        yearBuilt: formData.yearBuilt,
+        availableFrom: formData.availableFrom
+      });
+
+      //  Description
       if (!formData.description) {
           newErrors.description = "Description is required";
-        } else if (formData.description.length < 100) {
-          newErrors.description = "Description must be at least 100 characters long for a complete listing.";
+          console.log("❌ Description is missing");
         } else if (formData.description.length > 2000) {
           newErrors.description = "Description cannot exceed 2000 characters.";
+          console.log("❌ Description too long");
         }
 
-      if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required";
+      if (!formData.furnishing) {
+        newErrors.furnishing = "Furnishing status is required";
+        console.log("❌ Furnishing is missing");
+      }
 
       //  Maintenance (Required check is present, adding range/format)
       if (!formData.maintenance) {
         newErrors.maintenance = "Monthly Maintenance is required";
+        console.log("❌ Maintenance is missing");
       } else {
         validateNumber(formData.maintenance, 'maintenance', 0, 500000, true); // Min 0, Max 500,000
       }
 
-      // Bedrooms (New numerical validation)
+      // Bedrooms (numerical validation - must be positive)
       if (formData.bedrooms) {
-        validateNumber(formData.bedrooms, 'bedrooms', 0, 20); // Min 0, Max 20
+        validateNumber(formData.bedrooms, 'bedrooms', 1, 20, false); // Min 1, Max 20, no zero allowed
       }
 
-      //  Bathrooms (New numerical validation)
+      //  Bathrooms (numerical validation - must be positive)
       if (formData.bathrooms) {
-        validateNumber(formData.bathrooms, 'bathrooms', 0, 10); // Min 0, Max 10 
+        validateNumber(formData.bathrooms, 'bathrooms', 1, 10, false); // Min 1, Max 10, no zero allowed
       }
 
       // Year Built (New date/range validation)
@@ -499,6 +536,7 @@ const handleChange = (e) => {
         const yearValue = Number(formData.yearBuilt);
         if (isNaN(yearValue) || yearValue < 1800 || yearValue > currentYear) {
           newErrors.yearBuilt = `Year built must be a valid year between 1800 and ${currentYear}.`;
+          console.log("❌ Year built is invalid");
         }
       }
 
@@ -508,36 +546,89 @@ const handleChange = (e) => {
         const today = new Date().setHours(0, 0, 0, 0);
         if (availableDate < today) {
           newErrors.availableFrom = "Availability date cannot be in the past.";
+          console.log("❌ Available from date is in the past");
         }
       }
 
+      console.log("Step 2 validation errors:", newErrors);
     }
     if (step === 4) {
-      if (!formData.ownerName) newErrors.ownerName = "Owner name is required";
-      if (!formData.ownerEmail) newErrors.ownerEmail = "Email is required";
-      if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
-      if (formData.images.length === 0) newErrors.images = "At least one image is required";
+      console.log("🔍 Validating Step 4 with data:", {
+        ownerName: formData.ownerName,
+        ownerEmail: formData.ownerEmail,
+        phoneNumber: formData.phoneNumber,
+        images: formData.images?.length,
+        contactPreferences: formData.contactPreferences,
+        user_phone_verified: user?.phone_verified
+      });
 
-      const hasContactPreference = Object.values(formData.contactPreferences).some((pref) => pref);
-      if (!hasContactPreference) newErrors.contactPreferences = "Select at least one contact method";
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) newErrors.ownerEmail = "Enter a valid email";
-
-      //  Stricter Pakistan Phone Number Check (Based on UI hints)
-      const phoneRegexPakistan = /^3[0-9]{9}$/; // Starts with '3' and is exactly 10 digits total
-      const cleanPhone = (num) => num ? num.replace(/[^0-9]/g, '') : '';
-
-      if (formData.phoneNumber) {
-        if (!phoneRegexPakistan.test(cleanPhone(formData.phoneNumber))) {
+      // Owner Name validation
+      if (!formData.ownerName || !formData.ownerName.trim()) {
+        newErrors.ownerName = "Owner name is required";
+        console.log("❌ Owner name validation failed");
+      } else {
+        console.log("✅ Owner name validation passed");
+      }
+      
+      // Email validation
+      if (!formData.ownerEmail) {
+        newErrors.ownerEmail = "Email is required";
+        console.log("❌ Email validation failed: missing");
+      } else {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.ownerEmail)) {
+          newErrors.ownerEmail = "Enter a valid email";
+          console.log("❌ Email validation failed: invalid format");
+        } else {
+          console.log("✅ Email validation passed");
+        }
+      }
+      
+      // Phone number validation
+      if (!formData.phoneNumber) {
+        newErrors.phoneNumber = "Phone number is required. Please add it in your profile.";
+        console.log("❌ Phone validation failed: missing");
+      } else {
+        // Validate phone format
+        const phoneRegexPakistan = /^3[0-9]{9}$/; // Starts with '3' and is exactly 10 digits total
+        const cleanPhone = (num) => num ? num.replace(/[^0-9]/g, '') : '';
+        const cleaned = cleanPhone(formData.phoneNumber);
+        
+        console.log("📞 Phone validation - cleaned:", cleaned, "matches regex:", phoneRegexPakistan.test(cleaned));
+        
+        if (!phoneRegexPakistan.test(cleaned)) {
           newErrors.phoneNumber = "Enter a valid 10-digit phone number starting with '3' (e.g., 3001234567).";
+          console.log("❌ Phone validation failed: invalid format");
+        } else {
+          // Check if phone is verified (only if phone number exists and is valid format)
+          console.log("📞 Phone format valid, checking verification. user.phone_verified:", user?.phone_verified);
+          if (!user?.phone_verified || user.phone_verified !== 1) {
+            newErrors.phoneNumber = "Phone number must be verified. Please go to your profile to verify.";
+            console.log("❌ Phone validation failed: not verified");
+          } else {
+            console.log("✅ Phone validation passed");
+          }
         }
       }
-      if (formData.whatsappNumber) {
-        if (!phoneRegexPakistan.test(cleanPhone(formData.whatsappNumber))) {
-          newErrors.whatsappNumber = "Enter a valid 10-digit WhatsApp number starting with '3'.";
-        }
+      
+      // Images validation
+      if (!formData.images || formData.images.length === 0) {
+        newErrors.images = "At least one image is required";
+        console.log("❌ Images validation failed");
+      } else {
+        console.log("✅ Images validation passed:", formData.images.length, "images");
       }
+
+      // Contact preferences validation
+      const hasContactPreference = Object.values(formData.contactPreferences).some((pref) => pref);
+      if (!hasContactPreference) {
+        newErrors.contactPreferences = "Select at least one contact method";
+        console.log("❌ Contact preferences validation failed");
+      } else {
+        console.log("✅ Contact preferences validation passed:", formData.contactPreferences);
+      }
+
+      console.log("📋 Step 4 validation errors:", newErrors);
     }
     if (step === 5) {
       // (Document validation checks remain unchanged)
@@ -581,7 +672,19 @@ const handleChange = (e) => {
 
 
   const nextStep = () => {
-    if (validateStep(currentStep)) setCurrentStep((prev) => Math.min(prev + 1, 5));
+    console.log("Attempting to move to next step from step:", currentStep);
+    const isValid = validateStep(currentStep);
+    console.log("Validation result:", isValid);
+    if (!isValid) {
+      console.log("Validation errors:", errors);
+      toast.error("Please fill in all required fields correctly before proceeding.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
+    if (isValid) {
+      setCurrentStep((prev) => Math.min(prev + 1, 5));
+    }
   };
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -591,11 +694,22 @@ const handleChange = (e) => {
 
   
 const handleSubmit = async (e) => {
+  console.log("🚀 Starting form submission...");
   console.log("Submitting form with data:", formData);
   e.preventDefault();
-  if (!isLoggedIn) return onLoginClick("submit");
-  if (!validateStep(5)) return;
+  
+  if (!isLoggedIn) {
+    console.log("❌ User not logged in");
+    return onLoginClick("submit");
+  }
+  
+  console.log("✅ User is logged in, validating step 5...");
+  if (!validateStep(5)) {
+    console.log("❌ Step 5 validation failed");
+    return;
+  }
 
+  console.log("✅ Step 5 validation passed, starting submission...");
   setIsSubmitting(true);
 
   try {
@@ -603,6 +717,8 @@ const handleSubmit = async (e) => {
     const amenitiesList = Object.keys(formData.amenities || {})
       .filter((key) => formData.amenities[key])
       .join(",");
+
+    console.log("📋 Amenities list:", amenitiesList);
 
     // 2️⃣ Build payload for insert-all (JSON only)
     console.log("User ID for owner_id:", user?.user_id);
@@ -633,10 +749,8 @@ const handleSubmit = async (e) => {
       contact_name: formData.ownerName,
       contact_email: formData.ownerEmail,
       contact_phone: formData.phoneNumber,
-      contact_whatsapp: formData.whatsappNumber,
       pref_email: formData.contactPreferences.email ? 1 : 0,
       pref_phone: formData.contactPreferences.phone ? 1 : 0,
-      pref_whatsapp: formData.contactPreferences.whatsapp ? 1 : 0,
       amenities: amenitiesList,
       // No file URLs here; files will be uploaded in step 3
       images: [],
@@ -659,6 +773,15 @@ const handleSubmit = async (e) => {
       }
     });
 
+    // Add files
+    console.log("📎 Adding files to FormData:");
+    console.log("  - Images:", (formData.images || []).length);
+    console.log("  - CNIC Front:", formData.cnicFront ? "Yes" : "No");
+    console.log("  - CNIC Back:", formData.cnicBack ? "Yes" : "No");
+    console.log("  - Property Papers:", (formData.propertyPapers || []).length);
+    console.log("  - Utility Bills:", (formData.utilityBill || []).length);
+    console.log("  - Other Docs:", (formData.otherDocs || []).length);
+
     (formData.images || []).forEach((img) => form.append("images", img));
     if (formData.cnicFront) form.append("cnicFront", formData.cnicFront);
     if (formData.cnicBack) form.append("cnicBack", formData.cnicBack);
@@ -666,9 +789,12 @@ const handleSubmit = async (e) => {
     (formData.utilityBill || []).forEach((doc) => form.append("utilityBill", doc));
     (formData.otherDocs || []).forEach((doc) => form.append("otherDocs", doc));
 
+    console.log("🌐 Sending POST request to /api/property/insert-all...");
     const response = await axios.post("/api/property/insert-all", form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+
+    console.log("✅ Server response:", response);
 
     if (response.status === 201 || response.status === 200) {
       toast.success("Property listing created successfully!", {
@@ -685,19 +811,35 @@ const handleSubmit = async (e) => {
         localStorage.removeItem(`rentFormData_${user.user_id}`);
         localStorage.removeItem(`rentFormStep_${user.user_id}`);
       }
+      
+      console.log("✅ Form reset and localStorage cleared");
     }
   } catch (error) {
-    console.error("Error creating property listing:", error);
-    toast.error(
-      error.response?.data?.message ||
-        "Error creating property listing. Please try again.",
-      {
-        position: "top-right",
-        autoClose: 5000,
-      }
-    );
+    console.error("❌ Error creating property listing:", error);
+    console.error("❌ Error details:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+    });
+    
+    let errorMessage = "Error creating property listing. Please try again.";
+    
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    toast.error(errorMessage, {
+      position: "top-right",
+      autoClose: 5000,
+    });
   } finally {
     setIsSubmitting(false);
+    console.log("🏁 Submission process completed");
   }
 };
 
@@ -1070,9 +1212,12 @@ const handleSubmit = async (e) => {
                       value={formData.bedrooms}
                       onChange={handleChange}
                       placeholder="3"
-                      min="0"
-                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                      min="1"
+                      className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
+                        errors.bedrooms ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                      }`}
                     />
+                    {errors.bedrooms && <p className="text-red-500 text-sm mt-1">{errors.bedrooms}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Bathrooms</label>
@@ -1082,9 +1227,12 @@ const handleSubmit = async (e) => {
                       value={formData.bathrooms}
                       onChange={handleChange}
                       placeholder="2"
-                      min="0"
-                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                      min="1"
+                      className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
+                        errors.bathrooms ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                      }`}
                     />
+                    {errors.bathrooms && <p className="text-red-500 text-sm mt-1">{errors.bathrooms}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Year Built</label>
@@ -1350,97 +1498,121 @@ const handleSubmit = async (e) => {
                 <h3 className="text-xl font-semibold text-gray-900 mb-6">Contact Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Owner/Agent Name *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Owner/Agent Name *
+                      <span className="ml-2 text-xs text-gray-500 font-normal">(From your account)</span>
+                    </label>
                     <input
                       ref={refs.ownerName}
                       type="text"
                       name="ownerName"
                       value={formData.ownerName}
-                      onChange={handleChange}
-                      placeholder="Your full name"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.ownerName ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                      readOnly
+                      disabled
+                      className={`w-full px-4 py-4 border-2 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed transition-all duration-200 ${
+                        errors.ownerName ? "border-red-300" : "border-gray-200"
                       }`}
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      To change your name, please update it in{" "}
+                      <a href="/my-profile" className="text-emerald-600 hover:text-emerald-700 font-medium underline">
+                        My Profile
+                      </a>
+                    </p>
                     {errors.ownerName && <p className="text-red-500 text-sm mt-1">{errors.ownerName}</p>}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Address *
+                      <span className="ml-2 text-xs text-gray-500 font-normal">(From your account)</span>
+                    </label>
                     <input
                       ref={refs.ownerEmail}
                       type="email"
                       name="ownerEmail"
                       value={formData.ownerEmail}
-                      onChange={handleChange}
-                      placeholder="your.email@gmail.com"
-                      className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                        errors.ownerEmail ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                      }`}
+                      readOnly
+                      disabled
+                      className="w-full px-4 py-4 border-2 rounded-xl bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200"
                     />
-                    {errors.ownerEmail && <p className="text-red-500 text-sm mt-1">{errors.ownerEmail}</p>}
+                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed here</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
-                    <div className="flex items-center">
-                      <span className="px-3 py-4 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-700 font-medium">+92</span>
-                      <input
-                        ref={refs.phoneNumber}
-                        type="tel"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, "");
-                          if (value.startsWith("0")) value = value.slice(1);
-                          if (value.length > 10) value = value.slice(0, 10);
-                          setFormData({ ...formData, phoneNumber: value });
-                        }}
-                        placeholder="3001234567"
-                        className={`w-full px-4 py-4 border-2 rounded-r-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                          errors.phoneNumber ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                        }`}
-                      />
-                    </div>
-
-                    {formData.phoneNumber && formData.phoneNumber[0] !== "3" ? (
-                      <p className="text-red-500 text-sm mt-1">Number must start with 3 (e.g., 3001234567)</p>
-                    ) : formData.phoneNumber && formData.phoneNumber.length !== 10 ? (
-                      <p className="text-red-500 text-sm mt-1">Number must be exactly 10 digits</p>
-                    ) : null}
-
-                    {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">WhatsApp Number</label>
-                    <div className="flex items-center">
-                      <span className="px-3 py-4 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-700 font-medium">+92</span>
-                      <input
-                        ref={refs.whatsappNumber}
-                        type="tel"
-                        name="whatsappNumber"
-                        value={formData.whatsappNumber}
-                        onChange={(e) => {
-                          let value = e.target.value.replace(/\D/g, "");
-                          if (value.startsWith("0")) value = value.slice(1);
-                          if (value.length > 10) value = value.slice(0, 10);
-                          setFormData({ ...formData, whatsappNumber: value });
-                        }}
-                        placeholder="3001234567"
-                        className={`w-full px-4 py-4 border-2 rounded-r-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
-                          errors.whatsappNumber ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
-                        }`}
-                      />
-                    </div>
-
-                    {formData.whatsappNumber && formData.whatsappNumber[0] !== "3" ? (
-                      <p className="text-red-500 text-sm mt-1">Number must start with 3 (e.g., 3001234567)</p>
-                    ) : formData.whatsappNumber && formData.whatsappNumber.length !== 10 ? (
-                      <p className="text-red-500 text-sm mt-1">Number must be exactly 10 digits</p>
-                    ) : null}
-
-                    {errors.whatsappNumber && <p className="text-red-500 text-sm mt-1">{errors.whatsappNumber}</p>}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Phone Number *
+                      <span className="ml-2 text-xs text-gray-500 font-normal">(From your account)</span>
+                    </label>
+                    
+                    {user?.phone_number ? (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center flex-1">
+                            <span className="px-3 py-4 bg-gray-100 border border-r-0 border-gray-200 rounded-l-xl text-gray-700 font-medium">+92</span>
+                            <input
+                              ref={refs.phoneNumber}
+                              type="tel"
+                              name="phoneNumber"
+                              value={formData.phoneNumber}
+                              readOnly
+                              disabled
+                              className="w-full px-4 py-4 border-2 rounded-r-xl bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200"
+                            />
+                          </div>
+                          
+                          {user?.phone_verified === 1 ? (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border-2 border-emerald-500 rounded-xl">
+                              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <span className="text-sm font-semibold text-emerald-700">Verified</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 border-2 border-amber-500 rounded-xl">
+                              <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                              </svg>
+                              <span className="text-sm font-semibold text-amber-700">Not Verified</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {user?.phone_verified !== 1 && (
+                          <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                            <p className="text-sm text-amber-800 mb-2">
+                              <strong>⚠️ Phone verification required:</strong> Please verify your phone number to publish this listing.
+                            </p>
+                            <a
+                              href="/my-profile?tab=profile#phone-verification"
+                              className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              Go to Profile to Verify
+                            </a>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="mt-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800 mb-3">
+                          <strong>❌ Phone number required:</strong> You need to add and verify your phone number before publishing a listing.
+                        </p>
+                        <a
+                          href="/my-profile?tab=profile#phone-verification"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Go to Profile to Add Phone Number
+                        </a>
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-gray-500 mt-2">Phone number cannot be changed here. Go to your profile to update.</p>
                   </div>
                 </div>
               </div>
@@ -1448,7 +1620,7 @@ const handleSubmit = async (e) => {
               {/* Contact Preferences */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">How do you want buyers to contact you? *</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label
                     ref={refs.contactPreferences}
                     className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
@@ -1509,37 +1681,6 @@ const handleSubmit = async (e) => {
                         Phone Call
                       </span>
                       <p className="text-xs text-gray-500">Allow direct phone calls</p>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      formData.contactPreferences.whatsapp ? "border-emerald-500 bg-emerald-50 shadow-sm" : "border-gray-200 hover:border-emerald-300"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      name="contactPreferences.whatsapp"
-                      checked={formData.contactPreferences.whatsapp}
-                      onChange={handleChange}
-                      className="sr-only"
-                    />
-                    <div
-                      className={`flex items-center justify-center w-10 h-10 rounded-lg mr-3 transition-all duration-200 ${
-                        formData.contactPreferences.whatsapp ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-400"
-                      }`}
-                    >
-                      {formData.contactPreferences.whatsapp ? "✓" : "💬"}
-                    </div>
-                    <div>
-                      <span
-                        className={`text-sm font-semibold transition-colors duration-200 ${
-                          formData.contactPreferences.whatsapp ? "text-emerald-700" : "text-gray-700"
-                        }`}
-                      >
-                        WhatsApp
-                      </span>
-                      <p className="text-xs text-gray-500">Chat via WhatsApp</p>
                     </div>
                   </label>
                 </div>

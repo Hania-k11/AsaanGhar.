@@ -161,8 +161,8 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // Set cookie
-    res.cookie("token", token, {
+    // Set cookie with separate name for admin
+    res.cookie("adminToken", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
@@ -199,7 +199,7 @@ router.post("/login", async (req, res) => {
 
 // Logout endpoint
 router.post("/logout", (req, res) => {
-  res.clearCookie("token");
+  res.clearCookie("adminToken");
   res.json({ success: true, message: "Logged out" });
 });
 

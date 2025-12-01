@@ -20,7 +20,7 @@ function authenticateUser(req, res, next) {
 }
 
 function authenticateAdmin(req, res, next) {
-  const token = req.cookies.token; // ✅ read from cookie
+  const token = req.cookies.adminToken; // ✅ read from adminToken cookie
 
   if (!token) {
     return res.status(401).json({ success: false, message: "No token provided" });
