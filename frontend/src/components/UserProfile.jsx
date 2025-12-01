@@ -423,15 +423,6 @@ const UserProfile = () => {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Upload CNIC Images</h3>
-                <button
-                  onClick={() => setShowCNICModal(false)}
-                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
               <CNICUpload 
                 onUploadSuccess={handleCNICUploadSuccess} 
                 currentCnic={user?.cnic}
