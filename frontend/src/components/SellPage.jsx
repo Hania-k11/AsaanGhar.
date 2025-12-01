@@ -252,7 +252,22 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const ALLOW_DOC_TYPES = ["application/pdf", "image/jpeg", "image/png"];
   const ALLOW_IMG_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-  const handleChange = (e) => {
+  const MAX_FILE_SIZE_MB = 10;
+  const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024; // 10MB
+
+// Helper function to validate file size
+const validateFileSize = (file) => {
+  if (file.size > MAX_FILE_SIZE) {
+    toast.error(`File "${file.name}" exceeds ${MAX_FILE_SIZE_MB}MB limit`, {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    return false;
+  }
+  return true;
+};
+
+const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
 
     if (!isLoggedIn) {
@@ -265,35 +280,55 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       const toArray = (fl) => Array.from(fl || []);
 
       if (name === "images") {
-        const fileArray = toArray(files).filter((f) => ALLOW_IMG_TYPES.includes(f.type));
+        const validTypeFiles = toArray(files).filter((f) => ALLOW_IMG_TYPES.includes(f.type));
+        const validSizeFiles = validTypeFiles.filter(validateFileSize);
+        
+        const currentCount = (formData.images || []).length;
+        const remainingSlots = 5 - currentCount;
+        
+        if (validSizeFiles.length > remainingSlots) {
+          toast.warning(`Only ${remainingSlots} more image(s) can be added (max 5 total)`, {
+            position: "top-right",
+            autoClose: 3000,
+          });
+        }
+        
         setFormData((prev) => ({
           ...prev,
-          images: [...(prev.images || []), ...fileArray].slice(0, 5),
+          images: [...(prev.images || []), ...validSizeFiles].slice(0, 5),
         }));
       } else if (name === "documents") {
-        const fileArray = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validSizeFiles = validTypeFiles.filter(validateFileSize);
+        
         setFormData((prev) => ({
           ...prev,
-          documents: [...(prev.documents || []), ...fileArray].slice(0, 10),
+          documents: [...(prev.documents || []), ...validSizeFiles].slice(0, 10),
         }));
       } else if (name === "otherDocs") {
-        const fileArray = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validSizeFiles = validTypeFiles.filter(validateFileSize);
+        
         setFormData((prev) => ({
           ...prev,
-          otherDocs: [...(prev.otherDocs || []), ...fileArray].slice(0, 10),
+          otherDocs: [...(prev.otherDocs || []), ...validSizeFiles].slice(0, 10),
         }));
       } else if (name === "cnicFront" || name === "cnicBack") {
         const file = files && files[0] ? files[0] : null;
         const allow = ALLOW_IMG_TYPES;
+        const isValidFile = file && allow.includes(file.type) && validateFileSize(file);
+        
         setFormData((prev) => ({
           ...prev,
-          [name]: file && allow.includes(file.type) ? file : null,
+          [name]: isValidFile ? file : null,
         }));
       } else if (name === "propertyPapers" || name === "utilityBill") {
-        const fileArray = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
+        const validSizeFiles = validTypeFiles.filter(validateFileSize);
+        
         setFormData((prev) => ({
           ...prev,
-          [name]: [...(prev[name] || []), ...fileArray].slice(0, 10),
+          [name]: [...(prev[name] || []), ...validSizeFiles].slice(0, 10),
         }));
       }
 
@@ -315,6 +350,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+  // Helper functions defined OUTSIDE handleChange
   const removeDocument = (index) => {
     setFormData((prev) => ({
       ...prev,
@@ -358,19 +394,122 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   const validateStep = (step) => {
     const newErrors = {};
+
+    // Helper function for checking numbers
+    const validateNumber = (value, fieldName, min, max, allowZero = true) => {
+      const num = Number(value);
+      if (value === undefined || value === null || value === "") return; // Allow empty/optional fields
+
+      if (isNaN(num) || (!allowZero && num <= 0) || (allowZero && num < 0)) {
+        newErrors[fieldName] = `${fieldName} must be a valid number.`;
+      } else if (num < min) {
+        newErrors[fieldName] = `${fieldName} must be at least ${min}.`;
+      } else if (num > max) {
+        newErrors[fieldName] = `${fieldName} must be no more than ${max}.`;
+      }
+    };
+
     if (step === 1) {
-      if (!formData.title) newErrors.title = "Property title is required";
-      if (!formData.latitude || !formData.longitude) newErrors.address = "Please pin the location on the map.";
+      //  Title
+      if (!formData.title) {
+        newErrors.title = "Property title is required";
+      } else if (formData.title.length < 15) {
+        newErrors.title = "Title must be at least 15 characters long";
+      } else if (formData.title.length > 100) {
+        newErrors.title = "Title must be 100 characters or less";
+      }
+
+      // Location 
+      if (!formData.latitude || !formData.longitude) {
+        newErrors.address = "Please pin the location on the map.";
+      } else {
+        const lat = Number(formData.latitude);
+        const lon = Number(formData.longitude);
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          newErrors.address = "Invalid latitude or longitude coordinates.";
+        }
+      }
+
       if (!formData.location) newErrors.location = "Location is required";
-      if (!formData.rent) newErrors.rent = "Price is required";
+
+      // 3. Price (Refined to include max check and format check)
+      if (!formData.rent) {
+        newErrors.rent = "Price is required";
+      } else {
+        const priceValue = Number(formData.rent);
+        if (isNaN(priceValue) || priceValue <= 0) { // Enforce positive number
+          newErrors.rent = "Price must be a valid number greater than 0.";
+        } else if (priceValue < 1000) {
+          newErrors.rent = "Price must be at least PKR 1,000";
+        } else if (priceValue > 500000000) { // Added Max Price check (e.g., 500 Million PKR) (25 crore)
+          newErrors.rent = "Price seems too high. Please check the value (Max PKR 500,000,000)";
+        }
+      }
+
       if (!formData.propertyType) newErrors.propertyType = "Property type is required";
-      if (!formData.area) newErrors.area = "Area is required";
+
+      // Area 
+      if (!formData.area) {
+        newErrors.area = "Area is required";
+      } else {
+        const areaValue = Number(formData.area);
+        if (isNaN(areaValue) || areaValue <= 0) { // Enforce positive number
+          newErrors.area = "Area must be a valid number greater than 0.";
+        } else if (areaValue <= 80) {
+          newErrors.area = "Area must be at least 80 sqft";
+        } else if (areaValue > 100000) {
+          newErrors.area = "Area seems too large. Please enter a reasonable value (Max 100,000 sqft)";
+        }
+      }
       if (!formData.street_address) newErrors.street_address = "Street address is required";
     }
+
     if (step === 2) {
-      if (!formData.description) newErrors.description = "Description is required";
+      //  Description (Min/Max already good)
+      if (!formData.description) {
+          newErrors.description = "Description is required";
+        } else if (formData.description.length < 100) {
+          newErrors.description = "Description must be at least 100 characters long for a complete listing.";
+        } else if (formData.description.length > 2000) {
+          newErrors.description = "Description cannot exceed 2000 characters.";
+        }
+
       if (!formData.furnishing) newErrors.furnishing = "Furnishing status is required";
-            if (!formData.maintenance) newErrors.maintenance = "Monthly Maintenance is required";
+
+      //  Maintenance (Required check is present, adding range/format)
+      if (!formData.maintenance) {
+        newErrors.maintenance = "Monthly Maintenance is required";
+      } else {
+        validateNumber(formData.maintenance, 'maintenance', 0, 500000, true); // Min 0, Max 500,000
+      }
+
+      // Bedrooms (New numerical validation)
+      if (formData.bedrooms) {
+        validateNumber(formData.bedrooms, 'bedrooms', 0, 20); // Min 0, Max 20
+      }
+
+      //  Bathrooms (New numerical validation)
+      if (formData.bathrooms) {
+        validateNumber(formData.bathrooms, 'bathrooms', 0, 10); // Min 0, Max 10 
+      }
+
+      // Year Built (New date/range validation)
+      if (formData.yearBuilt) {
+        const currentYear = new Date().getFullYear();
+        const yearValue = Number(formData.yearBuilt);
+        if (isNaN(yearValue) || yearValue < 1800 || yearValue > currentYear) {
+          newErrors.yearBuilt = `Year built must be a valid year between 1800 and ${currentYear}.`;
+        }
+      }
+
+      //  Available From (New date validation: must not be in the past)
+      if (formData.availableFrom) {
+        const availableDate = new Date(formData.availableFrom).setHours(0, 0, 0, 0);
+        const today = new Date().setHours(0, 0, 0, 0);
+        if (availableDate < today) {
+          newErrors.availableFrom = "Availability date cannot be in the past.";
+        }
+      }
 
     }
     if (step === 4) {
@@ -384,49 +523,57 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (formData.ownerEmail && !emailRegex.test(formData.ownerEmail)) newErrors.ownerEmail = "Enter a valid email";
-      const phoneRegex = /^[+]?[0-9\s\-]{10,}$/;
-      if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber))
-        newErrors.phoneNumber = "Enter valid phone number";
-      if (formData.whatsappNumber && !phoneRegex.test(formData.whatsappNumber))
-        newErrors.whatsappNumber = "Enter valid WhatsApp number";
+
+      //  Stricter Pakistan Phone Number Check (Based on UI hints)
+      const phoneRegexPakistan = /^3[0-9]{9}$/; // Starts with '3' and is exactly 10 digits total
+      const cleanPhone = (num) => num ? num.replace(/[^0-9]/g, '') : '';
+
+      if (formData.phoneNumber) {
+        if (!phoneRegexPakistan.test(cleanPhone(formData.phoneNumber))) {
+          newErrors.phoneNumber = "Enter a valid 10-digit phone number starting with '3' (e.g., 3001234567).";
+        }
+      }
+      if (formData.whatsappNumber) {
+        if (!phoneRegexPakistan.test(cleanPhone(formData.whatsappNumber))) {
+          newErrors.whatsappNumber = "Enter a valid 10-digit WhatsApp number starting with '3'.";
+        }
+      }
     }
     if (step === 5) {
-  // CNIC Front (required)
-  if (
-    (!formData.cnicFront || formData.cnicFront.length === 0) &&
-    (!formData.cnicFrontUrl || formData.cnicFrontUrl.length === 0)
-  ) {
-    newErrors.cnicFront = "CNIC front image is required";
-  }
+      // (Document validation checks remain unchanged)
+      // CNIC Front (required)
+      if (
+        (!formData.cnicFront || formData.cnicFront.length === 0) &&
+        (!formData.cnicFrontUrl || formData.cnicFrontUrl.length === 0)
+      ) {
+        newErrors.cnicFront = "CNIC front image is required";
+      }
 
-  // CNIC Back (required)
-  if (
-    (!formData.cnicBack || formData.cnicBack.length === 0) &&
-    (!formData.cnicBackUrl || formData.cnicBackUrl.length === 0)
-  ) {
-    newErrors.cnicBack = "CNIC back image is required";
-  }
+      // CNIC Back (required)
+      if (
+        (!formData.cnicBack || formData.cnicBack.length === 0) &&
+        (!formData.cnicBackUrl || formData.cnicBackUrl.length === 0)
+      ) {
+        newErrors.cnicBack = "CNIC back image is required";
+      }
 
-  // Property Papers (required)
-  if (
-    (!formData.propertyPapers || formData.propertyPapers.length === 0) &&
-    (!formData.propertyPapersUrl || formData.propertyPapersUrl.length === 0)
-  ) {
-    newErrors.propertyPapers = "Property papers are required";
-  }
+      // Property Papers (required)
+      if (
+        (!formData.propertyPapers || formData.propertyPapers.length === 0) &&
+        (!formData.propertyPapersUrl || formData.propertyPapersUrl.length === 0)
+      ) {
+        newErrors.propertyPapers = "Property papers are required";
+      }
 
-  // Utility Bill (required)
-  if (
-    (!formData.utilityBill || formData.utilityBill.length === 0) &&
-    (!formData.utilityBillUrl || formData.utilityBillUrl.length === 0)
-  ) {
-    newErrors.utilityBill = "Latest utility bill is required";
-  }
+      // Utility Bill (required)
+      if (
+        (!formData.utilityBill || formData.utilityBill.length === 0) &&
+        (!formData.utilityBillUrl || formData.utilityBillUrl.length === 0)
+      ) {
+        newErrors.utilityBill = "Latest utility bill is required";
+      }
+    }
 
-}
-
-    // Step 5: make documents optional so publishing works without uploading files
-    // (We keep the UI but do not block submission.)
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) scrollToFirstError(newErrors);
     return Object.keys(newErrors).length === 0;

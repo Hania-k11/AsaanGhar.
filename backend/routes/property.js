@@ -6,6 +6,10 @@ const { upload } = require("../utils/cloudinary.js");
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const fs = require('fs');
+
+const SERVER_MAX_FILE_SIZE_MB = 10;
+const SERVER_MAX_FILE_SIZE_BYTES = SERVER_MAX_FILE_SIZE_MB * 1024 * 1024;
 
 
 // ----------------------
@@ -1071,6 +1075,36 @@ router.post(
     try {
       if (!req.files || Object.keys(req.files).length === 0) {
         return res.status(400).json({ success: false, message: "No files uploaded" });
+      }
+
+      //  SERVER-SIDE FILE SIZE VALIDATION 
+      const allFiles = [];
+      for (const key in req.files) {
+        // req.files[key] is an array of file objects from multer
+        allFiles.push(...req.files[key]);
+      }
+
+      const oversizedFile = allFiles.find(file => file.size > SERVER_MAX_FILE_SIZE_BYTES);
+
+      if (oversizedFile) {
+        
+        //  CLEANUP LOGIC: Delete all files Multer saved
+        //  // Server-side cleanup: Multer saves files to disk immediately. 
+        // MEANS: If validation fails (file too large), we must manually delete all temporary 
+        // files to prevent disk usage and security risks.
+        for (const file of allFiles) {
+          try {
+            // The `path` property holds the temporary location where Multer saved the file
+            fs.unlinkSync(file.path); 
+          } catch (err) {
+            console.error(`Failed to delete temporary file: ${file.path}`, err);
+          }
+        }
+        
+        return res.status(413).json({ 
+          success: false, 
+          message: `File upload failed: File "${oversizedFile.originalname}" exceeds the ${SERVER_MAX_FILE_SIZE_MB}MB limit.` 
+        });
       }
 
       const imageData = [];

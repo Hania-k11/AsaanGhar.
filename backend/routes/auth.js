@@ -122,10 +122,10 @@ router.post("/google-login", async (req, res) => {
 // =====================
 router.post("/signup", async (req, res) => {
   try {
-    const { firstName, lastName, email, password, gender, phone, jobTitle } = req.body;
+    const { firstName, lastName, email, password, gender, jobTitle } = req.body;
 
-    // Validate required fields
-    if (!firstName || !lastName || !email || !password || !gender || !phone) {
+    // Validate required fields (phone is now optional)
+    if (!firstName || !lastName || !email || !password || !gender) {
       return res.status(400).json({ error: "All required fields must be provided" });
     }
 
@@ -140,12 +140,6 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ error: "Password must be at least 6 characters long" });
     }
 
-    // Validate phone format (should be 10 digits for Pakistan)
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(phone)) {
-      return res.status(400).json({ error: "Phone number must be 10 digits" });
-    }
-
     // Check if email already exists
     const [emailCheck] = await pool.query(
       "SELECT user_id FROM users WHERE email = ? AND is_deleted = FALSE LIMIT 1",
@@ -156,32 +150,32 @@ router.post("/signup", async (req, res) => {
       return res.status(409).json({ error: "Email already registered" });
     }
 
-    // Check if phone already exists
-    const [phoneCheck] = await pool.query(
-      "SELECT user_id FROM users WHERE phone_number = ? AND is_deleted = FALSE LIMIT 1",
-      [phone]
+    // Generate email verification code only
+    const emailCode = generateCode();
+
+    // Create user with pending verification status
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    const [insertResult] = await pool.query(
+      `INSERT INTO users 
+       (first_name, last_name, email, password_hash, job_title, gender, 
+        is_verified, status, role, is_deleted) 
+       VALUES (?, ?, ?, ?, ?, ?, FALSE, 'active', 'user', 0)`,
+      [firstName, lastName, email, passwordHash, jobTitle || null, gender]
     );
 
-    if (phoneCheck.length > 0) {
-      return res.status(409).json({ error: "Phone number already registered" });
-    }
+    const userId = insertResult.insertId;
 
-    // Generate verification codes
-    const emailCode = generateCode();
-    const phoneCode = generateCode();
+    // Set expiration to 10 minutes from now
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-    // Create unverified user and store verification codes
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      password,
-      gender,
-      phone,
-      jobTitle: jobTitle || null,
-    };
-
-    const userId = await createUnverifiedUser(userData, emailCode, phoneCode);
+    // Store email verification code only
+    await pool.query(
+      `INSERT INTO verification_codes 
+       (user_id, email_code, expires_at) 
+       VALUES (?, ?, ?)`,
+      [userId, emailCode, expiresAt]
+    );
 
     // Send verification email
     try {
@@ -193,20 +187,9 @@ router.post("/signup", async (req, res) => {
       return res.status(500).json({ error: "Failed to send verification email. Please try again." });
     }
 
-    // Send verification SMS
-    try {
-      await sendVerificationSMS(phone, phoneCode);
-    } catch (smsError) {
-      console.error("Error sending verification SMS:", smsError);
-      // Clean up user if SMS fails
-      await pool.query('DELETE FROM users WHERE user_id = ?', [userId]);
-      return res.status(500).json({ error: "Failed to send verification SMS. Please verify your phone number in Twilio or try again later." });
-    }
-
     return res.json({
-      message: "Verification codes sent successfully to your email and phone",
+      message: "Verification code sent to your email",
       email,
-      phone,
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -219,24 +202,72 @@ router.post("/signup", async (req, res) => {
 // =====================
 router.post("/verify-signup", async (req, res) => {
   try {
-    const { email, phone, emailCode, phoneCode } = req.body;
+    const { email, emailCode } = req.body;
 
     // Validate required fields
-    if (!email || !phone || !emailCode || !phoneCode) {
-      return res.status(400).json({ error: "All verification fields are required" });
+    if (!email || !emailCode) {
+      return res.status(400).json({ error: "Email and verification code are required" });
     }
 
-    // Verify codes and activate user
-    let user;
-    try {
-      user = await verifyAndActivateUser(email, phone, emailCode, phoneCode);
-    } catch (verifyError) {
-      return res.status(400).json({ error: verifyError.message });
+    // Fetch user and verification code
+    const [rows] = await pool.query(
+      `SELECT u.user_id, u.email, u.is_verified, 
+              v.email_code, v.expires_at
+       FROM users u
+       INNER JOIN verification_codes v ON u.user_id = v.user_id
+       WHERE u.email = ? AND u.is_deleted = FALSE
+       LIMIT 1`,
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No verification request found. Please sign up again.' });
     }
+
+    const user = rows[0];
+
+    // Check if already verified
+    if (user.is_verified) {
+      return res.status(400).json({ error: 'User is already verified. Please login.' });
+    }
+
+    // Check if code has expired
+    if (new Date() > new Date(user.expires_at)) {
+      // Clean up expired codes and user
+      await pool.query('DELETE FROM users WHERE user_id = ?', [user.user_id]);
+      return res.status(400).json({ error: 'Verification code has expired. Please sign up again.' });
+    }
+
+    // Verify email code
+    if (user.email_code !== emailCode) {
+      return res.status(400).json({ error: 'Invalid verification code.' });
+    }
+
+    // Activate user
+    await pool.query(
+      `UPDATE users 
+       SET is_verified = TRUE 
+       WHERE user_id = ?`,
+      [user.user_id]
+    );
+
+    // Delete verification code after successful activation
+    await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [user.user_id]);
+
+    // Fetch activated user
+    const [userRows] = await pool.query(
+      `SELECT user_id, first_name, last_name, email, job_title, gender, phone_number,
+              profile_picture_url, bio, city, is_verified, created_at, updated_at,
+              status, role, cnic, cnic_front_url, cnic_back_url, cnic_verified
+       FROM users 
+       WHERE user_id = ? 
+       LIMIT 1`,
+      [user.user_id]
+    );
 
     // Create JWT token
     const token = jwt.sign(
-      { id: user.user_id, role: user.role },
+      { id: userRows[0].user_id, role: userRows[0].role },
       JWT_SECRET,
       { expiresIn: "7d" }
     );
@@ -251,7 +282,7 @@ router.post("/verify-signup", async (req, res) => {
 
     return res.json({
       message: "Account verified successfully! Welcome to AsaanGhar!",
-      user,
+      user: userRows[0],
     });
   } catch (err) {
     console.error("Verify signup error:", err);
@@ -264,37 +295,46 @@ router.post("/verify-signup", async (req, res) => {
 // =====================
 router.post("/resend-code", async (req, res) => {
   try {
-    const { email, phone } = req.body;
+    const { email } = req.body;
 
-    if (!email || !phone) {
-      return res.status(400).json({ error: "Email and phone are required" });
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
     }
 
-    // Resend verification codes
-    let codeData;
-    try {
-      codeData = await resendVerificationCodes(email, phone);
-    } catch (resendError) {
-      return res.status(404).json({ error: resendError.message });
+    // Find unverified user
+    const [userRows] = await pool.query(
+      `SELECT user_id, first_name FROM users 
+       WHERE email = ? AND is_verified = FALSE AND is_deleted = FALSE
+       LIMIT 1`,
+      [email]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: 'No pending verification found. Please sign up again.' });
     }
+
+    const user = userRows[0];
+
+    // Generate new code
+    const emailCode = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    
+    await pool.query(
+      `UPDATE verification_codes 
+       SET email_code = ?, expires_at = ? 
+       WHERE user_id = ?`,
+      [emailCode, expiresAt, user.user_id]
+    );
 
     // Resend verification email
     try {
-      await sendVerificationEmail(email, codeData.emailCode, codeData.firstName);
+      await sendVerificationEmail(email, emailCode, user.first_name);
     } catch (emailError) {
       console.error("Error resending verification email:", emailError);
       return res.status(500).json({ error: "Failed to resend verification email" });
     }
 
-    // Resend verification SMS
-    try {
-      await sendVerificationSMS(phone, codeData.phoneCode);
-    } catch (smsError) {
-      console.error("Error resending verification SMS:", smsError);
-      return res.status(500).json({ error: "Failed to resend verification SMS" });
-    }
-
-    return res.json({ message: "Verification codes resent successfully" });
+    return res.json({ message: "Verification code resent successfully" });
   } catch (err) {
     console.error("Resend code error:", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -316,7 +356,7 @@ router.post("/login", async (req, res) => {
       `SELECT 
          user_id, first_name, last_name, email, job_title, gender, phone_number,
          profile_picture_url, bio, city, is_verified, created_at, updated_at,
-         status, role, password_hash
+         status, role, password_hash, cnic, cnic_front_url, cnic_back_url, cnic_verified
        FROM users 
        WHERE email = ? AND is_deleted = FALSE
        LIMIT 1`,
@@ -379,7 +419,7 @@ router.get("/me", async (req, res) => {
       `SELECT 
          user_id, first_name, last_name, email, job_title, gender, phone_number,
          profile_picture_url, bio, city, is_verified, created_at, updated_at,
-         status, role
+         status, role, cnic, cnic_front_url, cnic_back_url, cnic_verified
        FROM users 
        WHERE user_id = ? AND is_deleted = FALSE
        LIMIT 1`,

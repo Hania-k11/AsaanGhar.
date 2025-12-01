@@ -178,10 +178,102 @@ const cleanupExpiredVerifications = async () => {
   return result.affectedRows;
 };
 
+/**
+ * Send phone verification code for existing user (profile update)
+ * @param {number} userId - User's ID
+ * @param {string} phone - Phone number to verify
+ * @returns {Promise<object>} - Returns generated code
+ */
+const sendPhoneVerificationCode = async (userId, phone) => {
+  // Generate new code
+  const phoneCode = generateCode();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+  // Check if verification code already exists for this user
+  const [existing] = await pool.query(
+    'SELECT id FROM verification_codes WHERE user_id = ? LIMIT 1',
+    [userId]
+  );
+
+  if (existing.length > 0) {
+    // Update existing verification code
+    await pool.query(
+      `UPDATE verification_codes 
+       SET phone_code = ?, expires_at = ? 
+       WHERE user_id = ?`,
+      [phoneCode, expiresAt, userId]
+    );
+  } else {
+    // Create new verification code entry (email_code can be NULL for phone-only verification)
+    await pool.query(
+      `INSERT INTO verification_codes 
+       (user_id, email_code, phone_code, expires_at) 
+       VALUES (?, NULL, ?, ?)`,
+      [userId, phoneCode, expiresAt]
+    );
+  }
+
+  return {
+    phoneCode,
+    phone,
+  };
+};
+
+/**
+ * Verify phone code for existing user (profile update)
+ * @param {number} userId - User's ID
+ * @param {string} phoneCode - Phone verification code provided by user
+ * @param {string} phone - Phone number to update
+ * @returns {Promise<boolean>} - Returns true if verified successfully
+ */
+const verifyPhoneCode = async (userId, phoneCode, phone) => {
+  // Fetch verification code
+  const [rows] = await pool.query(
+    `SELECT phone_code, expires_at
+     FROM verification_codes
+     WHERE user_id = ?
+     LIMIT 1`,
+    [userId]
+  );
+
+  if (rows.length === 0) {
+    throw new Error('No verification code found. Please request a new code.');
+  }
+
+  const verification = rows[0];
+
+  // Check if code has expired
+  if (new Date() > new Date(verification.expires_at)) {
+    // Clean up expired code
+    await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+    throw new Error('Verification code has expired. Please request a new code.');
+  }
+
+  // Verify phone code
+  if (verification.phone_code !== phoneCode) {
+    throw new Error('Invalid verification code.');
+  }
+
+  // Update user's phone number
+  await pool.query(
+    `UPDATE users 
+     SET phone_number = ? 
+     WHERE user_id = ?`,
+    [phone, userId]
+  );
+
+  // Delete verification code after successful verification
+  await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+
+  return true;
+};
+
 module.exports = {
   generateCode,
   createUnverifiedUser,
   verifyAndActivateUser,
   resendVerificationCodes,
   cleanupExpiredVerifications,
+  sendPhoneVerificationCode,
+  verifyPhoneCode,
 };
