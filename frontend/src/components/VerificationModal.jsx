@@ -7,17 +7,15 @@ import { useAuth } from "../context/AuthContext";
 
 const API_BASE_URL = "http://localhost:3001/api";
 
-const VerificationModal = ({ show, onClose, email, phone }) => {
+const VerificationModal = ({ show, onClose, email }) => {
   const { success, error } = useToast();
   const { loginuser } = useAuth();
   
   const [emailCode, setEmailCode] = useState(["", "", "", "", "", ""]);
-  const [phoneCode, setPhoneCode] = useState(["", "", "", "", "", ""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const emailInputRefs = useRef([]);
-  const phoneInputRefs = useRef([]);
 
   // Cooldown timer for resend button
   useEffect(() => {
@@ -35,15 +33,21 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
     newCode[index] = value;
     setCodeArray(newCode);
 
-    // Auto-focus next input
+    // Auto-focus next input with smooth transition
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
+      setTimeout(() => {
+        inputRefs.current[index + 1]?.focus();
+        inputRefs.current[index + 1]?.select();
+      }, 0);
     }
   };
 
   const handleKeyDown = (index, e, codeArray, setCodeArray, inputRefs) => {
     if (e.key === "Backspace" && !codeArray[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+      setTimeout(() => {
+        inputRefs.current[index - 1]?.focus();
+        inputRefs.current[index - 1]?.select();
+      }, 0);
     }
   };
 
@@ -63,16 +67,9 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
     e.preventDefault();
     
     const emailCodeString = emailCode.join("");
-    const phoneCodeString = phoneCode.join("");
 
-    // Both codes are required
     if (emailCodeString.length !== 6) {
       error("Please enter the email verification code");
-      return;
-    }
-
-    if (phoneCodeString.length !== 6) {
-      error("Please enter the phone verification code");
       return;
     }
 
@@ -83,9 +80,7 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
         `${API_BASE_URL}/auth/verify-signup`,
         {
           email,
-          phone,
           emailCode: emailCodeString,
-          phoneCode: phoneCodeString,
         },
         { withCredentials: true }
       );
@@ -111,17 +106,15 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
     try {
       await axios.post(`${API_BASE_URL}/auth/resend-code`, {
         email,
-        phone,
       });
 
-      success("Verification codes resent successfully!");
+      success("Verification code resent successfully!");
       setResendCooldown(60); // 60 second cooldown
       
-      // Clear existing codes
+      // Clear existing code
       setEmailCode(["", "", "", "", "", ""]);
-      setPhoneCode(["", "", "", "", "", ""]);
     } catch (err) {
-      const msg = err.response?.data?.error || "Failed to resend codes. Please try again.";
+      const msg = err.response?.data?.error || "Failed to resend code. Please try again.";
       error(msg);
     }
   };
@@ -183,10 +176,9 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
                 </div>
                 <h2 className="text-2xl font-bold text-emerald-600 mb-2">Verify Your Account</h2>
                 <p className="text-sm text-gray-600">
-                  We've sent verification codes to:
+                  We've sent a verification code to:
                 </p>
                 <p className="text-sm font-medium text-gray-800 mt-1">{email}</p>
-                <p className="text-sm font-medium text-gray-800">+92{phone}</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -202,18 +194,6 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
                   }
                 />
 
-                <CodeInput
-                  label="Phone Verification Code"
-                  codeArray={phoneCode}
-                  setCodeArray={setPhoneCode}
-                  inputRefs={phoneInputRefs}
-                  icon={
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  }
-                />
-
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -224,19 +204,19 @@ const VerificationModal = ({ show, onClose, email, phone }) => {
               </form>
 
               <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600 mb-2">Didn't receive the codes?</p>
+                <p className="text-sm text-gray-600 mb-2">Didn't receive the code?</p>
                 <button
                   onClick={handleResendCode}
                   disabled={resendCooldown > 0}
                   className="text-emerald-600 font-medium text-sm hover:text-emerald-800 transition-colors disabled:text-gray-400 disabled:cursor-not-allowed"
                 >
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Codes"}
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
                 </button>
               </div>
 
               <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="text-xs text-amber-800 text-center">
-                  ⏱️ Codes expire in 10 minutes
+                  ⏱️ Code expires in 10 minutes
                 </p>
               </div>
             </div>

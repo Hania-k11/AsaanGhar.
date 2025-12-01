@@ -256,7 +256,7 @@ router.post("/verify-signup", async (req, res) => {
 
     // Fetch activated user
     const [userRows] = await pool.query(
-      `SELECT user_id, first_name, last_name, email, job_title, gender, phone_number,
+      `SELECT user_id, first_name, last_name, email, job_title, gender, phone_number, phone_verified,
               profile_picture_url, bio, city, is_verified, created_at, updated_at,
               status, role, cnic, cnic_front_url, cnic_back_url, cnic_verified
        FROM users 
@@ -354,7 +354,7 @@ router.post("/login", async (req, res) => {
     // Fetch full row including password_hash in one query
     const [rows] = await pool.query(
       `SELECT 
-         user_id, first_name, last_name, email, job_title, gender, phone_number,
+         user_id, first_name, last_name, email, job_title, gender, phone_number, phone_verified,
          profile_picture_url, bio, city, is_verified, created_at, updated_at,
          status, role, password_hash, cnic, cnic_front_url, cnic_back_url, cnic_verified
        FROM users 
@@ -417,7 +417,7 @@ router.get("/me", async (req, res) => {
     // Optional: fetch fresh user from DB (to get updated info)
     const [rows] = await pool.query(
       `SELECT 
-         user_id, first_name, last_name, email, job_title, gender, phone_number,
+         user_id, first_name, last_name, email, job_title, gender, phone_number, phone_verified,
          profile_picture_url, bio, city, is_verified, created_at, updated_at,
          status, role, cnic, cnic_front_url, cnic_back_url, cnic_verified
        FROM users 

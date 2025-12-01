@@ -254,10 +254,10 @@ const verifyPhoneCode = async (userId, phoneCode, phone) => {
     throw new Error('Invalid verification code.');
   }
 
-  // Update user's phone number
+  // Update user's phone number and set phone_verified = 1
   await pool.query(
     `UPDATE users 
-     SET phone_number = ? 
+     SET phone_number = ?, phone_verified = 1
      WHERE user_id = ?`,
     [phone, userId]
   );

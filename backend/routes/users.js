@@ -216,7 +216,7 @@ router.post('/verify-phone', authenticateUser, async (req, res) => {
 
     // Fetch updated user data
     const [userRows] = await pool.query(
-      `SELECT user_id, first_name, last_name, email, phone_number, cnic, 
+      `SELECT user_id, first_name, last_name, email, phone_number, phone_verified, cnic, 
               cnic_front_url, cnic_back_url, cnic_verified, profile_picture_url, city, bio, 
               is_verified, created_at, updated_at, status, role
        FROM users 
@@ -244,7 +244,7 @@ router.get('/profile', authenticateUser, async (req, res) => {
     const userId = req.user.id;
 
     const [rows] = await pool.query(
-      `SELECT user_id, first_name, last_name, email, phone_number, cnic, 
+      `SELECT user_id, first_name, last_name, email, phone_number, phone_verified, cnic, 
               cnic_front_url, cnic_back_url, cnic_verified, profile_picture_url, city, bio, 
               is_verified, created_at, updated_at, status, role
        FROM users 

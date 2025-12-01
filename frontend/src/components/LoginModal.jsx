@@ -25,7 +25,7 @@ const LoginModal = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [showTerms, setShowTerms] = useState(false); 
   const [showVerification, setShowVerification] = useState(false);
-  const [verificationData, setVerificationData] = useState({ email: "", phone: "" });
+  const [verificationData, setVerificationData] = useState({ email: "" });
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -33,7 +33,6 @@ const LoginModal = () => {
     password: "",
     confirmPassword: "",
     gender: "",
-    phone: "",
     jobTitle: "",
     agree: false,
   });
@@ -99,7 +98,7 @@ const LoginModal = () => {
     
     if (isSignup) {
       // Signup validation
-      if (!form.firstName || !form.lastName || !form.email || !form.password || !form.gender || !form.phone) {
+      if (!form.firstName || !form.lastName || !form.email || !form.password || !form.gender) {
         error("Please fill in all required fields");
         return;
       }
@@ -121,14 +120,13 @@ const LoginModal = () => {
           email: form.email,
           password: form.password,
           gender: form.gender,
-          phone: form.phone,
           jobTitle: form.jobTitle,
         }, {
           withCredentials: true
         });
 
-        success("Verification codes sent! Please check your email and phone.");
-        setVerificationData({ email: form.email, phone: form.phone });
+        success("Verification code sent! Please check your email.");
+        setVerificationData({ email: form.email });
         setShowVerification(true);
         setShow(false);
       } catch (err) {
@@ -238,12 +236,7 @@ const LoginModal = () => {
                         </div>
                       </div>
 
-                      {/* Phone Input */}
-                      <div className="flex items-center border rounded-lg px-4 py-2 focus-within:ring-2 focus-within:ring-emerald-500 transition-shadow">
-                        <img src="https://flagcdn.com/w40/pk.png" alt="PK Flag" className="w-5 h-auto mr-2 rounded-sm" />
-                        <span className="text-sm mr-2 text-gray-700">+92</span>
-                        <input type="tel" name="phone" placeholder="3001234567" value={form.phone} onChange={handleChange} className="flex-1 outline-none bg-transparent text-gray-900 placeholder-gray-400" pattern="[0-9]{10}" required />
-                      </div>
+
 
                       {/* Job Title (Optional) */}
                       <input type="text" name="jobTitle" placeholder="Job Title (Optional)" value={form.jobTitle} onChange={handleChange} className={inputBaseClass} />
@@ -310,7 +303,6 @@ const LoginModal = () => {
         show={showVerification} 
         onClose={() => setShowVerification(false)}
         email={verificationData.email}
-        phone={verificationData.phone}
       />
     </>
   );

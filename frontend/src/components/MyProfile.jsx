@@ -48,7 +48,7 @@ const NAVBAR_HEIGHT = "3.7rem";
 const SIDEBAR_WIDTH = "20rem";
 
 const MyProfile = () => {
-  const { user, logoutUser } = useAuth();
+  const { user, logoutUser, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -73,9 +73,13 @@ const MyProfile = () => {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    if (loading) {
+      setIsLoading(true);
+    } else {
+      const timer = setTimeout(() => setIsLoading(false), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (user) {
@@ -84,10 +88,10 @@ const MyProfile = () => {
   }, [user]);
 
   useEffect(() => {
-    if (!user && !isLoggingOut) {
+    if (!user && !isLoggingOut && !isLoading) {
       navigate("/");
     }
-  }, [user, isLoggingOut, navigate]);
+  }, [user, isLoggingOut, navigate, isLoading]);
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
