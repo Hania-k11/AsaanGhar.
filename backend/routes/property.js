@@ -432,6 +432,7 @@ router.get('/favorites/:userId', async (req, res) => {
         AND p.status = 'active'
         AND p.is_deleted = 0
         AND p.approval_status = 'approved'
+         AND p.status = 'active'
         AND u.cnic_verified = 1
         AND u.phone_verified = 1
     `;
@@ -482,6 +483,7 @@ router.get('/favorites/:userId', async (req, res) => {
         AND p.status = 'active'
         AND p.is_deleted = 0
         AND p.approval_status = 'approved'
+         AND p.status = 'active'
         AND u.cnic_verified = 1
         AND u.phone_verified = 1
     `;
@@ -768,6 +770,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
       WHERE p.is_deleted = 0
       AND us.show_listings = TRUE
       AND p.approval_status = 'approved'
+       AND p.status = 'active'
        AND u.cnic_verified = 1
     AND u.phone_verified = 1
       AND p.owner_id != ?
@@ -894,6 +897,7 @@ router.get('/getall', async (req, res) => {
        AND u.cnic_verified = 1
     AND u.phone_verified = 1
        AND p.approval_status = 'approved'
+        AND p.status = 'active'
       
     `;
     const params = userId ? [userId] : [];

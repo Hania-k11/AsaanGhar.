@@ -227,7 +227,7 @@ useEffect(() => {
   const handleToggleLike = (propertyId, isCurrentlyLiked) => {
     if (!userId) {
       // Handle not logged-in case - you might want to show a login prompt
-      showToast('Please login to save favorites', 'error');
+      showToast('Please login to save favourites', 'error');
       return;
     }
     toggleFavoriteMutation.mutate({ userId, propertyId, isCurrentlyLiked });

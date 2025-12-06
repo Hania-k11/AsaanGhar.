@@ -216,14 +216,8 @@ const PropertyGrid = ({
 
   const handleLike = async (e, propertyId) => {
     e.stopPropagation();
-    try {
-      const wasLiked = likedProperties.has(propertyId);
-      await toggleLike(propertyId, wasLiked);
-      showToast(wasLiked ? "Removed from favorites" : "Added to favorites");
-    } catch (error) {
-      console.error("Like toggle error:", error);
-      showToast("Failed to update favorites", "error");
-    }
+    const wasLiked = likedProperties.has(propertyId);
+    await toggleLike(propertyId, wasLiked);
   };
 
   const StatusDropdown = ({ property, onChangeStatus }) => {

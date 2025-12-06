@@ -130,7 +130,7 @@ const FeaturedProperties = () => {
 
   const handleToggleLike = (propertyId, isCurrentlyLiked) => {
     if (!isLoggedIn) {
-      showToast('Please login to save favorites', 'error');
+      showToast('Please login to save favourites', 'error');
       return;
     }
     toggleFavoriteMutation.mutate({ userId, propertyId, isCurrentlyLiked });

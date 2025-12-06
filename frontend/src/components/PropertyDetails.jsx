@@ -332,7 +332,7 @@ const PropertyDetails = () => {
                     });
                     setLiked(!liked);
                   } else {
-                    displayToast("Please login to add favorites", 'error');
+                    displayToast("Please login to save favourites", 'error');
                     // navigate('/login');
                   }
                 }}
