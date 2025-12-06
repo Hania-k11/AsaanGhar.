@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  User,
 } from "lucide-react";
 import PropertyGrid from "./PropertyGrid";
 import { useNavigate } from "react-router-dom";
@@ -67,6 +68,7 @@ const RejectionModal = ({ isOpen, onClose, onConfirm, propertyTitle }) => {
 const AdminPropertyGrid = ({
   properties,
   onViewDocuments,
+  onViewUserDetails,
   page,
   totalPages,
   onPageChange,
@@ -155,6 +157,29 @@ const AdminPropertyGrid = ({
         >
           <Eye className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
           View Details
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            // Create a user object from property owner information
+            const ownerData = {
+              user_id: property.owner_id,
+              first_name: property.owner_first_name || 'N/A',
+              last_name: property.owner_last_name || 'N/A',
+              email: property.owner_email || 'N/A',
+              phone_number: property.owner_phone || 'N/A',
+              cnic: property.owner_cnic || 'N/A',
+              cnic_front_url: property.owner_cnic_front_url,
+              cnic_back_url: property.owner_cnic_back_url,
+              cnic_verified: property.owner_cnic_verified || 0,
+              city: property.location_city || 'N/A',
+            };
+            onViewUserDetails(ownerData);
+          }}
+          className="group w-full flex items-center justify-center rounded-xl border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 px-4 py-3 text-sm font-semibold text-purple-700 shadow-sm transition-all duration-200 hover:border-purple-300 hover:from-purple-100 hover:to-purple-200 hover:shadow-md"
+        >
+          <User className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" />
+          View User Details
         </button>
         <button
           onClick={(e) => {

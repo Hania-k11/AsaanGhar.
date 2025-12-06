@@ -49,6 +49,7 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
       sort_by = "posted_at",
       sort_order = "DESC",
       status,
+      search = '',
     } = req.query;
 
     const adminId = req.admin.id;
@@ -62,7 +63,8 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
       limit: Number(limit),
       sort_by,
       sort_order,
-      filterStatus
+      filterStatus,
+      search
     });
 
     const [results] = await pool.query(
@@ -71,15 +73,15 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
     );
 
     
-    const properties = results[0] || [];
+    let properties = results[0] || [];
     const totalCount = results[1]?.[0]?.total_count || 0;
-    const totalPages = Math.ceil(totalCount / limit);
 
     // Enrich properties with user verification status
     let enrichedProperties = await Promise.all(
       properties.map(async (property) => {
         const [userRows] = await pool.query(
-          `SELECT first_name, last_name, cnic_verified 
+          `SELECT first_name, last_name, email, phone_number, cnic, 
+                  cnic_front_url, cnic_back_url, cnic_verified, phone_verified 
            FROM users 
            WHERE user_id = ? AND is_deleted = FALSE`,
           [property.owner_id]
@@ -91,10 +93,36 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
           ...property,
           owner_first_name: user.first_name || 'N/A',
           owner_last_name: user.last_name || 'N/A',
+          owner_email: user.email || 'N/A',
+          owner_phone: user.phone_number || 'N/A',
+          owner_cnic: user.cnic || 'N/A',
+          owner_cnic_front_url: user.cnic_front_url,
+          owner_cnic_back_url: user.cnic_back_url,
           owner_cnic_verified: user.cnic_verified || 0,
+          owner_phone_verified: user.phone_verified || 0,
         };
       })
     );
+
+    // Apply search filter if search term is provided
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase();
+      enrichedProperties = enrichedProperties.filter(p => {
+        return (
+          p.title?.toLowerCase().includes(searchLower) ||
+          p.property_id?.toString().includes(searchLower) ||
+          p.location_city?.toLowerCase().includes(searchLower) ||
+          p.location_name?.toLowerCase().includes(searchLower) ||
+          p.owner_first_name?.toLowerCase().includes(searchLower) ||
+          p.owner_last_name?.toLowerCase().includes(searchLower) ||
+          `${p.owner_first_name} ${p.owner_last_name}`.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+
+    // Calculate search-adjusted pagination
+    const searchTotalCount = search && search.trim() ? enrichedProperties.length : totalCount;
+    const totalPages = Math.ceil(searchTotalCount / limit);
 
     // Fetch all images for each property using GROUP_CONCAT
     if (enrichedProperties.length > 0) {
@@ -153,7 +181,7 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        totalCount,
+        totalCount: searchTotalCount,
         totalPages,
       },
       stats, 

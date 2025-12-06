@@ -57,6 +57,7 @@ const AdminPanel = () => {
     sort_by: sortByDate === "newest" ? "posted_at" : "posted_at",
     sort_order: sortByDate === "newest" ? "DESC" : "ASC",
     status,
+    search: searchTerm,
     enabled: !!admin, // Only fetch when user is logged in
   });
 const properties = data?.data || []; 
@@ -86,10 +87,15 @@ const totalPages = data?.pagination?.totalPages || 1;
   const userStats = usersData?.stats || {};
 
 
-  // keep filter tab synced
+  // keep filter tab synced and reset page when filters change
   useEffect(() => {
     setPage(1);
-  }, [activeTab, sortByDate, listingType]);
+  }, [activeTab, sortByDate, listingType, searchTerm]);
+
+  // Reset user page when user filters change
+  useEffect(() => {
+    setUserPage(1);
+  }, [userVerificationFilter, userSearchTerm]);
 
   // Handle view documents
   const handleViewDocuments = (property) => {
@@ -114,19 +120,6 @@ const totalPages = data?.pagination?.totalPages || 1;
   if (!admin) return <AdminLogin />;
 
 
-  // Filter properties
-  const filteredProperties = properties.filter((p) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    return (
-      p.title?.toLowerCase().includes(term) ||
-      p.owner_id?.toString().includes(term) ||
-      p.location_city?.toLowerCase().includes(term) ||
-      p.location_name?.toLowerCase().includes(term)
-    );
-  });
-
-
   return (
 <div className="flex flex-col min-h-screen bg-emerald-100/30">
       <AdminNavbar navbarActive={navbarActive} setNavbarActive={setNavbarActive} />
@@ -149,7 +142,7 @@ const totalPages = data?.pagination?.totalPages || 1;
               currentAdmin={admin}
             />
             <AdminPropertyGrid
-              properties={filteredProperties}
+              properties={properties}
               page={page}
               totalPages={totalPages}
               onPageChange={setPage}
@@ -159,6 +152,7 @@ const totalPages = data?.pagination?.totalPages || 1;
   onListingTypeChange={setListingType}  
               currentAdmin={admin}
               onViewDocuments={handleViewDocuments}
+              onViewUserDetails={handleViewUserDetails}
             />
           </>
         )}
