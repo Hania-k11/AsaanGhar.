@@ -108,6 +108,7 @@ const PropertyGrid = ({
   likedProperties = new Set(),
   toggleLike,
   isOwner = false,
+  hideActions = false,
   onDelete,
   onEdit,
   onChangeStatus,
@@ -486,38 +487,40 @@ const PropertyGrid = ({
               )}
 
               {/* Action Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`absolute bottom-3 right-3 flex gap-1.5 z-10 transition-all duration-300 ${
-                  !isOwner ? "opacity-0 group-hover:opacity-100" : "opacity-100"
-                }`}
-              >
-                {!isOwner && (
-                  <motion.button
-                    whileHover={{ scale: 1.15, rotate: 5 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={(e) => handleLike(e, propertyId)}
-                    className={`p-2 rounded-full transition-all duration-200 ${
-                      likedProperties.has(propertyId)
-                        ? "bg-red-500 text-white shadow-lg"
-                        : "bg-white/90 text-gray-700 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700/90 dark:text-gray-300"
-                    } shadow-sm`}
-                    aria-label={likedProperties.has(propertyId) ? "Unlike" : "Like"}
-                  >
-                    <Heart size={16} fill={likedProperties.has(propertyId) ? "currentColor" : "none"} />
-                  </motion.button>
-                )}
-                <motion.button
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={(e) => handleShare(e, property)}
-                  className="p-2 bg-white/90 rounded-full text-gray-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-600 dark:bg-gray-700/90 dark:text-gray-300 dark:hover:bg-emerald-900/20 transition-all duration-200"
-                  aria-label="Share"
+              {!hideActions && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`absolute bottom-3 right-3 flex gap-1.5 z-10 transition-all duration-300 ${
+                    !isOwner ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+                  }`}
                 >
-                  <Share2 size={16} />
-                </motion.button>
-              </motion.div>
+                  {!isOwner && (
+                    <motion.button
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={(e) => handleLike(e, propertyId)}
+                      className={`p-2 rounded-full transition-all duration-200 ${
+                        likedProperties.has(propertyId)
+                          ? "bg-red-500 text-white shadow-lg"
+                          : "bg-white/90 text-gray-700 hover:bg-red-50 hover:text-red-500 dark:bg-gray-700/90 dark:text-gray-300"
+                      } shadow-sm`}
+                      aria-label={likedProperties.has(propertyId) ? "Unlike" : "Like"}
+                    >
+                      <Heart size={16} fill={likedProperties.has(propertyId) ? "currentColor" : "none"} />
+                    </motion.button>
+                  )}
+                  <motion.button
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => handleShare(e, property)}
+                    className="p-2 bg-white/90 rounded-full text-gray-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-600 dark:bg-gray-700/90 dark:text-gray-300 dark:hover:bg-emerald-900/20 transition-all duration-200"
+                    aria-label="Share"
+                  >
+                    <Share2 size={16} />
+                  </motion.button>
+                </motion.div>
+              )}
             </div>
 
             {/* Details Section */}

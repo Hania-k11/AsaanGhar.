@@ -284,6 +284,7 @@ const AdminPropertyGrid = ({
           properties={propertiesWithAdminActions}
           viewMode="grid"
           likedProperties={new Set()}
+          hideActions={true}
         />
 
         {/* Pagination Controls */}

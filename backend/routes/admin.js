@@ -124,9 +124,10 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
     const searchTotalCount = search && search.trim() ? enrichedProperties.length : totalCount;
     const totalPages = Math.ceil(searchTotalCount / limit);
 
-    // Fetch all images for each property using GROUP_CONCAT
+    // Fetch all images and favorite counts for each property
     if (enrichedProperties.length > 0) {
       const propertyIds = enrichedProperties.map(p => p.property_id);
+      
       const [imageRows] = await pool.query(
         `SELECT 
           property_id,
@@ -140,12 +141,28 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
         GROUP BY property_id`,
         [propertyIds]
       );
+
+      const [favRows] = await pool.query(
+        `SELECT property_id, COUNT(*) as count 
+         FROM favorites 
+         WHERE property_id IN (?) 
+         GROUP BY property_id`,
+        [propertyIds]
+      );
+
       const imageMap = {};
       imageRows.forEach(row => {
         imageMap[row.property_id] = row.images;
       });
+
+      const favMap = {};
+      favRows.forEach(row => {
+        favMap[row.property_id] = row.count;
+      });
+
       enrichedProperties = enrichedProperties.map(p => {
         p.images = imageMap[p.property_id] || null;
+        p.favorite_count = favMap[p.property_id] || 0;
         return parsePropertyImages(p);
       });
     }
@@ -203,9 +220,10 @@ router.get("/pending-properties", async (req, res) => {
     const [rows] = await pool.query("CALL GetPendingProperties()");
     let properties = rows[0] || [];
 
-    // Fetch all images for each property using GROUP_CONCAT
+    // Fetch all images and favorite counts for each property
     if (properties.length > 0) {
       const propertyIds = properties.map(p => p.property_id);
+      
       const [imageRows] = await pool.query(
         `SELECT 
           property_id,
@@ -219,12 +237,28 @@ router.get("/pending-properties", async (req, res) => {
         GROUP BY property_id`,
         [propertyIds]
       );
+
+      const [favRows] = await pool.query(
+        `SELECT property_id, COUNT(*) as count 
+         FROM favorites 
+         WHERE property_id IN (?) 
+         GROUP BY property_id`,
+        [propertyIds]
+      );
+
       const imageMap = {};
       imageRows.forEach(row => {
         imageMap[row.property_id] = row.images;
       });
+
+      const favMap = {};
+      favRows.forEach(row => {
+        favMap[row.property_id] = row.count;
+      });
+
       properties = properties.map(p => {
         p.images = imageMap[p.property_id] || null;
+        p.favorite_count = favMap[p.property_id] || 0;
         return parsePropertyImages(p);
       });
     }
