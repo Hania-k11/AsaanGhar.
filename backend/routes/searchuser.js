@@ -260,41 +260,6 @@ if (Array.isArray(clean.lease_duration)) {
     let allProperties = rows[0] || [];
     logger.info({total: allProperties.length }, "Fetched properties from DB");
 
-    // Filter by approval_status = 'approved'
-    allProperties = allProperties.filter(p => p.approval_status === 'approved');
-
-    // Fetch owner verification status and filter by verified owners
-    if (allProperties.length > 0) {
-      const ownerIds = [...new Set(allProperties.map(p => p.owner_id))];
-      const [userRows] = await pool.query(
-        `SELECT user_id, cnic_verified, phone_verified FROM users WHERE user_id IN (?)`,
-        [ownerIds]
-      );
-      const verifiedOwners = new Set(
-        userRows
-          .filter(u => u.cnic_verified === 1 && u.phone_verified === 1)
-          .map(u => u.user_id)
-      );
-      allProperties = allProperties.filter(p => verifiedOwners.has(p.owner_id));
-    }
-
-    // Fetch main images for all properties
-    if (allProperties.length > 0) {
-      const propertyIds = allProperties.map(p => p.property_id);
-      const [imageRows] = await pool.query(
-        `SELECT property_id, image_url FROM property_images WHERE property_id IN (?) AND is_main = 1`,
-        [propertyIds]
-      );
-      const imageMap = {};
-      imageRows.forEach(row => {
-        imageMap[row.property_id] = row.image_url;
-      });
-      allProperties = allProperties.map(p => ({
-        ...p,
-        image: imageMap[p.property_id] || null
-      }));
-    }
-
     // Sorting
     switch (sort) {
       case "price-low":
