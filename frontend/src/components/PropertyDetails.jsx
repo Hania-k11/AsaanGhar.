@@ -178,11 +178,13 @@ const PropertyDetails = () => {
     const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
     try {
       if (isCurrentlyLiked) {
-        await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+        const response = await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
         displayToast("Removed from favorites");
+        return response.data;
       } else {
-        await axios.post('/api/property/favorites', { userId, propertyId });
+        const response = await axios.post('/api/property/favorites', { userId, propertyId });
         displayToast("Added to favorites");
+        return response.data;
       }
       
       // Update localStorage as backup

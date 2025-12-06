@@ -541,7 +541,15 @@ router.post('/favorites', async (req, res) => {
       'INSERT INTO favorites (user_id, property_id) VALUES (?, ?) ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP',
       [userId, propertyId]
     );
-    res.status(201).json({ success: true, message: 'Property added to favorites' });
+    
+    // Get the updated favorite count for this property
+    const [countResult] = await pool.query(
+      'SELECT COUNT(*) AS favoriteCount FROM favorites WHERE property_id = ?',
+      [propertyId]
+    );
+    const favoriteCount = countResult[0]?.favoriteCount || 0;
+    
+    res.status(201).json({ success: true, message: 'Property added to favorites', favoriteCount });
   } catch (err) {
     console.error('Error adding to favorites:', err);
     res.status(500).json({ error: 'Failed to add property to favorites' });
@@ -555,7 +563,17 @@ router.delete('/favorites/:userId/:propertyId', async (req, res) => {
 
   try {
     const [result] = await pool.query('DELETE FROM favorites WHERE user_id = ? AND property_id = ?', [userId, propertyId]);
-    if (result.affectedRows > 0) return res.status(200).json({ success: true, message: 'Property removed from favorites' });
+    
+    // Get the updated favorite count for this property
+    const [countResult] = await pool.query(
+      'SELECT COUNT(*) AS favoriteCount FROM favorites WHERE property_id = ?',
+      [propertyId]
+    );
+    const favoriteCount = countResult[0]?.favoriteCount || 0;
+    
+    if (result.affectedRows > 0) {
+      return res.status(200).json({ success: true, message: 'Property removed from favorites', favoriteCount });
+    }
     res.status(404).json({ error: 'Favorite not found' });
   } catch (err) {
     console.error('Error removing from favorites:', err);
@@ -734,6 +752,14 @@ router.get('/getallnew/:user_id', async (req, res) => {
       -- Join contact information
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+      -- Join favorites for this user
+      LEFT JOIN favorites f_user ON p.property_id = f_user.property_id AND f_user.user_id = ?
+      -- Join favorite count subquery
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS favorite_count
+        FROM favorites
+        GROUP BY property_id
+      ) fav_count ON p.property_id = fav_count.property_id
 
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
@@ -747,7 +773,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
       AND p.owner_id != ?
       
     `;
-    const params = [user_id];
+    const params = [user_id, user_id];
 
     if (type !== 'all') {
       const id = type === 'rent' ? 1 : type === 'sale' ? 2 : null;
@@ -793,6 +819,9 @@ router.get('/getallnew/:user_id', async (req, res) => {
         pc.pref_email,
         pc.pref_phone,
         pc.pref_whatsapp,
+        -- Add favorites info
+        IF(f_user.favorite_id IS NOT NULL, 1, 0) AS is_favorite,
+        COALESCE(fav_count.favorite_count, 0) AS favorite_count,
         GROUP_CONCAT(DISTINCT
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 
@@ -828,7 +857,8 @@ router.get('/getallnew/:user_id', async (req, res) => {
 // Unified public getall with locations join (exclude deleted)
 router.get('/getall', async (req, res) => {
   try {
-    const { type = 'all', search = '', minPrice = 0, maxPrice = 9999999999, sort = 'featured', page = 1, limit = 6 } = req.query;
+    const { type = 'all', search = '', minPrice = 0, maxPrice = 9999999999, sort = 'featured', page = 1, limit = 6, user_id } = req.query;
+    const userId = user_id ? parseInt(user_id, 10) : null;
     const minPriceNum = parseNum(minPrice, 0);
     const maxPriceNum = parseNum(maxPrice, 9999999999);
     const pageNum = parseInt(page, 10) || 1;
@@ -847,6 +877,13 @@ router.get('/getall', async (req, res) => {
       -- Join contact information
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+      ${userId ? '-- Join favorites for this user\n      LEFT JOIN favorites f_user ON p.property_id = f_user.property_id AND f_user.user_id = ?' : ''}
+      -- Join favorite count subquery
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS favorite_count
+        FROM favorites
+        GROUP BY property_id
+      ) fav_count ON p.property_id = fav_count.property_id
 
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
@@ -859,7 +896,7 @@ router.get('/getall', async (req, res) => {
        AND p.approval_status = 'approved'
       
     `;
-    const params = [];
+    const params = userId ? [userId] : [];
 
     if (type !== 'all') {
       const id = type === 'rent' ? 1 : type === 'sale' ? 2 : null;
@@ -905,6 +942,9 @@ router.get('/getall', async (req, res) => {
         pc.pref_email,
         pc.pref_phone,
         pc.pref_whatsapp,
+        -- Add favorites info
+        ${userId ? 'IF(f_user.favorite_id IS NOT NULL, 1, 0)' : '0'} AS is_favorite,
+        COALESCE(fav_count.favorite_count, 0) AS favorite_count,
         GROUP_CONCAT(DISTINCT
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 

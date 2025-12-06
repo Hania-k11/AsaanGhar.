@@ -14,6 +14,7 @@ const fetchProperties = async ({ queryKey }) => {
     sort: sortBy,
     page: currentPage,
     limit,
+    ...(isLoggedIn && userId ? { user_id: userId } : {}),
   };
 
   console.log("Query params sent to API:", params);
@@ -24,7 +25,7 @@ const fetchProperties = async ({ queryKey }) => {
     console.log("Fetched properties (logged-in):", data);
     return data;
   } else {
-    // Guest user endpoint
+    // Guest user endpoint (or logged-in users using fallback)
     const { data } = await axios.get(`/api/property/getall`, { params });
     console.log("Fetched properties (guest):", data);
     return data;

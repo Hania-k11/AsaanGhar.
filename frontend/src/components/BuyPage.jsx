@@ -19,9 +19,11 @@ const propertiesPerPage = 6;
 // API function for toggling favorite
 const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
     if (isCurrentlyLiked) {
-        await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+        const response = await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+        return response.data;
     } else {
-        await axios.post('/api/property/favorites', { userId, propertyId });
+        const response = await axios.post('/api/property/favorites', { userId, propertyId });
+        return response.data;
     }
 };
 
@@ -155,14 +157,42 @@ useEffect(() => {
         return newSet;
       });
     },
-    onSuccess: () => {
-      // Invalidate queries to trigger a fresh fetch and update UI across components
+    onSuccess: (data, { propertyId, isCurrentlyLiked }) => {
+      const { favoriteCount } = data;
+      
+      // Update the favorite count in all cached queries
+      ['properties', 'nlpProperties', 'favoriteProperties', 'overview'].forEach(queryKey => {
+        queryClient.setQueriesData({ queryKey: [queryKey] }, (oldData) => {
+          if (!oldData) return oldData;
+          
+          // Handle different data structures
+          const updatedData = { ...oldData };
+          
+          if (oldData.data) {
+            // For normal properties
+            updatedData.data = oldData.data.map(prop => 
+              prop.property_id === propertyId 
+                ? { ...prop, favorite_count: favoriteCount }
+                : prop
+            );
+          } else if (oldData.properties) {
+            // For NLP properties
+            updatedData.properties = oldData.properties.map(prop => {
+              const property = prop.property || prop;
+              return property.property_id === propertyId
+                ? { ...prop, property: { ...property, favorite_count: favoriteCount } }
+                : prop;
+            });
+          }
+          
+          return updatedData;
+        });
+      });
+      
+      // Invalidate queries to ensure consistency
       queryClient.invalidateQueries(['properties']);
       queryClient.invalidateQueries(['favoriteProperties']);
       queryClient.invalidateQueries(['overview']);
-      
-      // Show success toast
-      // showToast('Favorites updated!');
     },
     onError: (error, { propertyId, isCurrentlyLiked }) => {
       // Revert the optimistic update on error
