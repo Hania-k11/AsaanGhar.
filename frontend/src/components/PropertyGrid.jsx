@@ -25,6 +25,8 @@ import {
   AlertCircle,
   Tag,
   Images,
+  XCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -68,6 +70,36 @@ const getStatusColor = (status) => {
       return "bg-yellow-100/80 text-yellow-800 border-yellow-200/50 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800/50 backdrop-blur-sm";
     default:
       return "bg-gray-100/80 text-gray-800 border-gray-200/50 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800/50 backdrop-blur-sm";
+  }
+};
+
+// Helper function to get approval status badge
+const getApprovalStatusBadge = (approvalStatus) => {
+  switch (approvalStatus) {
+    case "approved":
+      return {
+        icon: ShieldCheck,
+        label: "Approved",
+        className: "bg-emerald-100/90 text-emerald-700 border-emerald-200/50"
+      };
+    case "pending":
+      return {
+        icon: Clock,
+        label: "Pending Approval",
+        className: "bg-amber-100/90 text-amber-700 border-amber-200/50"
+      };
+    case "rejected":
+      return {
+        icon: XCircle,
+        label: "Rejected",
+        className: "bg-red-100/90 text-red-700 border-red-200/50"
+      };
+    default:
+      return {
+        icon: Clock,
+        label: "Pending",
+        className: "bg-gray-100/90 text-gray-700 border-gray-200/50"
+      };
   }
 };
 
@@ -141,8 +173,17 @@ const PropertyGrid = ({
     }
   };
 
-  const handleDelete = async (e, propertyId) => {
+  const handleDelete = async (e, propertyId, property) => {
     e.stopPropagation();
+    
+    // Check approval status before allowing delete
+    if (property.approval_status !== "approved") {
+      const message = property.approval_status === "pending" 
+        ? "Cannot delete while approval is pending"
+        : "Cannot delete rejected listing";
+      showToast(message, "error");
+      return;
+    }
     
     if (window.confirm("Are you sure you want to delete this property? This action cannot be undone.")) {
       setDeletingId(propertyId);
@@ -160,6 +201,16 @@ const PropertyGrid = ({
 
   const handleEdit = (e, property) => {
     e.stopPropagation();
+    
+    // Check approval status before allowing edit
+    if (property.approval_status !== "approved") {
+      const message = property.approval_status === "pending" 
+        ? "Cannot edit while approval is pending"
+        : "Cannot edit rejected listing. Please create a new corrected listing";
+      showToast(message, "error");
+      return;
+    }
+    
     onEdit(property);
   };
 
@@ -177,6 +228,7 @@ const PropertyGrid = ({
 
   const StatusDropdown = ({ property, onChangeStatus }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const isDisabled = property.approval_status !== "approved";
 
     useEffect(() => {
   const handleClickOutside = () => {
@@ -193,18 +245,33 @@ const PropertyGrid = ({
     return (
       <div className="relative">
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: isDisabled ? 1 : 1.05 }}
+          whileTap={{ scale: isDisabled ? 1 : 0.95 }}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
+            if (isDisabled) {
+              const message = property.approval_status === "pending" 
+                ? "Cannot change status while approval is pending"
+                : "Cannot change status of rejected listing";
+              showToast(message, "error");
+              return;
+            }
             setIsOpen(!isOpen);
           }}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${getStatusColor(
-            property.status || 'active'
-          )} shadow-sm hover:shadow-md`}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+            isDisabled 
+              ? "bg-gray-100/50 text-gray-400 border-gray-200/50 cursor-not-allowed opacity-60" 
+              : getStatusColor(property.status || 'active') + " shadow-sm hover:shadow-md"
+          }`}
           aria-expanded={isOpen}
           aria-haspopup="true"
+          disabled={isDisabled}
+          title={isDisabled 
+            ? (property.approval_status === "pending" 
+              ? "Cannot change status while approval is pending" 
+              : "Cannot change status of rejected listing")
+            : "Change property status"}
         >
           {getStatusIcon(property.status || 'active')}
           <span className="hidden xs:inline capitalize">
@@ -219,7 +286,7 @@ const PropertyGrid = ({
         </motion.button>
 
         <AnimatePresence>
-          {isOpen && (
+          {isOpen && !isDisabled && (
             <>
               {/* Backdrop */}
               <div 
@@ -272,6 +339,8 @@ const PropertyGrid = ({
 
   const ListingTypeDropdown = ({ property, onChangeListingType }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const isDisabled = property.approval_status !== "approved";
+  
   useEffect(() => {
   const handleClickOutside = () => {
     setIsOpen(false);
@@ -295,16 +364,33 @@ const PropertyGrid = ({
   return (
     <div className="relative">
 <motion.button
-  whileHover={{ scale: 1.05 }}
-  whileTap={{ scale: 0.95 }}
+  whileHover={{ scale: isDisabled ? 1 : 1.05 }}
+  whileTap={{ scale: isDisabled ? 1 : 0.95 }}
   onClick={(e) => {
     e.stopPropagation();
     e.preventDefault();
+    if (isDisabled) {
+      const message = property.approval_status === "pending" 
+        ? "Cannot change listing type while approval is pending"
+        : "Cannot change listing type of rejected listing";
+      showToast(message, "error");
+      return;
+    }
     setIsOpen(!isOpen);
   }}
-  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${currentTypeData?.color} shadow-sm hover:shadow-md backdrop-blur-sm`}
+  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 border ${
+    isDisabled 
+      ? "bg-gray-100/50 text-gray-400 border-gray-200/50 cursor-not-allowed opacity-60" 
+      : currentTypeData?.color + " shadow-sm hover:shadow-md"
+  } backdrop-blur-sm`}
   aria-expanded={isOpen}
   aria-haspopup="true"
+  disabled={isDisabled}
+  title={isDisabled 
+    ? (property.approval_status === "pending" 
+      ? "Cannot change listing type while approval is pending" 
+      : "Cannot change listing type of rejected listing")
+    : "Change listing type"}
 >
   <Tag size={12} />
   <span>{currentTypeData?.name}</span>
@@ -318,7 +404,7 @@ const PropertyGrid = ({
 
 
       <AnimatePresence>
-        {isOpen && (
+        {isOpen && !isDisabled && (
           <>
             <div 
   className="fixed inset-0 z-40"
@@ -601,6 +687,38 @@ const PropertyGrid = ({
                     </span>
                   </div>
                 </div>
+
+                {/* Approval Status Badge (for owner) */}
+                {isOwner && property.approval_status && (
+                  <div className="mt-3">
+                    {(() => {
+                      const statusInfo = getApprovalStatusBadge(property.approval_status);
+                      const StatusIcon = statusInfo.icon;
+                      return (
+                        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border backdrop-blur-sm ${statusInfo.className}`}>
+                          <StatusIcon size={16} />
+                          <span className="text-sm font-semibold">{statusInfo.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Rejection Reason (for rejected properties) */}
+                {isOwner && property.approval_status === "rejected" && property.rejection_reason && (
+                  <div className="mt-3 p-3 bg-red-50/80 border border-red-200/50 rounded-xl backdrop-blur-sm">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-semibold text-red-900">Rejection Reason:</p>
+                        <p className="text-xs text-red-800">{property.rejection_reason}</p>
+                        <p className="text-xs text-red-700 font-medium mt-2">
+                          Please post another listing with the corrected version.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons (Owner or View) */}
@@ -609,21 +727,39 @@ const PropertyGrid = ({
               ) : isOwner ? (
                 <div className="flex flex-col sm:flex-row gap-2 mt-3 pt-2 border-t border-gray-100/50 dark:border-gray-700/50">
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: property.approval_status === "approved" ? 1.02 : 1 }}
+                    whileTap={{ scale: property.approval_status === "approved" ? 0.98 : 1 }}
                     onClick={(e) => handleEdit(e, property)}
-                    disabled={isDeleting}
-                    className="flex-1 bg-gradient-to-r from-emerald-50/80 to-emerald-100/80 dark:from-emerald-900/30 dark:to-emerald-800/30 border border-emerald-200/50 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300 font-medium rounded-xl py-2.5 px-3 hover:shadow-md transition-all text-sm backdrop-blur-sm disabled:opacity-50"
+                    disabled={isDeleting || property.approval_status !== "approved"}
+                    className={`flex-1 font-medium rounded-xl py-2.5 px-3 transition-all text-sm backdrop-blur-sm ${
+                      property.approval_status === "approved"
+                        ? "bg-gradient-to-r from-emerald-50/80 to-emerald-100/80 dark:from-emerald-900/30 dark:to-emerald-800/30 border border-emerald-200/50 dark:border-emerald-700/50 text-emerald-700 dark:text-emerald-300 hover:shadow-md cursor-pointer"
+                        : "bg-gray-100/50 border border-gray-200/50 text-gray-400 cursor-not-allowed opacity-60"
+                    }`}
+                    title={property.approval_status !== "approved" 
+                      ? (property.approval_status === "pending" 
+                        ? "Cannot edit while approval is pending" 
+                        : "Cannot edit rejected listing")
+                      : "Edit property details"}
                   >
                     <Edit3 size={16} className="inline mr-1.5" />
                     <span>Edit</span>
                   </motion.button>
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => handleDelete(e, propertyId)}
-                    disabled={isDeleting}
-                    className="flex-1 bg-gradient-to-r from-red-500/90 to-red-600/90 text-white font-medium rounded-xl py-2.5 px-3 shadow-sm hover:shadow transition-all text-sm disabled:opacity-50"
+                    whileHover={{ scale: property.approval_status === "approved" ? 1.02 : 1 }}
+                    whileTap={{ scale: property.approval_status === "approved" ? 0.98 : 1 }}
+                    onClick={(e) => handleDelete(e, propertyId, property)}
+                    disabled={isDeleting || property.approval_status !== "approved"}
+                    className={`flex-1 font-medium rounded-xl py-2.5 px-3 shadow-sm transition-all text-sm ${
+                      property.approval_status === "approved"
+                        ? "bg-gradient-to-r from-red-500/90 to-red-600/90 text-white hover:shadow cursor-pointer"
+                        : "bg-gray-100/50 border border-gray-200/50 text-gray-400 cursor-not-allowed opacity-60"
+                    } disabled:opacity-50`}
+                    title={property.approval_status !== "approved" 
+                      ? (property.approval_status === "pending" 
+                        ? "Cannot delete while approval is pending" 
+                        : "Cannot delete rejected listing")
+                      : "Delete property"}
                   >
                     <Trash2 size={16} className="inline mr-1.5" />
                     <span>{isDeleting ? "Deleting..." : "Delete"}</span>

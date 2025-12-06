@@ -90,7 +90,9 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: res?.data?.message || "Login failed" };
     } catch (err) {
       console.error("loginUser error:", err.response?.data ?? err.message);
-      return { success: false, message: err.response?.data?.message || "Server error" };
+      // Return specific error from backend, or fallback to generic message
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Unable to connect to server. Please try again.";
+      return { success: false, message: errorMessage };
     }
   };
 
@@ -126,9 +128,11 @@ export const AuthProvider = ({ children }) => {
         "❌ loginAdmin error:",
         err.response?.data ?? err.message
       );
+      // Return specific error from backend, or fallback to generic message
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Unable to connect to server. Please try again.";
       return {
         success: false,
-        message: err.response?.data?.message || "Server error",
+        message: errorMessage,
       };
     }
   };

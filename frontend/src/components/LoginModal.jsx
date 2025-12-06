@@ -148,11 +148,14 @@ const LoginModal = () => {
         success(`Welcome ${res.user.first_name || res.user.email}!`);
         setShow(false);
       } else {
+        // Display the specific error message from the backend
         error(res.message || "Login failed");
       }
     } catch (err) {
       console.error("Login error:", err);
-      error("Something went wrong, please try again.");
+      // This catch block should rarely be hit since loginuser handles errors
+      // But if it does, show a generic error
+      error("An unexpected error occurred. Please try again.");
     }
   };
   

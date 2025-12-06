@@ -477,7 +477,7 @@ const SettingsTab = () => {
             description="Control who can see your profile."
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SettingToggle
+            {/* <SettingToggle
               label="Show Contact Information"
               description="Display your contact details."
               checked={privacySettings.showContactInfo}
@@ -488,7 +488,7 @@ const SettingsTab = () => {
                   showContactInfo: !prev.showContactInfo,
                 }))
               }
-            />
+            /> */}
             <SettingToggle
               label="Show My Listings"
               description="Display your property listings."

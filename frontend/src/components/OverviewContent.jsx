@@ -127,11 +127,7 @@ const RecentActivityItem = ({ activity, index }) => {
           </div>
         </div>
       </div>
-      {activity.price && (
-        <span className="text-sm font-bold text-emerald-600 flex-shrink-0">
-          {activity.price}
-        </span>
-      )}
+     
     </motion.div>
   )
 }
