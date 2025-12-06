@@ -258,6 +258,37 @@ if (Array.isArray(clean.lease_duration)) {
     );
 
     let allProperties = rows[0] || [];
+    
+    // Parse images string and extract main image + images array
+    allProperties = allProperties.map(property => {
+      if (property.images && typeof property.images === 'string') {
+        // Format: "image_id:image_url:is_main||image_id:image_url:is_main"
+        const imageEntries = property.images.split('||');
+        
+        // Extract all image URLs into an array
+        const imageUrls = imageEntries.map(entry => {
+          const parts = entry.split(':');
+          // Extract URL (everything except first and last part)
+          return parts.slice(1, -1).join(':');
+        }).filter(url => url); // Remove any empty URLs
+        
+        // Find main image
+        const mainImageEntry = imageEntries.find(entry => entry.endsWith(':1'));
+        
+        if (mainImageEntry) {
+          const parts = mainImageEntry.split(':');
+          property.image = parts.slice(1, -1).join(':');
+        } else if (imageUrls.length > 0) {
+          // Fallback to first image if no main image
+          property.image = imageUrls[0];
+        }
+        
+        // Set images array for PropertyDetails component
+        property.images = imageUrls;
+      }
+      return property;
+    });
+    
     logger.info({total: allProperties.length }, "Fetched properties from DB");
 
     // Sorting

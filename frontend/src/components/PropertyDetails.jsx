@@ -257,9 +257,7 @@ const PropertyDetails = () => {
 
   const images = property.images && property.images.length > 0 
     ? property.images 
-    : [property.image, property.image, property.image];
-
- 
+    : property.image ? [property.image] : [];
 
   const sliderSettings = {
     dots: true,
@@ -336,8 +334,8 @@ const PropertyDetails = () => {
               </button>
             </div>
 
-            <div className="relative">
-              <Slider {...sliderSettings}>
+            <div className="relative w-full overflow-hidden">
+              <Slider key={images.length} {...sliderSettings}>
                 {images.map((img, index) => (
                   <div
                     key={index}
