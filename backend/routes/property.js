@@ -24,6 +24,36 @@ function parseIntSafe(value) {
   return Number.isFinite(n) ? n : undefined;
 }
 
+// Helper function to parse images string from GROUP_CONCAT
+function parsePropertyImages(property) {
+  if (property.images && typeof property.images === 'string') {
+    // Format: "image_id:image_url:is_main||image_id:image_url:is_main"
+    const imageEntries = property.images.split('||');
+    
+    // Extract all image URLs into an array
+    const imageUrls = imageEntries.map(entry => {
+      const parts = entry.split(':');
+      // Extract URL (everything except first and last part)
+      return parts.slice(1, -1).join(':');
+    }).filter(url => url); // Remove any empty URLs
+    
+    // Find main image
+    const mainImageEntry = imageEntries.find(entry => entry.endsWith(':1'));
+    
+    if (mainImageEntry) {
+      const parts = mainImageEntry.split(':');
+      property.image = parts.slice(1, -1).join(':');
+    } else if (imageUrls.length > 0) {
+      // Fallback to first image if no main image
+      property.image = imageUrls[0];
+    }
+    
+    // Set images array for PropertyDetails component
+    property.images = imageUrls;
+  }
+  return property;
+}
+
 // Whitelist for safe partial updates
 const ALLOWED_UPDATE_FIELDS = new Set([
   // core
@@ -104,7 +134,11 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         pt.name AS property_type_name,
         fs.name AS furnishing_status_name,
         COALESCE(fav.favorite_count, 0) AS favorite_count,
-        pi.image_url AS image
+        GROUP_CONCAT(
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.location_id
       LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
@@ -114,14 +148,14 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav ON p.property_id = fav.property_id
-      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
       WHERE p.owner_id = ?
         AND p.is_deleted = 0
     `;
     const selectParams = [userId];
 
     let countSql = `
-      SELECT COUNT(*) AS total
+      SELECT COUNT(DISTINCT p.property_id) AS total
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.location_id
       LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
@@ -195,6 +229,9 @@ router.get('/getmyproperties/:userId', async (req, res) => {
     countSql  += ' AND p.price BETWEEN ? AND ?';
     selectParams.push(minPriceNum, maxPriceNum);
     countParams.push(minPriceNum, maxPriceNum);
+    
+    // Add GROUP BY for GROUP_CONCAT
+    selectSql += ' GROUP BY p.property_id';
 
     switch (sort) {
       case 'newest':     selectSql += ' ORDER BY p.posted_at DESC'; break;
@@ -211,11 +248,14 @@ router.get('/getmyproperties/:userId', async (req, res) => {
     const [rows] = await pool.query(selectSql, selectParams);
     const [countRows] = await pool.query(countSql, countParams);
 
+    // Parse images for each property
+    const properties = rows.map(property => parsePropertyImages(property));
+
     const totalCount = countRows[0]?.total || 0;
     const totalPages = Math.ceil(totalCount / limitNum);
 
     res.status(200).json({
-      data: rows,
+      data: properties,
       pagination: {
         total: totalCount,
         page: pageNum,
@@ -353,7 +393,11 @@ router.get('/favorites/:userId', async (req, res) => {
         lt.name AS listing_type_name,
         f.created_at AS favorited_at,
         COALESCE(fav_count.favorite_count, 0) AS favorite_count,
-        pi.image_url AS image,
+        GROUP_CONCAT(DISTINCT
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images,
         -- Add amenities as comma-separated string
         GROUP_CONCAT(DISTINCT a.name ORDER BY a.name SEPARATOR ', ') AS amenities,
         -- Add contact information
@@ -375,7 +419,7 @@ router.get('/favorites/:userId', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav_count ON p.property_id = fav_count.property_id
-      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
       -- Join amenities
       LEFT JOIN property_amenities pa ON p.property_id = pa.property_id
       LEFT JOIN amenities a ON pa.amenity_id = a.amenity_id
@@ -407,8 +451,8 @@ router.get('/favorites/:userId', async (req, res) => {
     query += ' AND p.price BETWEEN ? AND ?';
     params.push(minPriceNum, maxPriceNum);
 
-    // GROUP BY clause (required because of GROUP_CONCAT for amenities)
-    query += ' GROUP BY p.property_id, f.created_at, pi.image_url';
+    // GROUP BY clause (required because of GROUP_CONCAT for amenities and images)
+    query += ' GROUP BY p.property_id, f.created_at';
 
     switch (sort) {
       case 'newest':     query += ' ORDER BY f.created_at DESC'; break;
@@ -423,6 +467,9 @@ router.get('/favorites/:userId', async (req, res) => {
     params.push(limitNum, offset);
 
     const [rows] = await pool.query(query, params);
+    
+    // Parse images for each property
+    const properties = rows.map(property => parsePropertyImages(property));
 
     // count (same where)
     let countQuery = `
@@ -430,9 +477,13 @@ router.get('/favorites/:userId', async (req, res) => {
       FROM favorites f
       JOIN properties p ON f.property_id = p.property_id
       LEFT JOIN locations l ON p.location_id = l.location_id
+      LEFT JOIN users u ON p.owner_id = u.user_id
       WHERE f.user_id = ?
         AND p.status = 'active'
         AND p.is_deleted = 0
+        AND p.approval_status = 'approved'
+        AND u.cnic_verified = 1
+        AND u.phone_verified = 1
     `;
     const countParams = [userId];
 
@@ -453,7 +504,7 @@ router.get('/favorites/:userId', async (req, res) => {
     const totalPages = Math.ceil(totalCount / limitNum);
 
     res.status(200).json({
-      data: rows,
+      data: properties,
       pagination: { total: totalCount, page: pageNum, limit: limitNum, totalPages },
     });
   } catch (err) {
@@ -684,7 +735,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
 
-      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
       LEFT JOIN users u ON p.owner_id = u.user_id
 
@@ -742,13 +793,20 @@ router.get('/getallnew/:user_id', async (req, res) => {
         pc.pref_email,
         pc.pref_phone,
         pc.pref_whatsapp,
-        MAX(pi.image_url) AS image
+        GROUP_CONCAT(DISTINCT
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images
       ${base}${groupBy}${orderBy} LIMIT ? OFFSET ?
       
     `;
     const finalParams = [...params, limitNum, offset];
 
     const [rows] = await pool.query(final, finalParams);
+    
+    // Parse images for each property
+    const properties = rows.map(property => parsePropertyImages(property));
 
     const countQuery = `SELECT COUNT(DISTINCT p.property_id) AS count ${base}`;
     const [countRows] = await pool.query(countQuery, params);
@@ -757,7 +815,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
     const totalPages = Math.ceil(total / limitNum);
 
     res.status(200).json({
-      data: rows,
+      data: properties,
       pagination: { total, page: pageNum, limit: limitNum, totalPages },
     });
   } catch (err) {
@@ -790,7 +848,7 @@ router.get('/getall', async (req, res) => {
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
 
-      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
       LEFT JOIN users u ON p.owner_id = u.user_id
 
@@ -847,13 +905,20 @@ router.get('/getall', async (req, res) => {
         pc.pref_email,
         pc.pref_phone,
         pc.pref_whatsapp,
-        MAX(pi.image_url) AS image
+        GROUP_CONCAT(DISTINCT
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images
       ${base}${groupBy}${orderBy} LIMIT ? OFFSET ?
       
     `;
     const finalParams = [...params, limitNum, offset];
 
     const [rows] = await pool.query(final, finalParams);
+    
+    // Parse images for each property
+    const properties = rows.map(property => parsePropertyImages(property));
 
     const countQuery = `SELECT COUNT(DISTINCT p.property_id) AS count ${base}`;
     const [countRows] = await pool.query(countQuery, params);
@@ -862,7 +927,7 @@ router.get('/getall', async (req, res) => {
     const totalPages = Math.ceil(total / limitNum);
 
     res.status(200).json({
-      data: rows,
+      data: properties,
       pagination: { total, page: pageNum, limit: limitNum, totalPages },
     });
   } catch (err) {

@@ -8,6 +8,36 @@ const { authenticateAdmin } = require("../middleware/auth");
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
+// Helper function to parse images string from GROUP_CONCAT
+function parsePropertyImages(property) {
+  if (property.images && typeof property.images === 'string') {
+    // Format: "image_id:image_url:is_main||image_id:image_url:is_main"
+    const imageEntries = property.images.split('||');
+    
+    // Extract all image URLs into an array
+    const imageUrls = imageEntries.map(entry => {
+      const parts = entry.split(':');
+      // Extract URL (everything except first and last part)
+      return parts.slice(1, -1).join(':');
+    }).filter(url => url); // Remove any empty URLs
+    
+    // Find main image
+    const mainImageEntry = imageEntries.find(entry => entry.endsWith(':1'));
+    
+    if (mainImageEntry) {
+      const parts = mainImageEntry.split(':');
+      property.image = parts.slice(1, -1).join(':');
+    } else if (imageUrls.length > 0) {
+      // Fallback to first image if no main image
+      property.image = imageUrls[0];
+    }
+    
+    // Set images array for PropertyDetails component
+    property.images = imageUrls;
+  }
+  return property;
+}
+
 
 
 
@@ -66,21 +96,30 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
       })
     );
 
-    // Fetch main images for all properties
+    // Fetch all images for each property using GROUP_CONCAT
     if (enrichedProperties.length > 0) {
       const propertyIds = enrichedProperties.map(p => p.property_id);
       const [imageRows] = await pool.query(
-        `SELECT property_id, image_url FROM property_images WHERE property_id IN (?) AND is_main = 1`,
+        `SELECT 
+          property_id,
+          GROUP_CONCAT(
+            CONCAT(image_id, ':', image_url, ':', is_main) 
+            ORDER BY is_main DESC, image_id ASC 
+            SEPARATOR '||'
+          ) AS images
+        FROM property_images 
+        WHERE property_id IN (?) 
+        GROUP BY property_id`,
         [propertyIds]
       );
       const imageMap = {};
       imageRows.forEach(row => {
-        imageMap[row.property_id] = row.image_url;
+        imageMap[row.property_id] = row.images;
       });
-      enrichedProperties = enrichedProperties.map(p => ({
-        ...p,
-        image: imageMap[p.property_id] || null
-      }));
+      enrichedProperties = enrichedProperties.map(p => {
+        p.images = imageMap[p.property_id] || null;
+        return parsePropertyImages(p);
+      });
     }
 
     const [statsRows] = await pool.query(
@@ -136,21 +175,30 @@ router.get("/pending-properties", async (req, res) => {
     const [rows] = await pool.query("CALL GetPendingProperties()");
     let properties = rows[0] || [];
 
-    // Fetch main images for all properties
+    // Fetch all images for each property using GROUP_CONCAT
     if (properties.length > 0) {
       const propertyIds = properties.map(p => p.property_id);
       const [imageRows] = await pool.query(
-        `SELECT property_id, image_url FROM property_images WHERE property_id IN (?) AND is_main = 1`,
+        `SELECT 
+          property_id,
+          GROUP_CONCAT(
+            CONCAT(image_id, ':', image_url, ':', is_main) 
+            ORDER BY is_main DESC, image_id ASC 
+            SEPARATOR '||'
+          ) AS images
+        FROM property_images 
+        WHERE property_id IN (?) 
+        GROUP BY property_id`,
         [propertyIds]
       );
       const imageMap = {};
       imageRows.forEach(row => {
-        imageMap[row.property_id] = row.image_url;
+        imageMap[row.property_id] = row.images;
       });
-      properties = properties.map(p => ({
-        ...p,
-        image: imageMap[p.property_id] || null
-      }));
+      properties = properties.map(p => {
+        p.images = imageMap[p.property_id] || null;
+        return parsePropertyImages(p);
+      });
     }
    
     res.json({ success: true, properties });
