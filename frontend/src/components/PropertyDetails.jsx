@@ -1,7 +1,7 @@
 //src/components/PropertyDetails.jsx
 /* eslint-disable no-unused-vars */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,6 +27,10 @@ import {
   Mail,
   User,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  ZoomIn,
 } from "lucide-react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -73,6 +77,7 @@ const PropertyDetails = () => {
   const queryClient = useQueryClient();
 
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [liked, setLiked] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [contactForm, setContactForm] = useState({
@@ -87,6 +92,8 @@ const PropertyDetails = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showToast, setShowToast] = useState({ show: false, message: '', type: 'success' });
+  
+  const sliderRef = useRef(null);
 
   const { user, isLoggedIn } = useAuth();
   const userId = user?.user_id;
@@ -261,14 +268,15 @@ const PropertyDetails = () => {
 
   const sliderSettings = {
     dots: true,
-    infinite: true,
+    infinite: images.length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
     arrows: false,
-    autoplay: true,
+    autoplay: images.length > 1,
     autoplaySpeed: 4000,
     pauseOnHover: true,
+    beforeChange: (current, next) => setCurrentImageIndex(next),
   };
 
   return (
@@ -334,12 +342,15 @@ const PropertyDetails = () => {
               </button>
             </div>
 
-            <div className="relative w-full overflow-hidden">
-              <Slider key={images.length} {...sliderSettings}>
+            <div className="relative w-full overflow-hidden group/slider">
+              <Slider ref={sliderRef} key={images.length} {...sliderSettings}>
                 {images.map((img, index) => (
                   <div
                     key={index}
-                    onClick={() => setIsImagePreviewOpen(true)}
+                    onClick={() => {
+                      setCurrentImageIndex(index);
+                      setIsImagePreviewOpen(true);
+                    }}
                     className="cursor-pointer relative"
                   >
                     <img
@@ -365,9 +376,49 @@ const PropertyDetails = () => {
                         );
                       })()}
                     </div>
+                    
+                    {/* Expand Icon Overlay */}
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <div className="opacity-0 group-hover/slider:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg">
+                        <Maximize2 className="w-6 h-6 text-emerald-600" />
+                      </div>
+                    </div>
                   </div>
                 ))}
               </Slider>
+              
+              {/* Custom Navigation Buttons */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sliderRef.current?.slickPrev();
+                    }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-emerald-600 text-gray-800 hover:text-white rounded-full p-3 shadow-xl transition-all duration-300 opacity-0 group-hover/slider:opacity-100 hover:scale-110"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      sliderRef.current?.slickNext();
+                    }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-emerald-600 text-gray-800 hover:text-white rounded-full p-3 shadow-xl transition-all duration-300 opacity-0 group-hover/slider:opacity-100 hover:scale-110"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+              
+              {/* Image Counter */}
+              {images.length > 1 && (
+                <div className="absolute bottom-4 right-4 z-10 bg-black/70 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+                  {currentImageIndex + 1} / {images.length}
+                </div>
+              )}
             </div>
 
             <div className="p-10 space-y-10">
@@ -751,7 +802,7 @@ const PropertyDetails = () => {
             )}
 
             {/* WhatsApp Contact */}
-            {property.pref_whatsapp === 1 && (property.contact_whatsapp || property.contact_phone) && (
+            {/* {property.pref_whatsapp === 1 && (property.contact_whatsapp || property.contact_phone) && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -777,7 +828,7 @@ const PropertyDetails = () => {
                   WhatsApp
                 </a>
               </motion.div>
-            )}
+            )} */}
           </motion.div>
         </div>
 
@@ -836,37 +887,128 @@ const PropertyDetails = () => {
           )}
         </AnimatePresence>
 
-        {/* Image Preview Modal */}
+        {/* Professional Image Lightbox Modal */}
         <AnimatePresence>
           {isImagePreviewOpen && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+              className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4"
               onClick={() => setIsImagePreviewOpen(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setIsImagePreviewOpen(false);
+                if (e.key === 'ArrowLeft') {
+                  setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+                }
+                if (e.key === 'ArrowRight') {
+                  setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+                }
+              }}
+              tabIndex={0}
             >
               <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                className="relative max-w-4xl max-h-[90vh] w-full"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
+                {/* Close Button */}
                 <button
                   onClick={() => setIsImagePreviewOpen(false)}
-                  className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 p-2 bg-black/50 rounded-full transition-colors"
+                  className="absolute top-4 right-4 z-30 text-white hover:text-red-400 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-all duration-300 backdrop-blur-sm shadow-lg hover:scale-110"
+                  aria-label="Close lightbox"
                 >
                   <X className="w-6 h-6" />
                 </button>
-                <img
-                  src={property.image}
-                  alt="Property Preview"
-                  className="w-full h-full object-contain rounded-lg"
-                  onError={(e) => {
-                    e.target.src = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=500&fit=crop";
-                  }}
-                />
+
+                {/* Image Counter */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                  {currentImageIndex + 1} / {images.length}
+                </div>
+
+                {/* Navigation Buttons */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+                      }}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/10 hover:bg-emerald-600 text-white rounded-full p-4 shadow-2xl transition-all duration-300 backdrop-blur-md hover:scale-110 border border-white/20"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="w-8 h-8" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/10 hover:bg-emerald-600 text-white rounded-full p-4 shadow-2xl transition-all duration-300 backdrop-blur-md hover:scale-110 border border-white/20"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="w-8 h-8" />
+                    </button>
+                  </>
+                )}
+
+                {/* Main Image */}
+                <motion.div
+                  key={currentImageIndex}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  <img
+                    src={images[currentImageIndex]}
+                    alt={`Property view ${currentImageIndex + 1}`}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    onError={(e) => {
+                      e.target.src = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=500&fit=crop";
+                    }}
+                  />
+                </motion.div>
+
+                {/* Thumbnail Navigation */}
+                {images.length > 1 && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2 bg-black/70 backdrop-blur-sm p-3 rounded-2xl shadow-lg max-w-full overflow-x-auto">
+                    {images.map((img, idx) => (
+                      <motion.button
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentImageIndex(idx);
+                        }}
+                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                          idx === currentImageIndex
+                            ? "border-emerald-500 scale-110 shadow-lg shadow-emerald-500/50"
+                            : "border-white/30 hover:border-white/60 opacity-60 hover:opacity-100"
+                        }`}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <img
+                          src={img}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&h=100&fit=crop";
+                          }}
+                        />
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Keyboard Hints */}
+                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 text-white/60 text-xs font-medium hidden md:block">
+                  Use arrow keys to navigate • ESC to close
+                </div>
               </motion.div>
             </motion.div>
           )}

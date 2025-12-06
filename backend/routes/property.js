@@ -275,16 +275,54 @@ router.get('/property-status/:userId', async (req, res) => {
         p.approval_status,
         p.rejection_reason,
         p.posted_at,
-        pi.image_url AS image
+        GROUP_CONCAT(
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images
       FROM properties p
-      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
       WHERE p.owner_id = ? AND p.is_deleted = 0
+      GROUP BY p.property_id
       ORDER BY p.posted_at DESC
     `, [userId]);
 
+    // Parse images string to extract main image and images array
+    const properties = rows.map(property => {
+      if (property.images && typeof property.images === 'string') {
+        // Format: "image_id:image_url:is_main||image_id:image_url:is_main"
+        const imageEntries = property.images.split('||');
+        
+        // Extract all image URLs into an array
+        const imageUrls = imageEntries.map(entry => {
+          const parts = entry.split(':');
+          // Extract URL (everything except first and last part)
+          return parts.slice(1, -1).join(':');
+        }).filter(url => url); // Remove any empty URLs
+        
+        // Find main image
+        const mainImageEntry = imageEntries.find(entry => entry.endsWith(':1'));
+        
+        if (mainImageEntry) {
+          const parts = mainImageEntry.split(':');
+          property.image = parts.slice(1, -1).join(':');
+        } else if (imageUrls.length > 0) {
+          // Fallback to first image if no main image
+          property.image = imageUrls[0];
+        }
+        
+        // Set images array for display
+        property.images = imageUrls;
+      } else {
+        property.image = null;
+        property.images = [];
+      }
+      return property;
+    });
+
     res.json({
       success: true,
-      properties: rows
+      properties: properties
     });
   } catch (err) {
     console.error('Error fetching property status:', err);

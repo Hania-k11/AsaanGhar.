@@ -24,6 +24,7 @@ import {
   MessageSquare,
   AlertCircle,
   Tag,
+  Images,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -440,9 +441,29 @@ const PropertyGrid = ({
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-80 transition-opacity duration-500" />
 
+              {/* Image Count Badge */}
+              {property.images && property.images.length > 1 && (
+                <div className="absolute top-3 left-3 z-10 bg-black/70 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
+                  <Images size={14} />
+                  <span>{property.images.length}</span>
+                </div>
+              )}
+              
+              {/* View Photos Overlay */}
+              {property.images && property.images.length > 1 && (
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                    <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                      <Images size={16} className="text-emerald-600" />
+                      View All {property.images.length} Photos
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Status or Listing Type */}
               {isOwner ? (
-                  <div className="absolute top-3 left-3 z-10 flex gap-2">
+                  <div className="absolute top-3 right-3 z-10 flex gap-2">
     <StatusDropdown property={property} onChangeStatus={onChangeStatus} />
     <ListingTypeDropdown property={property} onChangeListingType={onChangeListingType} />
   </div>
@@ -450,7 +471,7 @@ const PropertyGrid = ({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute top-3 left-3 z-10"
+                  className="absolute top-3 right-3 z-10"
                 >
                   <span
                     className={`px-2.5 py-1 rounded-full text-xs font-semibold shadow-md ${
@@ -468,7 +489,7 @@ const PropertyGrid = ({
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`absolute top-3 right-3 flex gap-1.5 z-10 transition-all duration-300 ${
+                className={`absolute bottom-3 right-3 flex gap-1.5 z-10 transition-all duration-300 ${
                   !isOwner ? "opacity-0 group-hover:opacity-100" : "opacity-100"
                 }`}
               >

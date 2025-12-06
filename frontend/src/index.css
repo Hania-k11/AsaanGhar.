@@ -105,3 +105,12 @@ html, body {
   background-color: #10b981;
   border-radius: 6px;
 }
+
+/* Hide scrollbar for horizontal image galleries */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

@@ -448,17 +448,28 @@ const UserProfile = () => {
                     className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors cursor-pointer"
                     onClick={() => navigate(`/property/${property.property_id}`)}
                   >
-                    {/* Property Image */}
-                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
-                      {property.image ? (
-                        <img
-                          src={property.image}
-                          alt={property.title}
-                          className="w-full h-full object-cover"
-                        />
+                    {/* Property Images - Show all images in horizontal scroll */}
+                    <div className="flex-shrink-0">
+                      {property.images && property.images.length > 0 ? (
+                        <div className="flex gap-2 overflow-x-auto max-w-[240px] scrollbar-hide">
+                          {property.images.map((imageUrl, index) => (
+                            <div
+                              key={index}
+                              className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`${property.title} - Image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ))}
+                        </div>
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Home className="w-8 h-8 text-gray-400" />
+                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Home className="w-8 h-8 text-gray-400" />
+                          </div>
                         </div>
                       )}
                     </div>
