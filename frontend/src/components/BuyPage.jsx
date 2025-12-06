@@ -367,9 +367,26 @@ useEffect(() => {
 />
 </div>
           ) : (normalError && !isNlpActive) || (nlpError && isNlpActive) ? (
-            <p className="text-center text-red-500 py-20">
-              Error loading properties.
-            </p>
+            <div className="text-center py-20">
+              {(nlpError?.isNotRealEstate || normalError?.isNotRealEstate) ? (
+                <div className="max-w-md mx-auto">
+                  <div className="text-6xl mb-4">🏘️</div>
+                  <p className="text-2xl font-bold mb-4 text-gray-800">
+                    Oops! That's not a real estate query
+                  </p>
+                  <p className="text-lg text-gray-600 mb-6">
+                    {nlpError?.message || normalError?.message || 'Please search for properties, houses, apartments, or real estate related queries.'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Try searching for: "3 bedroom house" or "apartment for rent in Gulshan"
+                  </p>
+                </div>
+              ) : (
+                <p className="text-red-500 text-lg">
+                  Error loading properties. Please try again.
+                </p>
+              )}
+            </div>
           ) : properties.length === 0 ? (
             <div className="text-center py-16">
               <p className="text-2xl font-bold mb-4">No Properties Found</p>

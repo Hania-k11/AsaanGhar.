@@ -27,12 +27,24 @@ const fetchNlpProperties = async ({ queryKey }) => {
     limit,
   };
 
-  if (isLoggedIn) {
-    const response = await axios.post(`/api/searchuser/nlp-search/${userId}`, payload);
-    return response.data;
-  } else {
-    const response = await axios.post(`/api/search/nlp-search`, payload);
-    return response.data;
+  try {
+    if (isLoggedIn) {
+      const response = await axios.post(`/api/searchuser/nlp-search/${userId}`, payload);
+      return response.data;
+    } else {
+      const response = await axios.post(`/api/search/nlp-search`, payload);
+      return response.data;
+    }
+  } catch (error) {
+    // Check if this is a non-real-estate query error
+    if (error.response?.data?.isNotRealEstate) {
+      // Throw a custom error object with the message
+      const customError = new Error(error.response.data.message || 'Please search in the real estate domain only');
+      customError.isNotRealEstate = true;
+      throw customError;
+    }
+    // Re-throw other errors
+    throw error;
   }
 };
 

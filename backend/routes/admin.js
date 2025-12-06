@@ -46,7 +46,7 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
     const totalPages = Math.ceil(totalCount / limit);
 
     // Enrich properties with user verification status
-    const enrichedProperties = await Promise.all(
+    let enrichedProperties = await Promise.all(
       properties.map(async (property) => {
         const [userRows] = await pool.query(
           `SELECT first_name, last_name, cnic_verified 
@@ -65,6 +65,23 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
         };
       })
     );
+
+    // Fetch main images for all properties
+    if (enrichedProperties.length > 0) {
+      const propertyIds = enrichedProperties.map(p => p.property_id);
+      const [imageRows] = await pool.query(
+        `SELECT property_id, image_url FROM property_images WHERE property_id IN (?) AND is_main = 1`,
+        [propertyIds]
+      );
+      const imageMap = {};
+      imageRows.forEach(row => {
+        imageMap[row.property_id] = row.image_url;
+      });
+      enrichedProperties = enrichedProperties.map(p => ({
+        ...p,
+        image: imageMap[p.property_id] || null
+      }));
+    }
 
     const [statsRows] = await pool.query(
       `
@@ -117,8 +134,26 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
 router.get("/pending-properties", async (req, res) => {
   try {
     const [rows] = await pool.query("CALL GetPendingProperties()");
+    let properties = rows[0] || [];
+
+    // Fetch main images for all properties
+    if (properties.length > 0) {
+      const propertyIds = properties.map(p => p.property_id);
+      const [imageRows] = await pool.query(
+        `SELECT property_id, image_url FROM property_images WHERE property_id IN (?) AND is_main = 1`,
+        [propertyIds]
+      );
+      const imageMap = {};
+      imageRows.forEach(row => {
+        imageMap[row.property_id] = row.image_url;
+      });
+      properties = properties.map(p => ({
+        ...p,
+        image: imageMap[p.property_id] || null
+      }));
+    }
    
-    res.json({ success: true, properties: rows[0] });
+    res.json({ success: true, properties });
   } catch (err) {
     console.error("Error fetching pending properties:", err);
     res.status(500).json({ success: false, message: "Server error" });

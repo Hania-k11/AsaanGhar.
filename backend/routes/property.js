@@ -103,7 +103,8 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         l.city AS location_city,
         pt.name AS property_type_name,
         fs.name AS furnishing_status_name,
-        COALESCE(fav.favorite_count, 0) AS favorite_count
+        COALESCE(fav.favorite_count, 0) AS favorite_count,
+        pi.image_url AS image
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.location_id
       LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
@@ -113,6 +114,7 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav ON p.property_id = fav.property_id
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
       WHERE p.owner_id = ?
         AND p.is_deleted = 0
     `;
@@ -260,6 +262,36 @@ router.get('/stats/:userId', async (req, res) => {
   }
 });
 
+// Property status for user's properties (for profile status section)
+router.get('/property-status/:userId', async (req, res) => {
+  const userId = parseInt(req.params.userId, 10);
+  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        p.property_id,
+        p.title,
+        p.approval_status,
+        p.rejection_reason,
+        p.posted_at,
+        pi.image_url AS image
+      FROM properties p
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      WHERE p.owner_id = ? AND p.is_deleted = 0
+      ORDER BY p.posted_at DESC
+    `, [userId]);
+
+    res.json({
+      success: true,
+      properties: rows
+    });
+  } catch (err) {
+    console.error('Error fetching property status:', err);
+    res.status(500).json({ error: 'Failed to retrieve property status' });
+  }
+});
+
 // Favorites list (exclude deleted)
 router.get('/favorites/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId, 10);
@@ -312,9 +344,14 @@ router.get('/favorites/:userId', async (req, res) => {
       -- Join contact information
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+      -- Join users for verification status
+      LEFT JOIN users u ON p.owner_id = u.user_id
       WHERE f.user_id = ?
         AND p.status = 'active'
         AND p.is_deleted = 0
+        AND p.approval_status = 'approved'
+        AND u.cnic_verified = 1
+        AND u.phone_verified = 1
     `;
     const params = [userId];
 
@@ -582,19 +619,7 @@ router.delete('/:propertyId/hard', async (req, res) => {
 // ----------------------
 // Public feeds (exclude deleted)
 // ----------------------
-router.get('/getallexclude/:userId', async (req, res) => {
-  const userId = parseInt(req.params.userId, 10);
-  if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
 
-  try {
-    const [rows] = await pool.query('CALL GetPropertiesExcludingUser(?)', [userId]);
-    const properties = (rows[0] || []).filter(p => !p.is_deleted || p.is_deleted === 0);
-    res.json(properties);
-  } catch (err) {
-    console.error('Error fetching properties:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 router.get('/getallnew/:user_id', async (req, res) => {
   const user_id = parseInt(req.params.user_id, 10);
@@ -608,55 +633,101 @@ router.get('/getallnew/:user_id', async (req, res) => {
     const limitNum = parseInt(limit, 10) || 6;
     const offset = (pageNum - 1) * limitNum;
 
-    const [rows] = await pool.query('CALL GetPropertiesExcludingUser(?)', [Number(user_id)]);
-    let properties = (rows[0] || []).filter(p => !p.is_deleted || p.is_deleted === 0);
+    let base = `
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.location_id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
+      LEFT JOIN furnishing_statuses fs ON p.furnishing_status_id = fs.furnishing_status_id
+      LEFT JOIN listing_types lt ON p.listing_type_id = lt.listing_type_id
+      -- Join amenities
+      LEFT JOIN property_amenities pa ON p.property_id = pa.property_id
+      LEFT JOIN amenities a ON pa.amenity_id = a.amenity_id
+      -- Join contact information
+      LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
+      LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
+      LEFT JOIN user_settings us ON p.owner_id = us.user_id
+      LEFT JOIN users u ON p.owner_id = u.user_id
+
+      WHERE p.is_deleted = 0
+      AND us.show_listings = TRUE
+      AND p.approval_status = 'approved'
+       AND u.cnic_verified = 1
+    AND u.phone_verified = 1
+      AND p.owner_id != ?
+      
+    `;
+    const params = [user_id];
 
     if (type !== 'all') {
-      const map = { rent: 1, sale: 2 };
-      const id = map[type];
-      properties = properties.filter(p => p.listing_type_id === id);
+      const id = type === 'rent' ? 1 : type === 'sale' ? 2 : null;
+      if (id) { base += ' AND p.listing_type_id = ?'; params.push(id); }
     }
 
     if (search) {
-      const q = search.toLowerCase();
-      properties = properties.filter(p =>
-        (p.title && p.title.toLowerCase().includes(q)) ||
-        (p.location_city && p.location_city.toLowerCase().includes(q)) ||
-        (p.location_name && p.location_name.toLowerCase().includes(q))
-      );
+      base += ' AND (p.title LIKE ? OR l.city LIKE ? OR l.area LIKE ?)';
+      const like = `%${search}%`;
+      params.push(like, like, like);
     }
 
-    properties = properties.filter(p => {
-      const priceNum = parseFloat(p.price);
-      return priceNum >= minPriceNum && priceNum <= maxPriceNum;
-    });
+    base += ' AND p.price BETWEEN ? AND ?';
+    params.push(minPriceNum, maxPriceNum);
 
+    // Add GROUP BY before ORDER BY
+    const groupBy = ' GROUP BY p.property_id';
+
+    let orderBy = '';
     switch (sort) {
-      case 'featured':   properties.sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)); break;
-      case 'price-low':  properties.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)); break;
-      case 'price-high': properties.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)); break;
-      case 'newest':
-        properties.sort((a, b) => {
-          const aDate = a.posted_at ? new Date(String(a.posted_at).replace(' ', 'T')).getTime() : 0;
-          const bDate = b.posted_at ? new Date(String(b.posted_at).replace(' ', 'T')).getTime() : 0;
-          return bDate - aDate;
-        });
-        break;
+      case 'featured':   orderBy = ' ORDER BY p.is_featured DESC'; break;
+      case 'price-low':  orderBy = ' ORDER BY p.price ASC'; break;
+      case 'price-high': orderBy = ' ORDER BY p.price DESC'; break;
+      case 'newest':     orderBy = ' ORDER BY p.posted_at DESC'; break;
+      default:           orderBy = '';
     }
 
-    const totalCount = properties.length;
-    const totalPages = Math.ceil(totalCount / limitNum);
-    const paginatedData = properties.slice(offset, offset + Number(limitNum));
+    const final = `
+      SELECT 
+        p.*,
+        l.city AS location_city,
+        l.area AS location_name,
+        pt.name AS property_type_name,
+        fs.name AS furnishing_status_name,
+        lt.name AS listing_type_name,
+        -- Add amenities as comma-separated string
+        GROUP_CONCAT(DISTINCT a.name ORDER BY a.name SEPARATOR ', ') AS amenities,
+        -- Add contact information
+        c.contact_name,
+        c.contact_email,
+        c.contact_phone,
+        c.contact_whatsapp,
+        pc.pref_email,
+        pc.pref_phone,
+        pc.pref_whatsapp,
+        MAX(pi.image_url) AS image
+      ${base}${groupBy}${orderBy} LIMIT ? OFFSET ?
+      
+    `;
+    const finalParams = [...params, limitNum, offset];
+
+    const [rows] = await pool.query(final, finalParams);
+
+    const countQuery = `SELECT COUNT(DISTINCT p.property_id) AS count ${base}`;
+    const [countRows] = await pool.query(countQuery, params);
+
+    const total = countRows?.[0]?.count || 0;
+    const totalPages = Math.ceil(total / limitNum);
 
     res.status(200).json({
-      data: paginatedData,
-      pagination: { total: totalCount, page: pageNum, limit: limitNum, totalPages },
+      data: rows,
+      pagination: { total, page: pageNum, limit: limitNum, totalPages },
     });
   } catch (err) {
     console.error('Error retrieving properties:', err);
     res.status(500).json({ error: 'Failed to retrieve properties' });
   }
 });
+
 
 // Unified public getall with locations join (exclude deleted)
 router.get('/getall', async (req, res) => {
@@ -681,10 +752,16 @@ router.get('/getall', async (req, res) => {
       LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
       LEFT JOIN contacts c ON pc.contact_id = c.contact_id
 
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id AND pi.is_main = 1
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
+      LEFT JOIN users u ON p.owner_id = u.user_id
 
       WHERE p.is_deleted = 0
       AND us.show_listings = TRUE
+       AND u.cnic_verified = 1
+    AND u.phone_verified = 1
+       AND p.approval_status = 'approved'
+      
     `;
     const params = [];
 
@@ -731,8 +808,10 @@ router.get('/getall', async (req, res) => {
         c.contact_whatsapp,
         pc.pref_email,
         pc.pref_phone,
-        pc.pref_whatsapp
+        pc.pref_whatsapp,
+        MAX(pi.image_url) AS image
       ${base}${groupBy}${orderBy} LIMIT ? OFFSET ?
+      
     `;
     const finalParams = [...params, limitNum, offset];
 
@@ -753,6 +832,9 @@ router.get('/getall', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve properties' });
   }
 });
+
+
+
 // Counters (🔒 ignore deleted)
 router.post('/:propertyId/views', async (req, res) => {
   const propertyId = parseInt(req.params.propertyId, 10);

@@ -255,7 +255,7 @@ if (Array.isArray(clean.lease_duration)) {
     );
 
     let allProperties = rows[0] || [];
-    logger.info({total: allProperties.length }, "Fetched properties from DB");
+    logger.info({total: allProperties.length }, "Fetched properties from DB (filtered by stored procedure)");
 
     // Sorting
     switch (sort) {

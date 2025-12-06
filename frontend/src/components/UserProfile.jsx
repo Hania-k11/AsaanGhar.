@@ -1,12 +1,14 @@
 /* eslint-disable no-unused-vars */
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, Phone, Calendar, Edit3, Save, X, User, Hash, CreditCard, Shield, CheckCircle2, AlertCircle, Clock, AlertTriangle } from "lucide-react"
+import { Mail, Phone, Calendar, Edit3, Save, X, User, Hash, CreditCard, Shield, CheckCircle2, AlertCircle, Clock, AlertTriangle, Home, XCircle } from "lucide-react"
 import { useAuth } from "../context/AuthContext"
 import { format } from "date-fns"
 import CNICUpload from "./CNICUpload"
 import PhoneVerificationModal from "./PhoneVerificationModal"
+import axios from "axios"
+import { useNavigate } from "react-router-dom"
 
 const generatePlaceholderImage = (firstName, lastName) => {
   const safeFirstName = firstName || "U"; 
@@ -41,10 +43,31 @@ const generatePlaceholderImage = (firstName, lastName) => {
 };
 
 const UserProfile = () => {
+  const navigate = useNavigate();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCNICModal, setShowCNICModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
-  const { user, updateUser } = useAuth(); 
+  const [propertyStatus, setPropertyStatus] = useState([]);
+  const [loadingStatus, setLoadingStatus] = useState(true);
+  const { user, updateUser } = useAuth();
+
+  // Fetch property status
+  useEffect(() => {
+    const fetchPropertyStatus = async () => {
+      if (!user?.user_id) return;
+      try {
+        const { data } = await axios.get(`/api/property/property-status/${user.user_id}`);
+        if (data.success) {
+          setPropertyStatus(data.properties);
+        }
+      } catch (err) {
+        console.error('Error fetching property status:', err);
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+    fetchPropertyStatus();
+  }, [user?.user_id]); 
 
   // Initialize editData with safe defaults
   const [editData, setEditData] = useState({
@@ -390,6 +413,100 @@ const UserProfile = () => {
             >
               {user?.phone_number ? 'Change Phone Number' : 'Add Phone Number'}
             </button>
+          </div>
+        </div>
+
+        {/* My Properties Status Card */}
+        <div className="mt-8 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-200 dark:border-gray-700 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8 flex items-center space-x-3">
+            <Home className="w-6 h-6 text-emerald-500" />
+            <span>My Properties Status</span>
+          </h2>
+
+          <div className="space-y-4">
+            {loadingStatus ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto"></div>
+                <p className="text-gray-600 dark:text-gray-400 mt-3">Loading properties...</p>
+              </div>
+            ) : propertyStatus.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 dark:bg-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <Home className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 dark:text-gray-400 mb-4">You haven't listed any properties yet</p>
+                <button
+                  onClick={() => navigate('/sell')}
+                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors"
+                >
+                  List a Property
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {propertyStatus.map((property) => (
+                  <div
+                    key={property.property_id}
+                    className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/property/${property.property_id}`)}
+                  >
+                    {/* Property Image */}
+                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                      {property.image ? (
+                        <img
+                          src={property.image}
+                          alt={property.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Home className="w-8 h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Property Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {property.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        Posted {property.posted_at ? format(new Date(property.posted_at), 'dd MMM yyyy') : 'N/A'}
+                      </p>
+
+                      {/* Rejection Reason */}
+                      {property.approval_status === 'rejected' && property.rejection_reason && (
+                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                          <p className="text-sm text-red-700 dark:text-red-300">
+                            <strong>Reason:</strong> {property.rejection_reason}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex-shrink-0">
+                      {property.approval_status === 'approved' && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full text-sm font-medium">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Approved
+                        </div>
+                      )}
+                      {property.approval_status === 'pending' && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-sm font-medium">
+                          <Clock className="w-4 h-4" />
+                          Pending
+                        </div>
+                      )}
+                      {property.approval_status === 'rejected' && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-sm font-medium">
+                          <XCircle className="w-4 h-4" />
+                          Rejected
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
