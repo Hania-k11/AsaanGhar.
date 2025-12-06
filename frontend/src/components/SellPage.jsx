@@ -183,29 +183,31 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-populate email, phone, and name from user data
+  // This runs whenever user changes to handle async loading
   useEffect(() => {
     if (user) {
-      const updates = {};
-      
-      if (user.email) {
-        updates.ownerEmail = user.email;
-      }
-      
-      if (user.phone_number) {
-        updates.phoneNumber = user.phone_number;
-      }
-      
-      // Auto-populate owner name from first_name and last_name
-      if (user.first_name || user.last_name) {
-        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-        if (fullName) {
-          updates.ownerName = fullName;
+      setFormData((prev) => {
+        const updates = { ...prev };
+        
+        // Always update from user data if available (handles async loading)
+        if (user.email) {
+          updates.ownerEmail = user.email;
         }
-      }
-      
-      if (Object.keys(updates).length > 0) {
-        setFormData((prev) => ({ ...prev, ...updates }));
-      }
+        
+        if (user.phone_number) {
+          updates.phoneNumber = user.phone_number;
+        }
+        
+        // Auto-populate owner name from first_name and last_name
+        if (user.first_name || user.last_name) {
+          const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+          if (fullName) {
+            updates.ownerName = fullName;
+          }
+        }
+        
+        return updates;
+      });
     }
   }, [user]);
 
@@ -240,6 +242,10 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     images: useRef(),
     documents: useRef(),
     contactPreferences: useRef(),
+    // Step 5 refs
+    cnicVerification: useRef(),
+    propertyPapers: useRef(),
+    utilityBill: useRef(),
   };
 
   const scrollToFirstError = (errorObj) => {
@@ -251,6 +257,7 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       "rent",
       "propertyType",
       "area",
+      "yearBuilt",
       "description",
       "furnishing",
       "ownerName",
@@ -259,6 +266,10 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
       "images",
       "documents",
       "contactPreferences",
+      // Step 5 error keys
+      "cnicVerification",
+      "propertyPapers",
+      "utilityBill",
     ];
     for (const key of errorOrder) {
       if (errorObj[key] && refs[key] && refs[key].current) {
@@ -266,6 +277,28 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
         if (refs[key].current.focus) refs[key].current.focus();
         break;
       }
+    }
+  };
+
+  // Handler to prevent non-numeric characters in number inputs
+  const handleNumericKeyDown = (e) => {
+    // Allow: backspace, delete, tab, escape, enter, arrows
+    const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    if (allowedKeys.includes(e.key)) {
+      return;
+    }
+    // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+    if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) {
+      return;
+    }
+    // Block non-numeric characters (e, E, +, -, ., comma)
+    if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
+      e.preventDefault();
+      return;
+    }
+    // Allow only numbers 0-9
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
     }
   };
 
@@ -470,6 +503,20 @@ const handleChange = (e) => {
         }
       }
       if (!formData.street_address) newErrors.street_address = "Street address is required";
+
+      // Year Built validation (validate proper 4-digit year)
+      if (formData.yearBuilt) {
+        const currentYear = new Date().getFullYear();
+        const yearStr = String(formData.yearBuilt).trim();
+        const yearValue = Number(formData.yearBuilt);
+        
+        // Check if it's a valid 4-digit year
+        if (!/^\d{4}$/.test(yearStr)) {
+          newErrors.yearBuilt = `Please enter a valid 4-digit year (e.g., 2020).`;
+        } else if (isNaN(yearValue) || yearValue < 1800 || yearValue > currentYear) {
+          newErrors.yearBuilt = `Year built must be between 1800 and ${currentYear}.`;
+        }
+      }
     }
 
     if (step === 2) {
@@ -497,33 +544,27 @@ const handleChange = (e) => {
         console.log("❌ Furnishing is missing");
       }
 
-      //  Maintenance (Required check is present, adding range/format)
-      if (!formData.maintenance) {
-        newErrors.maintenance = "Monthly Maintenance is required";
-        console.log("❌ Maintenance is missing");
-      } else {
-        validateNumber(formData.maintenance, 'maintenance', 0, 500000, true); // Min 0, Max 500,000
+      //  Maintenance (Optional - but if entered, min 500)
+      if (formData.maintenance) {
+        const maintenanceValue = Number(formData.maintenance);
+        if (isNaN(maintenanceValue) || maintenanceValue < 500) {
+          newErrors.maintenance = "Monthly maintenance must be at least PKR 500.";
+        } else if (maintenanceValue > 500000) {
+          newErrors.maintenance = "Monthly maintenance seems too high (Max PKR 500,000).";
+        }
       }
 
       // Bedrooms (numerical validation - must be positive)
       if (formData.bedrooms) {
-        validateNumber(formData.bedrooms, 'bedrooms', 1, 20, false); // Min 1, Max 20, no zero allowed
+        validateNumber(formData.bedrooms, 'bedrooms', 1, 50, false); // Min 1, Max 50, no zero allowed
       }
 
       //  Bathrooms (numerical validation - must be positive)
       if (formData.bathrooms) {
-        validateNumber(formData.bathrooms, 'bathrooms', 1, 10, false); // Min 1, Max 10, no zero allowed
+        validateNumber(formData.bathrooms, 'bathrooms', 1, 50, false); // Min 1, Max 50, no zero allowed
       }
 
-      // Year Built (New date/range validation)
-      if (formData.yearBuilt) {
-        const currentYear = new Date().getFullYear();
-        const yearValue = Number(formData.yearBuilt);
-        if (isNaN(yearValue) || yearValue < 1800 || yearValue > currentYear) {
-          newErrors.yearBuilt = `Year built must be a valid year between 1800 and ${currentYear}.`;
-          console.log("❌ Year built is invalid");
-        }
-      }
+      // Year Built validation is now in Step 1 since the field is in Step 1
 
       //  Available From (New date validation: must not be in the past)
       if (formData.availableFrom) {
@@ -532,6 +573,16 @@ const handleChange = (e) => {
         if (availableDate < today) {
           newErrors.availableFrom = "Availability date cannot be in the past.";
           console.log("❌ Available from date is in the past");
+        }
+      }
+
+      // Security Deposit validation (range 1000-100000 if entered)
+      if (formData.deposit) {
+        const depositValue = Number(formData.deposit);
+        if (isNaN(depositValue) || depositValue < 1000) {
+          newErrors.deposit = "Security deposit must be at least PKR 1,000.";
+        } else if (depositValue > 100000) {
+          newErrors.deposit = "Security deposit cannot exceed PKR 100,000.";
         }
       }
 
@@ -638,7 +689,10 @@ const handleChange = (e) => {
     }
 
     setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) scrollToFirstError(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      // Use setTimeout to let React update the DOM before scrolling
+      setTimeout(() => scrollToFirstError(newErrors), 100);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -1129,6 +1183,7 @@ const handleSubmit = async (e) => {
                       name="rent"
                       value={formData.rent}
                       onChange={handleChange}
+                      onKeyDown={handleNumericKeyDown}
                       placeholder={formData.listingType === "rent" ? "50,000" : "5,000,000"}
                       min="0"
                       className={`w-full pl-16 pr-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
@@ -1179,6 +1234,7 @@ const handleSubmit = async (e) => {
                       name="bedrooms"
                       value={formData.bedrooms}
                       onChange={handleChange}
+                      onKeyDown={handleNumericKeyDown}
                       placeholder="3"
                       min="1"
                       className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
@@ -1194,6 +1250,7 @@ const handleSubmit = async (e) => {
                       name="bathrooms"
                       value={formData.bathrooms}
                       onChange={handleChange}
+                      onKeyDown={handleNumericKeyDown}
                       placeholder="2"
                       min="1"
                       className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
@@ -1209,11 +1266,15 @@ const handleSubmit = async (e) => {
                       name="yearBuilt"
                       value={formData.yearBuilt}
                       onChange={handleChange}
+                      onKeyDown={handleNumericKeyDown}
                       placeholder="2020"
                       min="1800"
                       max={new Date().getFullYear()}
-                      className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                      className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
+                        errors.yearBuilt ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                      }`}
                     />
+                    {errors.yearBuilt && <p className="text-red-500 text-sm mt-1">{errors.yearBuilt}</p>}
                   </div>
                 </div>
 
@@ -1226,6 +1287,7 @@ const handleSubmit = async (e) => {
                     name="area"
                     value={formData.area}
                     onChange={handleChange}
+                    onKeyDown={handleNumericKeyDown}
                     placeholder="Enter area in sqft, e.g., 1200"
                     className={`w-full px-4 py-4 border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-emerald-100 ${
                       errors.area ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
@@ -1319,7 +1381,7 @@ const handleSubmit = async (e) => {
 
               
              <div>
-  <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance *</label>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">Monthly Maintenance</label>
   <div className="relative">
     <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">PKR</span>
     <input
@@ -1327,6 +1389,7 @@ const handleSubmit = async (e) => {
       name="maintenance"
       value={formData.maintenance}
       onChange={handleChange}
+      onKeyDown={handleNumericKeyDown}
       placeholder="5,000"
       min="0"
       className={`w-full pl-16 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200
@@ -1342,13 +1405,15 @@ const handleSubmit = async (e) => {
                 {formData.listingType === "rent" && (
                   <>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Minimum Lease Duration</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Minimum Lease Duration (Months)</label>
                       <input
-                        type="text"
+                        type="number"
                         name="leaseDuration"
                         value={formData.leaseDuration}
                         onChange={handleChange}
-                        placeholder="e.g., 12 Months"
+                        onKeyDown={handleNumericKeyDown}
+                        placeholder="e.g., 12"
+                        min="1"
                         className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
                       />
                     </div>
@@ -1362,11 +1427,15 @@ const handleSubmit = async (e) => {
                           name="deposit"
                           value={formData.deposit}
                           onChange={handleChange}
+                          onKeyDown={handleNumericKeyDown}
                           placeholder="100,000"
                           min="0"
-                          className="w-full pl-16 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                          className={`w-full pl-16 pr-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
+                            errors.deposit ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                          }`}
                         />
                       </div>
+                      {errors.deposit && <p className="text-red-500 text-sm mt-1">{errors.deposit}</p>}
                     </div>
                   </>
                 )}
@@ -1738,7 +1807,7 @@ const handleSubmit = async (e) => {
               <p className="text-gray-700 text-sm mb-4">Upload your property documents for verification. Accepted formats: PDF, PNG, JPG. Max size 10MB per file.</p>
 
               {/* CNIC Verification Status */}
-              <div>
+              <div ref={refs.cnicVerification}>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">CNIC Verification</h3>
                 
                 {user?.cnic_verified === 1 ? (
@@ -1807,7 +1876,7 @@ const handleSubmit = async (e) => {
               </div>
 
               {/* Property Papers */}
-              <div>
+              <div ref={refs.propertyPapers}>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Property Papers</h3>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
@@ -1867,7 +1936,7 @@ const handleSubmit = async (e) => {
               </div>
 
               {/* Utility Bill */}
-              <div>
+              <div ref={refs.utilityBill}>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Utility Bill</h3>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
