@@ -15,7 +15,7 @@ axios.defaults.withCredentials = true;
 
 const queryClient = new QueryClient();
 
-const GOOGLE_CLIENT_ID = "928405638610-qkd8neqtf3il0r0i2ke2k9hsadu2otls.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 
 ReactDOM.createRoot(document.getElementById("root")).render(
