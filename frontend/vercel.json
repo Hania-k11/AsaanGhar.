@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+    {
+      "source": "/api/(.*)",
+      "destination": "https://asaanghar-production-abfc.up.railway.app/api/$1"
+    }
   ]
 }
