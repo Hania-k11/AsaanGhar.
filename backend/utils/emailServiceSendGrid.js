@@ -47,7 +47,28 @@ const sendVerificationEmail = async (email, code, firstName = 'User') => {
       email: process.env.SENDGRID_FROM_EMAIL,
       name: 'AsaanGhar'
     },
-    subject: 'Verify Your AsaanGhar Account',
+    subject: 'Your AsaanGhar Verification Code',
+    // Plain text version (improves deliverability and spam score)
+    text: `
+Hello ${firstName}!
+
+Thank you for signing up with AsaanGhar. To complete your registration, please use the verification code below:
+
+Your Verification Code: ${code}
+
+Enter this code in the verification screen to activate your account.
+
+IMPORTANT: This code will expire in 10 minutes. If you didn't request this code, please ignore this email.
+
+If you have any questions, feel free to contact our support team.
+
+Best regards,
+The AsaanGhar Team
+
+© ${new Date().getFullYear()} AsaanGhar. All rights reserved.
+This is an automated email. Please do not reply to this message.
+    `.trim(),
+    // HTML version
     html: `
       <!DOCTYPE html>
       <html>

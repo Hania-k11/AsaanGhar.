@@ -1486,8 +1486,11 @@ const handleSubmit = async (e) => {
                     name="availableFrom"
                     value={formData.availableFrom}
                     onChange={handleChange}
-                    className="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 focus:border-emerald-500 transition-all duration-200"
+                    className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all duration-200 ${
+                      errors.availableFrom ? "border-red-300 bg-red-50" : "border-gray-200 focus:border-emerald-500"
+                    }`}
                   />
+                  {errors.availableFrom && <p className="text-red-500 text-sm mt-1">{errors.availableFrom}</p>}
                 </div>
 
               
