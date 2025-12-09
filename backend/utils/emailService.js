@@ -15,13 +15,17 @@ const validateEmailConfig = () => {
 // Check configuration on module load
 const isEmailConfigured = validateEmailConfig();
 
-// Create transporter using Gmail SMTP
+// Create transporter using Gmail SMTP with timeout
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  // Add connection timeout to prevent hanging
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 5000, // 5 seconds
+  socketTimeout: 10000, // 10 seconds
 });
 
 /**
@@ -155,6 +159,18 @@ const sendVerificationEmail = async (email, code, firstName = 'User') => {
 
   try {
     console.log(`📧 Attempting to send verification email to: ${email}`);
+    
+    // Verify transporter connection before sending
+    console.log(`🔗 Verifying SMTP connection...`);
+    try {
+      await transporter.verify();
+      console.log(`✅ SMTP connection verified`);
+    } catch (verifyError) {
+      console.error(`❌ SMTP connection verification failed:`, verifyError.message);
+      throw new Error(`Email server connection failed: ${verifyError.message}`);
+    }
+    
+    // Send the email
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Verification email sent successfully:', info.messageId);
     console.log('   Recipient:', email);
