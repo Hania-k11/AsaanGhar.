@@ -156,11 +156,16 @@ useEffect(() => {
         }
         return newSet;
       });
+      
+      // Cancel outgoing refetches to prevent overwriting optimistic update
+      await queryClient.cancelQueries(['properties']);
+      await queryClient.cancelQueries(['nlpProperties']);
     },
     onSuccess: (data, { propertyId, isCurrentlyLiked }) => {
       const { favoriteCount } = data;
+      const newIsFavorite = !isCurrentlyLiked;
       
-      // Update the favorite count in all cached queries
+      // Update the favorite count AND is_favorite flag in all cached queries
       ['properties', 'nlpProperties', 'favoriteProperties', 'overview'].forEach(queryKey => {
         queryClient.setQueriesData({ queryKey: [queryKey] }, (oldData) => {
           if (!oldData) return oldData;
@@ -172,16 +177,24 @@ useEffect(() => {
             // For normal properties
             updatedData.data = oldData.data.map(prop => 
               prop.property_id === propertyId 
-                ? { ...prop, favorite_count: favoriteCount }
+                ? { ...prop, favorite_count: favoriteCount, is_favorite: newIsFavorite }
                 : prop
             );
           } else if (oldData.properties) {
             // For NLP properties
             updatedData.properties = oldData.properties.map(prop => {
               const property = prop.property || prop;
-              return property.property_id === propertyId
-                ? { ...prop, property: { ...property, favorite_count: favoriteCount } }
-                : prop;
+              if (property.property_id === propertyId) {
+                return { 
+                  ...prop, 
+                  property: { 
+                    ...property, 
+                    favorite_count: favoriteCount,
+                    is_favorite: newIsFavorite 
+                  } 
+                };
+              }
+              return prop;
             });
           }
           
@@ -189,10 +202,9 @@ useEffect(() => {
         });
       });
       
-      // Invalidate queries to ensure consistency
-      queryClient.invalidateQueries(['properties']);
-      queryClient.invalidateQueries(['favoriteProperties']);
-      queryClient.invalidateQueries(['overview']);
+      // Only invalidate favoriteProperties (to update the favorites page)
+      // Do NOT invalidate the current query to prevent reverting the optimistic update
+      queryClient.invalidateQueries({ queryKey: ['favoriteProperties'], refetchType: 'none' });
     },
     onError: (error, { propertyId, isCurrentlyLiked }) => {
       // Revert the optimistic update on error
