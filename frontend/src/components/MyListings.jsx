@@ -198,16 +198,41 @@ const Modal = ({ isOpen, onClose, children, size = "md" }) => {
   const containerRef = useRef(null);
   const firstFocusable = useRef(null);
   const lastFocusable = useRef(null);
+  const hasModifiedOverflow = useRef(false);
 
+  // Handle body overflow and padding
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Reset on close
+      if (hasModifiedOverflow.current) {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        hasModifiedOverflow.current = false;
+      }
+      return;
+    }
 
+    // Set overflow hidden when open
     const { body } = document;
     const prevOverflow = body.style.overflow;
     const prevPaddingRight = body.style.paddingRight;
     const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    
     body.style.overflow = "hidden";
     if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+    hasModifiedOverflow.current = true;
+
+    // Cleanup when isOpen changes or component unmounts
+    return () => {
+      body.style.overflow = prevOverflow || "";
+      body.style.paddingRight = prevPaddingRight || "";
+      hasModifiedOverflow.current = false;
+    };
+  }, [isOpen]);
+
+  // Handle keyboard events and focus management
+  useEffect(() => {
+    if (!isOpen) return;
 
     const handleEsc = (e) => e.key === "Escape" && onClose?.();
     document.addEventListener("keydown", handleEsc);
@@ -242,13 +267,22 @@ const Modal = ({ isOpen, onClose, children, size = "md" }) => {
     document.addEventListener("keydown", trapFocus);
 
     return () => {
-      body.style.overflow = prevOverflow || "";
-      body.style.paddingRight = prevPaddingRight || "";
       document.removeEventListener("keydown", handleEsc);
       document.removeEventListener("keydown", trapFocus);
       clearTimeout(timer);
     };
   }, [isOpen, onClose]);
+
+  // Final cleanup on unmount - ensures overflow is always reset
+  useEffect(() => {
+    return () => {
+      if (hasModifiedOverflow.current) {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        hasModifiedOverflow.current = false;
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -822,6 +856,24 @@ const MyListings = () => {
       navigate("/");
     }
   }, [isLoggedIn, navigate, authLoading]);
+
+  // Comprehensive cleanup on unmount to prevent blocking other tabs
+  useEffect(() => {
+    return () => {
+      // Ensure body overflow is reset
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+      
+      // Remove any lingering event listeners
+      document.removeEventListener('keydown', () => {});
+      
+      // Force a small timeout to ensure cleanup completes
+      setTimeout(() => {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }, 0);
+    };
+  }, []);
 
   const [activeTab, setActiveTab] = useState("all");
   const [viewMode, setViewMode] = useState("grid");
