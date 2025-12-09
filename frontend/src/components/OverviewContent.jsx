@@ -204,7 +204,7 @@ const OverviewContent = ({ user = {} }) => {
       >
         {[
           {
-            label: "Active Properties",
+            label: "Properties",
             value: stats?.activeProperties || 0,
             icon: Building,
             color: "text-blue-600",
@@ -224,20 +224,20 @@ const OverviewContent = ({ user = {} }) => {
             color: "text-purple-600",
             bg: "bg-purple-100",
           },
-          {
-            label: "Paused Properties",
-            value: stats?.pausedProperties || 0,
-            icon: Clock,
-            color: "text-amber-600",
-            bg: "bg-amber-100",
-          },
+          // {
+          //   label: "Paused Properties",
+          //   value: stats?.pausedProperties || 0,
+          //   icon: Clock,
+          //   color: "text-amber-600",
+          //   bg: "bg-amber-100",
+          // },
         ].map((stat) => (
           <StatCard key={stat.label} {...stat} isLoading={isLoading} />
         ))}
       </motion.div>
 
       {/* Additional Stats Row */}
-      <motion.div
+      {/* <motion.div
         className="grid grid-cols-1 sm:grid-cols-2 gap-6"
         variants={containerVariants}
       >
@@ -274,7 +274,7 @@ const OverviewContent = ({ user = {} }) => {
             </div>
           </div>
         </motion.div>
-      </motion.div>
+      </motion.div> */}
 
       {/* Quick Actions */}
       <motion.div

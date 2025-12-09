@@ -1048,6 +1048,17 @@ const { toasts, push: notify, dismiss } = useToast();
     setCurrentPage(1);
   }, [activeTab, searchQuery, filters, sortOrder]);
 
+  // Cleanup effect to ensure modals are closed when component unmounts
+  useEffect(() => {
+    return () => {
+      // Close all modals
+      setModals({ filter: false, delete: false, edit: false });
+      // Reset body overflow in case a modal was open
+      document.body.style.overflow = 'unset';
+      document.body.style.paddingRight = '';
+    };
+  }, []);
+
   const properties = propertiesData?.data || [];
   const visibleProperties = useMemo(
     () => properties.filter((p) => !removedIds.has(p.property_id)),
@@ -1088,7 +1099,7 @@ const { toasts, push: notify, dismiss } = useToast();
         })();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

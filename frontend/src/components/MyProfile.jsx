@@ -127,7 +127,9 @@ const MyProfile = () => {
 
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    if (tabFromUrl && tabFromUrl !== activeTab) setActiveTab(tabFromUrl);
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
   }, [searchParams]);
 
   // Calculate available height dynamically
@@ -350,12 +352,12 @@ return (
                   exit="exit"
                   className="min-h-full"
                 >
-                  {activeTab === "overview" && <OverviewContent user={displayUserDetails} />}
-                  {activeTab === "listings" && <MyListings />}
-                  {activeTab === "favorites" && <Favourites />}
-                  {activeTab === "messages" && <MessagesTab />}
-                  {activeTab === "profile" && <UserProfile />}
-                  {activeTab === "settings" && <SettingsTab userData={displayUserDetails} />}
+                  {activeTab === "overview" && <OverviewContent key="overview" user={displayUserDetails} />}
+                  {activeTab === "listings" && <MyListings key="listings" />}
+                  {activeTab === "favorites" && <Favourites key="favorites" />}
+                  {activeTab === "messages" && <MessagesTab key="messages" />}
+                  {activeTab === "profile" && <UserProfile key="profile" />}
+                  {activeTab === "settings" && <SettingsTab key="settings" userData={displayUserDetails} />}
                 </motion.div>
               </AnimatePresence>
             </div>

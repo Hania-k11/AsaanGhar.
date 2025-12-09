@@ -8,13 +8,23 @@ import AdminUserGrid from "./AdminUserGrid";
 import AdminModals from "./AdminModals";
 import AdminNavbar from "./AdminNavbar";
 import axios from "axios";
+import { useSearchParams } from "react-router-dom";
 import { useAdmin } from "../hooks/useAdmin";
 import { useUsers } from "../hooks/useUsers";
 
 
 const AdminPanel = () => {
   const { admin, loading, loginadmin, logoutadmin } = useAuth();
-  const [navbarActive, setNavbarActive] = useState("properties");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navbarActive = searchParams.get("tab") || "properties";
+  
+  const setNavbarActive = (tab) => {
+    setSearchParams(prev => {
+      prev.set("tab", tab);
+      return prev;
+    });
+  };
+
   const [showPropertyDetails, setShowPropertyDetails] = useState(false);
   const [showDocuments, setShowDocuments] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);

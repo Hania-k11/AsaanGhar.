@@ -300,7 +300,7 @@ router.put('/update-profile', authenticateUser, async (req, res) => {
     const [userRows] = await pool.query(
       `SELECT user_id, first_name, last_name, email, phone_number, phone_verified, cnic, 
               cnic_front_url, cnic_back_url, cnic_verified, profile_picture_url, city, bio, 
-              is_verified, created_at, updated_at, status, role, gender, age
+              is_verified, created_at, updated_at, status, role, gender
        FROM users 
        WHERE user_id = ? 
        LIMIT 1`,

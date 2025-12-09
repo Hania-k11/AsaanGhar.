@@ -438,6 +438,175 @@ router.get("/me", async (req, res) => {
 });
 
 // =====================
+// REQUEST EMAIL CHANGE
+// =====================
+router.post("/request-email-change", async (req, res) => {
+  try {
+    const { userId, newEmail } = req.body;
+
+    // Validate required fields
+    if (!userId || !newEmail) {
+      return res.status(400).json({ error: "User ID and new email are required" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    // Get current user
+    const [userRows] = await pool.query(
+      "SELECT email FROM users WHERE user_id = ? AND is_deleted = FALSE LIMIT 1",
+      [userId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const currentEmail = userRows[0].email;
+
+    // Check if new email is same as current
+    if (newEmail.toLowerCase() === currentEmail.toLowerCase()) {
+      return res.status(400).json({ error: "New email must be different from current email" });
+    }
+
+    // Check if new email is already registered
+    const [emailCheck] = await pool.query(
+      "SELECT user_id FROM users WHERE email = ? AND is_deleted = FALSE LIMIT 1",
+      [newEmail]
+    );
+
+    if (emailCheck.length > 0) {
+      return res.status(409).json({ error: "This email is already registered" });
+    }
+
+    // Generate verification code
+    const emailCode = generateCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Delete any existing email change request for this user
+    await pool.query(
+      "DELETE FROM verification_codes WHERE user_id = ?",
+      [userId]
+    );
+
+    // Store verification code with new email
+    await pool.query(
+      `INSERT INTO verification_codes 
+       (user_id, email_code, expires_at, new_email) 
+       VALUES (?, ?, ?, ?)`,
+      [userId, emailCode, expiresAt, newEmail]
+    );
+
+    // Send verification email to NEW email address
+    try {
+      const [nameRows] = await pool.query(
+        "SELECT first_name FROM users WHERE user_id = ? LIMIT 1",
+        [userId]
+      );
+      const firstName = nameRows[0]?.first_name || "User";
+      
+      await sendVerificationEmail(newEmail, emailCode, firstName);
+    } catch (emailError) {
+      console.error("Error sending verification email:", emailError);
+      // Clean up verification code if email fails
+      await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+      return res.status(500).json({ error: "Failed to send verification email. Please try again." });
+    }
+
+    return res.json({
+      message: "Verification code sent to your new email address",
+      newEmail,
+    });
+  } catch (err) {
+    console.error("Request email change error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// =====================
+// VERIFY EMAIL CHANGE
+// =====================
+router.post("/verify-email-change", async (req, res) => {
+  try {
+    const { userId, code } = req.body;
+
+    // Validate required fields
+    if (!userId || !code) {
+      return res.status(400).json({ error: "User ID and verification code are required" });
+    }
+
+    // Fetch verification code and new email
+    const [rows] = await pool.query(
+      `SELECT email_code, new_email, expires_at
+       FROM verification_codes
+       WHERE user_id = ?
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "No email change request found. Please request a new code." });
+    }
+
+    const verificationData = rows[0];
+
+    // Check if code has expired
+    if (new Date() > new Date(verificationData.expires_at)) {
+      // Clean up expired code
+      await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+      return res.status(400).json({ error: "Verification code has expired. Please request a new one." });
+    }
+
+    // Verify code
+    if (verificationData.email_code !== code) {
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    // Check if new email is still available
+    const [emailCheck] = await pool.query(
+      "SELECT user_id FROM users WHERE email = ? AND is_deleted = FALSE LIMIT 1",
+      [verificationData.new_email]
+    );
+
+    if (emailCheck.length > 0) {
+      await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+      return res.status(409).json({ error: "This email is no longer available" });
+    }
+
+    // Update user's email
+    await pool.query(
+      "UPDATE users SET email = ? WHERE user_id = ?",
+      [verificationData.new_email, userId]
+    );
+
+    // Delete verification code
+    await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+
+    // Fetch updated user data
+    const [userRows] = await pool.query(
+      `SELECT user_id, first_name, last_name, email, job_title, gender, phone_number, phone_verified,
+              profile_picture_url, bio, city, is_verified, created_at, updated_at,
+              status, role, cnic, cnic_front_url, cnic_back_url, cnic_verified
+       FROM users 
+       WHERE user_id = ? 
+       LIMIT 1`,
+      [userId]
+    );
+
+    return res.json({
+      message: "Email updated successfully!",
+      user: userRows[0],
+    });
+  } catch (err) {
+    console.error("Verify email change error:", err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// =====================
 // LOGOUT
 // =====================
 router.post("/logout", (req, res) => {

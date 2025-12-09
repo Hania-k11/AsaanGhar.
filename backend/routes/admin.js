@@ -150,6 +150,14 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
         [propertyIds]
       );
 
+      const [inquiryRows] = await pool.query(
+        `SELECT property_id, COUNT(*) as count 
+         FROM inquiries 
+         WHERE property_id IN (?) 
+         GROUP BY property_id`,
+        [propertyIds]
+      );
+
       const imageMap = {};
       imageRows.forEach(row => {
         imageMap[row.property_id] = row.images;
@@ -160,9 +168,15 @@ router.get("/properties",authenticateAdmin, async (req, res) => {
         favMap[row.property_id] = row.count;
       });
 
+      const inquiryMap = {};
+      inquiryRows.forEach(row => {
+        inquiryMap[row.property_id] = row.count;
+      });
+
       enrichedProperties = enrichedProperties.map(p => {
         p.images = imageMap[p.property_id] || null;
         p.favorite_count = favMap[p.property_id] || 0;
+        p.inquiries = inquiryMap[p.property_id] || 0;
         return parsePropertyImages(p);
       });
     }
@@ -246,6 +260,14 @@ router.get("/pending-properties", async (req, res) => {
         [propertyIds]
       );
 
+      const [inquiryRows] = await pool.query(
+        `SELECT property_id, COUNT(*) as count 
+         FROM inquiries 
+         WHERE property_id IN (?) 
+         GROUP BY property_id`,
+        [propertyIds]
+      );
+
       const imageMap = {};
       imageRows.forEach(row => {
         imageMap[row.property_id] = row.images;
@@ -256,9 +278,15 @@ router.get("/pending-properties", async (req, res) => {
         favMap[row.property_id] = row.count;
       });
 
+      const inquiryMap = {};
+      inquiryRows.forEach(row => {
+        inquiryMap[row.property_id] = row.count;
+      });
+
       properties = properties.map(p => {
         p.images = imageMap[p.property_id] || null;
         p.favorite_count = favMap[p.property_id] || 0;
+        p.inquiries = inquiryMap[p.property_id] || 0;
         return parsePropertyImages(p);
       });
     }

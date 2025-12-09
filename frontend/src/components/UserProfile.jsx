@@ -9,6 +9,7 @@ import CNICUpload from "./CNICUpload"
 import PhoneVerificationModal from "./PhoneVerificationModal"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
+import EmailChangeModal from "./EmailChangeModal"
 
 const generatePlaceholderImage = (firstName, lastName) => {
   const safeFirstName = firstName || "U"; 
@@ -47,6 +48,7 @@ const UserProfile = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCNICModal, setShowCNICModal] = useState(false);
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
   const [propertyStatus, setPropertyStatus] = useState([]);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const { user, updateUser } = useAuth();
@@ -119,6 +121,12 @@ const UserProfile = () => {
     // Update user context with verified phone
     updateUser(updatedUser);
     setShowPhoneModal(false);
+  };
+
+  const handleEmailChangeSuccess = (updatedUser) => {
+    // Update user context with new email
+    updateUser(updatedUser);
+    setShowEmailModal(false);
   };
 
   // Handle loading state if user is not yet available
@@ -203,8 +211,18 @@ const UserProfile = () => {
                 <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1">
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
-                <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.email}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => setShowEmailModal(true)}
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline px-2 py-1"
+                  >
+                    Change
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -413,7 +431,7 @@ const UserProfile = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
             style={{ backdropFilter: 'blur(10px)', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
             onClick={() => setShowCNICModal(false)}
           >
@@ -453,6 +471,12 @@ const UserProfile = () => {
         currentPhone={user?.phone_number}
       />
 
+      <EmailChangeModal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        onSuccess={handleEmailChangeSuccess}
+      />
+
        {/* Edit Profile Modal */}
             <AnimatePresence>
               {showEditModal && (
@@ -460,7 +484,7 @@ const UserProfile = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0  z-50  flex items-center justify-center p-4 overflow-y-auto"
+                  className="fixed inset-0 z-[10000] flex items-start justify-center pt-28 p-4 overflow-y-auto"
                   style={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(0, 0, 0, 0.6)" }}
                   onClick={handleCancel}
                 >
@@ -469,7 +493,7 @@ const UserProfile = () => {
                     animate={{ scale: 1, y: 0, opacity: 1 }}
                     exit={{ scale: 0.9, y: 20, opacity: 0 }}
                     transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-xl w-full shadow-2xl text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/50"
+                    className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-4xl w-full shadow-2xl text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/50"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Modal Header */}
@@ -487,86 +511,117 @@ const UserProfile = () => {
                         <X className="w-6 h-6" />
                       </button>
                     </div>
-      
-                    {/* Profile Avatar Preview */}
-                    <div className="flex justify-center mb-8">
-                      <div className="relative group">
-                        <div className="w-28 h-28 rounded-full border-4 border-emerald-500/20 dark:border-emerald-400/20 bg-gray-200 dark:bg-gray-700 overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
-                          {generatePlaceholderImage(editData.first_name, editData.last_name)}
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-lg">
-                          <User className="w-5 h-5 text-white" />
-                        </div>
-                      </div>
-                    </div>
 
-                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-6 -mt-4">
-                    
-                    </p>
-      
-                    <div className="space-y-5">
-                      {/* Name Fields */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="group">
-                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            First Name
-                          </label>
-                          <input
-                            type="text"
-                            value={editData.first_name}
-                            onChange={(e) => handleInputChange("first_name", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                            placeholder="Enter first name"
-                          />
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                      {/* Left Column: Avatar */}
+                      <div className="md:col-span-4 flex flex-col items-center border-r border-gray-100 dark:border-gray-700/50 pr-4">
+                        <div className="relative group mb-4">
+                          <div className="w-32 h-32 rounded-full border-4 border-emerald-500/20 dark:border-emerald-400/20 bg-gray-200 dark:bg-gray-700 overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
+                            {generatePlaceholderImage(editData.first_name, editData.last_name)}
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-lg">
+                            <User className="w-5 h-5 text-white" />
+                          </div>
                         </div>
-                        <div className="group">
-                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                            Last Name
-                          </label>
-                          <input
-                            type="text"
-                            value={editData.last_name}
-                            onChange={(e) => handleInputChange("last_name", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
-                            placeholder="Enter last name"
-                          />
+                        <p className="text-sm text-center text-gray-500 dark:text-gray-400">
+                          Profile Picture
+                        </p>
+                      </div>
+
+                      {/* Right Column: Fields */}
+                      <div className="md:col-span-8 space-y-5">
+                         {/* Name Fields - Side by Side */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="group">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              First Name
+                            </label>
+                            <input
+                              type="text"
+                              value={editData.first_name}
+                              onChange={(e) => handleInputChange("first_name", e.target.value)}
+                              className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                              placeholder="Enter first name"
+                            />
+                          </div>
+                          <div className="group">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              Last Name
+                            </label>
+                            <input
+                              type="text"
+                              value={editData.last_name}
+                              onChange={(e) => handleInputChange("last_name", e.target.value)}
+                              className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                              placeholder="Enter last name"
+                            />
+                          </div>
+                        </div>
+
+                         {/* Email and Gender - Side by Side on large screens */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Gender Field */}
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              Gender
+                            </label>
+                            <select
+                              value={editData.gender}
+                              onChange={(e) => handleInputChange("gender", e.target.value)}
+                              className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 cursor-pointer"
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Non-binary">Non-binary</option>
+                              <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                          </div>
+                             
+                             {/* Email Field */}
+                           <div>
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                              Email Address
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="email"
+                                value={user.email}
+                                readOnly
+                                disabled
+                                className="w-full bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 text-gray-500 dark:text-gray-400 focus:outline-none cursor-not-allowed"
+                              />
+                               <button
+                                onClick={() => {
+                                  setShowEditModal(false);
+                                  setShowEmailModal(true);
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Change Email"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                            </div>
+                           </div>
+                        </div>
+                         
+                         {/* Modal Actions - Aligned to bottom of inputs */}
+                        <div className="flex space-x-4 pt-4 mt-2">
+                          <button
+                            onClick={handleCancel}
+                            className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-3 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleSave}
+                            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 rounded-xl flex items-center justify-center space-x-2 font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                          >
+                            <Save className="w-5 h-5" />
+                            <span>Save Changes</span>
+                          </button>
                         </div>
                       </div>
-      
-                      {/* Gender Field */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                          Gender
-                        </label>
-                        <select
-                          value={editData.gender}
-                          onChange={(e) => handleInputChange("gender", e.target.value)}
-                          className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 cursor-pointer"
-                        >
-                          <option value="">Select Gender</option>
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Non-binary">Non-binary</option>
-                          <option value="Prefer not to say">Prefer not to say</option>
-                        </select>
-                      </div>
-                    </div>
-      
-                    {/* Modal Actions */}
-                    <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <button
-                        onClick={handleCancel}
-                        className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleSave}
-                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3.5 px-6 rounded-xl flex items-center justify-center space-x-2 font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-                      >
-                        <Save className="w-5 h-5" />
-                        <span>Save Changes</span>
-                      </button>
                     </div>
                   </motion.div>
                 </motion.div>

@@ -93,57 +93,178 @@ const LoginModal = () => {
     }
   };
 
+  // Validation helper functions
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateName = (name) => {
+    // Only letters, spaces, hyphens, and apostrophes
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    return nameRegex.test(name) && name.trim().length >= 2;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (isSignup) {
-      // Signup validation
-      if (!form.firstName || !form.lastName || !form.email || !form.password || !form.gender) {
-        error("Please fill in all required fields");
+      // COMPREHENSIVE SIGNUP VALIDATION
+      
+      // 1. Check if all required fields are filled
+      if (!form.firstName.trim()) {
+        error("First name is required");
         return;
       }
       
+      if (!form.lastName.trim()) {
+        error("Last name is required");
+        return;
+      }
+      
+      if (!form.email.trim()) {
+        error("Email is required");
+        return;
+      }
+      
+      if (!form.password) {
+        error("Password is required");
+        return;
+      }
+      
+      if (!form.confirmPassword) {
+        error("Please confirm your password");
+        return;
+      }
+      
+      if (!form.gender) {
+        error("Please select your gender");
+        return;
+      }
+      
+      // 2. Validate first name
+      if (!validateName(form.firstName)) {
+        error("First name must be at least 2 characters and contain only letters");
+        return;
+      }
+      
+      if (form.firstName.trim().length > 50) {
+        error("First name must be less than 50 characters");
+        return;
+      }
+      
+      // 3. Validate last name
+      if (!validateName(form.lastName)) {
+        error("Last name must be at least 2 characters and contain only letters");
+        return;
+      }
+      
+      if (form.lastName.trim().length > 50) {
+        error("Last name must be less than 50 characters");
+        return;
+      }
+      
+      // 4. Validate email format
+      if (!validateEmail(form.email)) {
+        error("Please enter a valid email address (e.g., user@example.com)");
+        return;
+      }
+      
+      if (form.email.length > 100) {
+        error("Email must be less than 100 characters");
+        return;
+      }
+      
+      // 5. Validate password strength
+      if (form.password.length < 6) {
+        error("Password must be at least 6 characters long");
+        return;
+      }
+      
+      if (form.password.length > 100) {
+        error("Password must be less than 100 characters");
+        return;
+      }
+      
+      if (!/[a-zA-Z]/.test(form.password)) {
+        error("Password must contain at least one letter");
+        return;
+      }
+      
+      if (!/[0-9]/.test(form.password)) {
+        error("Password must contain at least one number");
+        return;
+      }
+      
+      // 6. Check if passwords match
       if (form.password !== form.confirmPassword) {
-        error("Passwords do not match.");
+        error("Passwords do not match");
         return;
       }
       
+      // 7. Check terms agreement
       if (!form.agree) {
-        error("You must agree to the Terms and Conditions to sign up.");
+        error("You must agree to the Terms and Conditions to sign up");
         return;
       }
 
+      // 8. Attempt signup
       try {
         const res = await axios.post(`${API_BASE_URL}/auth/signup`, {
-          firstName: form.firstName,
-          lastName: form.lastName,
-          email: form.email,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim().toLowerCase(),
           password: form.password,
           gender: form.gender,
-          jobTitle: form.jobTitle,
+          jobTitle: form.jobTitle.trim(),
         }, {
           withCredentials: true
         });
 
         success("Verification code sent! Please check your email.");
-        setVerificationData({ email: form.email });
+        setVerificationData({ email: form.email.trim().toLowerCase() });
         setShowVerification(true);
         setShow(false);
       } catch (err) {
-        const msg = err.response?.data?.error || "Signup failed. Please try again.";
-        error(msg);
+        // Handle specific backend errors
+        const errorMessage = err.response?.data?.error;
+        
+        if (errorMessage) {
+          // Check for specific error types
+          if (errorMessage.toLowerCase().includes("email") && errorMessage.toLowerCase().includes("already")) {
+            error("This email is already registered. Please login or use a different email.");
+          } else if (errorMessage.toLowerCase().includes("invalid email")) {
+            error("Invalid email format. Please enter a valid email address.");
+          } else if (errorMessage.toLowerCase().includes("password")) {
+            error("Password does not meet requirements. Please use at least 6 characters.");
+          } else {
+            error(errorMessage);
+          }
+        } else {
+          error("Signup failed. Please try again later.");
+        }
       }
       return;
     }
 
-    // Login logic
-    if (!form.email || !form.password) {
-      error("Please enter email and password");
+    // LOGIN VALIDATION
+    if (!form.email.trim()) {
+      error("Please enter your email");
+      return;
+    }
+    
+    if (!validateEmail(form.email)) {
+      error("Please enter a valid email address");
+      return;
+    }
+
+    if (!form.password) {
+      error("Please enter your password");
       return;
     }
 
     try {
-      const res = await loginuser(form.email, form.password);
+      const res = await loginuser(form.email.trim().toLowerCase(), form.password);
       if (res.success) {
         success(`Welcome ${res.user.first_name || res.user.email}!`);
         setShow(false);
@@ -242,7 +363,7 @@ const LoginModal = () => {
 
 
                       {/* Job Title (Optional) */}
-                      <input type="text" name="jobTitle" placeholder="Job Title (Optional)" value={form.jobTitle} onChange={handleChange} className={inputBaseClass} />
+                      {/* <input type="text" name="jobTitle" placeholder="Job Title (Optional)" value={form.jobTitle} onChange={handleChange} className={inputBaseClass} /> */}
 
                       {/* Terms and Conditions Checkbox */}
                       <label className="flex items-start space-x-3 text-sm">
