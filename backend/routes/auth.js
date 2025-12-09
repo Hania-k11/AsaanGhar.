@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 const { OAuth2Client } = require("google-auth-library");
-const { sendVerificationEmail } = require("../utils/emailService");
+const { sendVerificationEmail, isEmailConfigured } = require("../utils/emailService");
 const { sendVerificationSMS } = require("../utils/smsService");
 const {
   generateCode,
@@ -124,6 +124,8 @@ router.post("/signup", async (req, res) => {
   try {
     const { firstName, lastName, email, password, gender, jobTitle } = req.body;
 
+    console.log(`📝 Signup attempt for email: ${email}`);
+
     // Validate required fields (phone is now optional)
     if (!firstName || !lastName || !email || !password || !gender) {
       return res.status(400).json({ error: "All required fields must be provided" });
@@ -152,6 +154,7 @@ router.post("/signup", async (req, res) => {
 
     // Generate email verification code only
     const emailCode = generateCode();
+    console.log(`🔑 Generated verification code for ${email}: ${emailCode}`);
 
     // Create user with pending verification status
     const passwordHash = await bcrypt.hash(password, 10);
@@ -165,6 +168,7 @@ router.post("/signup", async (req, res) => {
     );
 
     const userId = insertResult.insertId;
+    console.log(`👤 Created user with ID: ${userId}`);
 
     // Set expiration to 10 minutes from now
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -176,24 +180,47 @@ router.post("/signup", async (req, res) => {
        VALUES (?, ?, ?)`,
       [userId, emailCode, expiresAt]
     );
+    console.log(`💾 Stored verification code in database`);
 
     // Send verification email
     try {
+      console.log(`📧 Attempting to send verification email to ${email}...`);
       await sendVerificationEmail(email, emailCode, firstName);
+      console.log(`✅ Verification email sent successfully to ${email}`);
     } catch (emailError) {
-      console.error("Error sending verification email:", emailError);
+      console.error(`❌ CRITICAL: Failed to send verification email to ${email}`);
+      console.error(`   Error Type: ${emailError.name}`);
+      console.error(`   Error Message: ${emailError.message}`);
+      console.error(`   Stack:`, emailError.stack);
+      
+      // Clean up verification code
+      await pool.query('DELETE FROM verification_codes WHERE user_id = ?', [userId]);
+      console.log(`🧹 Deleted verification code for user ${userId}`);
+      
       // Clean up user if email fails
       await pool.query('DELETE FROM users WHERE user_id = ?', [userId]);
-      return res.status(500).json({ error: "Failed to send verification email. Please try again." });
+      console.log(`🧹 Deleted user ${userId} due to email failure`);
+      
+      return res.status(500).json({ 
+        error: "Failed to send verification email. Please try again later.",
+        details: process.env.NODE_ENV === 'development' ? emailError.message : undefined
+      });
     }
 
+    console.log(`✅ Signup process completed successfully for ${email}`);
     return res.json({
       message: "Verification code sent to your email",
       email,
     });
   } catch (err) {
-    console.error("Signup error:", err);
-    return res.status(500).json({ error: "Internal server error during signup" });
+    console.error("❌ Signup error:", err);
+    console.error("   Error Type:", err.name);
+    console.error("   Error Message:", err.message);
+    console.error("   Stack:", err.stack);
+    return res.status(500).json({ 
+      error: "Internal server error during signup",
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
@@ -612,6 +639,46 @@ router.post("/verify-email-change", async (req, res) => {
 router.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.json({ message: "Logged out" });
+});
+
+// =====================
+// EMAIL CONFIGURATION TEST (For debugging)
+// =====================
+router.get("/email-config-status", (req, res) => {
+  return res.json({
+    emailConfigured: isEmailConfigured,
+    emailUser: process.env.EMAIL_USER ? `${process.env.EMAIL_USER.substring(0, 3)}***` : 'NOT SET',
+    emailPassConfigured: !!process.env.EMAIL_PASS,
+    nodeEnv: process.env.NODE_ENV || 'development',
+  });
+});
+
+// =====================
+// TEST EMAIL SENDING (For debugging - remove in production or add auth)
+// =====================
+router.post("/test-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const testCode = "123456";
+    await sendVerificationEmail(email, testCode, "Test User");
+    
+    return res.json({ 
+      message: "Test email sent successfully",
+      email,
+      code: testCode
+    });
+  } catch (error) {
+    console.error("Test email error:", error);
+    return res.status(500).json({ 
+      error: "Failed to send test email",
+      details: error.message
+    });
+  }
 });
 
 module.exports = router;

@@ -1,6 +1,20 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+// Validate email configuration on startup
+const validateEmailConfig = () => {
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.error('❌ EMAIL CONFIGURATION ERROR: EMAIL_USER and/or EMAIL_PASS environment variables are not set!');
+    console.error('⚠️  Email verification will NOT work until these are configured.');
+    return false;
+  }
+  console.log('✅ Email configuration validated: EMAIL_USER =', process.env.EMAIL_USER);
+  return true;
+};
+
+// Check configuration on module load
+const isEmailConfigured = validateEmailConfig();
+
 // Create transporter using Gmail SMTP
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -18,6 +32,13 @@ const transporter = nodemailer.createTransport({
  * @returns {Promise} - Resolves when email is sent
  */
 const sendVerificationEmail = async (email, code, firstName = 'User') => {
+  // Check if email is configured
+  if (!isEmailConfigured) {
+    const error = new Error('Email service is not configured. Missing EMAIL_USER or EMAIL_PASS environment variables.');
+    console.error('❌ Cannot send email:', error.message);
+    throw error;
+  }
+
   const mailOptions = {
     from: `"AsaanGhar" <${process.env.EMAIL_USER}>`,
     to: email,
@@ -133,13 +154,22 @@ const sendVerificationEmail = async (email, code, firstName = 'User') => {
   };
 
   try {
+    console.log(`📧 Attempting to send verification email to: ${email}`);
     const info = await transporter.sendMail(mailOptions);
-    console.log('Verification email sent:', info.messageId);
+    console.log('✅ Verification email sent successfully:', info.messageId);
+    console.log('   Recipient:', email);
+    console.log('   Code:', code);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    throw new Error('Failed to send verification email');
+    console.error('❌ CRITICAL ERROR sending verification email:');
+    console.error('   Error Type:', error.name);
+    console.error('   Error Message:', error.message);
+    console.error('   Recipient:', email);
+    console.error('   EMAIL_USER:', process.env.EMAIL_USER);
+    console.error('   EMAIL_PASS configured:', !!process.env.EMAIL_PASS);
+    console.error('   Full error:', error);
+    throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 
-module.exports = { sendVerificationEmail };
+module.exports = { sendVerificationEmail, isEmailConfigured };
