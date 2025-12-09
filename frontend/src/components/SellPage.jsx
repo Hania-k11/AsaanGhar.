@@ -392,22 +392,8 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   // Only allow images for all uploads (no PDFs)
   const ALLOW_IMG_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  const MAX_FILE_SIZE_MB = 10;
-  const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024; // 10MB
   const MAX_IMAGES_STEP4 = 5; // Max property images
   const MAX_IMAGES_STEP5 = 5; // Max images per document type in Step 5
-
-// Helper function to validate file size
-const validateFileSize = (file) => {
-  if (file.size > MAX_FILE_SIZE) {
-    toast.error(`File "${file.name}" exceeds ${MAX_FILE_SIZE_MB}MB limit`, {
-      position: "top-right",
-      autoClose: 3000,
-    });
-    return false;
-  }
-  return true;
-};
 
 const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -436,14 +422,8 @@ const handleChange = (e) => {
 
       const validTypeFiles = fileArray.filter((f) => ALLOW_IMG_TYPES.includes(f.type));
       
-      // Validate file sizes
-      const validSizeFiles = validTypeFiles.filter(validateFileSize);
-      
-      if (validTypeFiles.length !== validSizeFiles.length) {
-        const rejectedCount = validTypeFiles.length - validSizeFiles.length;
-        // validateFileSize already shows individual errors, just log
-        console.log(`${rejectedCount} file(s) rejected due to size`);
-      }
+      // Validate file sizes (Removed per user request)
+      const validSizeFiles = validTypeFiles;
 
       // Handle Step 4: Property Images
       if (name === "images") {
