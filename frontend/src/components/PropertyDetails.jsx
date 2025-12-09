@@ -37,7 +37,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import axios from 'axios';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { useAuth } from "../context/AuthContext";
 
 const DetailItem = ({ label, value }) => (
@@ -67,10 +67,24 @@ const processAmenities = (amenities) => {
   return amenitiesList;
 };
 
+// API function for toggling favorite
+const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
+  if (isCurrentlyLiked) {
+    const response = await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
+    return response.data;
+  } else {
+    const response = await axios.post('/api/property/favorites', { userId, propertyId });
+    return response.data;
+  }
+};
+
 const PropertyDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const property = location.state?.property;
+  const initialProperty = location.state?.property;
+  
+  // Use local state for property to allow updates
+  const [property, setProperty] = useState(initialProperty);
   
   console.log("Amenities data received:", property?.amenities);
 
@@ -78,7 +92,6 @@ const PropertyDetails = () => {
 
   const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [liked, setLiked] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [contactForm, setContactForm] = useState({
     message: '',
@@ -94,6 +107,13 @@ const PropertyDetails = () => {
 
   const { user, isLoggedIn } = useAuth();
   const userId = user?.user_id;
+
+  // Sync local property state when navigation state changes
+  useEffect(() => {
+    if (initialProperty) {
+      setProperty(initialProperty);
+    }
+  }, [initialProperty?.property_id]);
 
   // Toast notification function
   const displayToast = (message, type = 'success') => {
@@ -161,46 +181,93 @@ const PropertyDetails = () => {
     }
   }, [property]);
 
-  // Check if user has already liked this property
-  useEffect(() => {
-    if (isLoggedIn && property?.property_id) {
-      // You would typically fetch this from your API
-      // For now, checking localStorage as a fallback
-      const likedProperties = JSON.parse(localStorage.getItem(`liked_${userId}`) || '[]');
-      setLiked(likedProperties.includes(property.property_id));
-    }
-  }, [isLoggedIn, property?.property_id, userId]);
+  // Get the liked state from the property data (not local state)
+  const liked = property?.is_favorite === 1 || property?.isFavorite === true;
 
-  // API function for toggling favorite
-    const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) => {
-    try {
-      if (isCurrentlyLiked) {
-        const response = await axios.delete(`/api/property/favorites/${userId}/${propertyId}`);
-        displayToast("Removed from favorites");
-        return response.data;
-      } else {
-        const response = await axios.post('/api/property/favorites', { userId, propertyId });
-        displayToast("Added to favorites");
-        return response.data;
+  // Mutation for toggling favorite with optimistic updates
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteProperty,
+    onMutate: async ({ propertyId, isCurrentlyLiked }) => {
+      // Optimistically update the local property state for immediate UI feedback
+      setProperty(prev => ({
+        ...prev,
+        is_favorite: isCurrentlyLiked ? 0 : 1,
+        favorite_count: (prev?.favorite_count || 0) + (isCurrentlyLiked ? -1 : 1)
+      }));
+      
+      // Cancel any outgoing refetches to prevent overwriting optimistic update
+      await queryClient.cancelQueries(['properties']);
+      await queryClient.cancelQueries(['nlpProperties']);
+      
+      // Snapshot the previous value for rollback on error
+      const previousData = queryClient.getQueryData(['properties']);
+      
+      return { previousData };
+    },
+    onSuccess: (data, { propertyId, isCurrentlyLiked }) => {
+      const { favoriteCount } = data;
+      const newIsFavorite = !isCurrentlyLiked;
+      
+      // Update the favorite count AND is_favorite flag in all cached queries
+      ['properties', 'nlpProperties', 'favoriteProperties', 'overview'].forEach(queryKey => {
+        queryClient.setQueriesData({ queryKey: [queryKey] }, (oldData) => {
+          if (!oldData) return oldData;
+          
+          // Handle different data structures
+          const updatedData = { ...oldData };
+          
+          if (oldData.data) {
+            // For normal properties
+            updatedData.data = oldData.data.map(prop => 
+              prop.property_id === propertyId 
+                ? { ...prop, favorite_count: favoriteCount, is_favorite: newIsFavorite }
+                : prop
+            );
+          } else if (oldData.properties) {
+            // For NLP properties
+            updatedData.properties = oldData.properties.map(prop => {
+              const property = prop.property || prop;
+              if (property.property_id === propertyId) {
+                return { 
+                  ...prop, 
+                  property: { 
+                    ...property, 
+                    favorite_count: favoriteCount,
+                    is_favorite: newIsFavorite 
+                  } 
+                };
+              }
+              return prop;
+            });
+          }
+          
+          return updatedData;
+        });
+      });
+      
+      // Show success toast
+      displayToast(isCurrentlyLiked ? "Removed from favorites" : "Added to favorites");
+      
+      // Only invalidate favoriteProperties (to update the favorites page)
+      queryClient.invalidateQueries({ queryKey: ['favoriteProperties'], refetchType: 'none' });
+    },
+    onError: (error, { propertyId, isCurrentlyLiked }, context) => {
+      // Rollback the property state on error
+      setProperty(prev => ({
+        ...prev,
+        is_favorite: isCurrentlyLiked ? 1 : 0,
+        favorite_count: (prev?.favorite_count || 0) + (isCurrentlyLiked ? 1 : -1)
+      }));
+      
+      // Rollback cache on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['properties'], context.previousData);
       }
       
-      // Update localStorage as backup
-      const likedProperties = JSON.parse(localStorage.getItem(`liked_${userId}`) || '[]');
-      const updatedLiked = isCurrentlyLiked 
-        ? likedProperties.filter(id => id !== propertyId)
-        : [...likedProperties, propertyId];
-      localStorage.setItem(`liked_${userId}`, JSON.stringify(updatedLiked));
-      
-      // Invalidate queries to update overview
-      queryClient.invalidateQueries(['properties']);
-      queryClient.invalidateQueries(['favoriteProperties']);
-      queryClient.invalidateQueries(['overview']); // ⬅️ ADD THIS
-      
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      displayToast("Failed to update favorites", "error");
-    }
-  };
+      console.error('Failed to toggle favorite:', error);
+      displayToast('Failed to update favorites', 'error');
+    },
+  });
 
   const handleContactFormChange = (field, value) => {
     setContactForm(prev => ({ ...prev, [field]: value }));
@@ -321,17 +388,15 @@ const PropertyDetails = () => {
                 <Share2 className="w-5 h-5" />
               </button>
               <button
-                onClick={async () => {
+                onClick={() => {
                   if (isLoggedIn) {
-                    await toggleFavoriteProperty({
+                    toggleFavoriteMutation.mutate({
                       userId,
                       propertyId: property.property_id,
                       isCurrentlyLiked: liked,
                     });
-                    setLiked(!liked);
                   } else {
                     displayToast("Please login to save favourites", 'error');
-                    // navigate('/login');
                   }
                 }}
                 className={`p-2 rounded-full ${

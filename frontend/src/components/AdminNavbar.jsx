@@ -18,69 +18,94 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
   };
 
   return (
-    <div className="w-full bg-emerald-800  shadow-lg">
-      <div className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-7xl mx-auto">
+    <div className="w-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700/50 shadow-2xl">
+      <div className="flex items-center justify-between px-6 sm:px-8 py-4 max-w-7xl mx-auto">
         {/* Left - Brand */}
-        <div className="flex items-center">
-          <div className="bg-emerald-700 rounded-lg w-10 h-10 flex items-center justify-center border border-emerald-600">
-            <Home className="w-6 h-6 text-emerald-100" />
+        <div className="flex items-center group">
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl blur opacity-75 group-hover:opacity-100 transition duration-300"></div>
+            <div className="relative bg-gradient-to-br from-emerald-600 to-teal-700 rounded-xl w-11 h-11 flex items-center justify-center border border-emerald-400/30 shadow-lg">
+              <Home className="w-6 h-6 text-white drop-shadow-lg" />
+            </div>
           </div>
-          <div className="ml-3">
-            <div className="text-lg font-semibold text-white">Asaan Ghar</div>
-            <div className="text-sm text-emerald-200">Admin Panel</div>
+          <div className="ml-4">
+            <div className="text-xl font-bold bg-gradient-to-r from-white to-emerald-200 bg-clip-text text-transparent">
+              Asaan Ghar
+            </div>
+            <div className="text-xs font-medium text-slate-400 tracking-wider uppercase">
+              Admin Dashboard
+            </div>
           </div>
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="sm:hidden p-2 rounded-md text-emerald-100 hover:bg-emerald-700 border border-transparent hover:border-emerald-600 transition-all duration-200"
+          className="sm:hidden p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-700/50 border border-slate-700/50 hover:border-slate-600 transition-all duration-300 backdrop-blur-sm"
           onClick={() => setMobileOpen(!mobileOpen)}
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
         {/* Desktop - Right */}
-        <div className="hidden sm:flex flex-1 items-center justify-between">
-          {/* Center - Nav Links */}
-          <nav className="flex space-x-2 mx-auto">
+        <div className="hidden sm:flex flex-1 items-center justify-end ml-8">
+          {/* Nav Links - Left aligned in remaining space */}
+          <nav className="flex space-x-3 mr-auto">
             <button
               onClick={() => setNavbarActive("properties")}
-              className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group relative flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 navbarActive === "properties"
-                  ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
-                  : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
+                  ? "text-white shadow-lg shadow-emerald-500/30"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              <Home className="w-4 h-4 mr-2" />
-              Properties
+              {navbarActive === "properties" && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl"></div>
+              )}
+              <div className={`absolute inset-0 rounded-xl transition-all duration-300 ${
+                navbarActive === "properties" 
+                  ? "bg-transparent" 
+                  : "bg-slate-700/30 group-hover:bg-slate-700/50 border border-slate-600/50"
+              }`}></div>
+              <Home className="w-4 h-4 mr-2 relative z-10" />
+              <span className="relative z-10">Properties</span>
             </button>
 
             <button
               onClick={() => setNavbarActive("users")}
-              className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group relative flex items-center px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 navbarActive === "users"
-                  ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
-                  : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
+                  ? "text-white shadow-lg shadow-emerald-500/30"
+                  : "text-slate-300 hover:text-white"
               }`}
             >
-              <Users className="w-4 h-4 mr-2" />
-              Users
+              {navbarActive === "users" && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl"></div>
+              )}
+              <div className={`absolute inset-0 rounded-xl transition-all duration-300 ${
+                navbarActive === "users" 
+                  ? "bg-transparent" 
+                  : "bg-slate-700/30 group-hover:bg-slate-700/50 border border-slate-600/50"
+              }`}></div>
+              <Users className="w-4 h-4 mr-2 relative z-10" />
+              <span className="relative z-10">Users</span>
             </button>
-
           </nav>
 
           {/* Right - User Info + Logout */}
           <div className="flex items-center space-x-3">
             {admin && (
-              <div className="flex items-center space-x-2 px-3 py-2 border-emerald-600">
-                <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center border border-emerald-500">
-                  <UserIcon className="w-4 h-4 text-emerald-100" />
+              <div className="flex items-center space-x-3 px-4 py-2 rounded-xl bg-slate-700/30 border border-slate-600/50 backdrop-blur-sm">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full blur opacity-60"></div>
+                  <div className="relative w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-full flex items-center justify-center border border-emerald-400/30 shadow-lg">
+                    <UserIcon className="w-5 h-5 text-white" />
+                  </div>
                 </div>
                 <div className="text-sm">
-                  <div className="font-medium text-white truncate max-w-[120px]">
+                  <div className="font-semibold text-white truncate max-w-[130px]">
                     {admin.name}
                   </div>
-                  <div className="text-emerald-200 text-xs truncate max-w-[120px]">
+                  <div className="text-slate-400 text-xs truncate max-w-[130px]">
                     {admin.email}
                   </div>
                 </div>
@@ -89,11 +114,12 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
 
             <button
               onClick={handleLogout}
-              className="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-red-600 hover:text-white rounded-lg transition-all duration-200 border border-transparent hover:border-red-500"
+              className="group relative flex items-center px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition-all duration-300 overflow-hidden"
               title="Logout"
             >
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              <div className="absolute inset-0 bg-slate-700/30 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-rose-600 transition-all duration-300 border border-slate-600/50 group-hover:border-red-500/50 rounded-xl"></div>
+              <LogOut className="w-4 h-4 mr-2 relative z-10" />
+              <span className="relative z-10">Logout</span>
             </button>
           </div>
         </div>
@@ -101,21 +127,29 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
 
       {/* Mobile Dropdown */}
       {mobileOpen && (
-        <div className="sm:hidden px-4 pb-4 space-y-2 bg-emerald-800 border-t border-emerald-700">
-          <nav className="flex flex-col space-y-2">
+        <div className="sm:hidden px-4 pb-4 space-y-3 bg-gradient-to-b from-slate-800 to-slate-900 border-t border-slate-700/50 backdrop-blur-xl">
+          <nav className="flex flex-col space-y-2 pt-3">
             <button
               onClick={() => {
                 setNavbarActive("properties");
                 setMobileOpen(false);
               }}
-              className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group relative flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 navbarActive === "properties"
-                  ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
-                  : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
+                  ? "text-white shadow-lg shadow-emerald-500/30"
+                  : "text-slate-300"
               }`}
             >
-              <Home className="w-4 h-4 mr-2" />
-              Properties
+              {navbarActive === "properties" && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl"></div>
+              )}
+              <div className={`absolute inset-0 rounded-xl transition-all duration-300 ${
+                navbarActive === "properties" 
+                  ? "bg-transparent" 
+                  : "bg-slate-700/30 border border-slate-600/50"
+              }`}></div>
+              <Home className="w-4 h-4 mr-3 relative z-10" />
+              <span className="relative z-10">Properties</span>
             </button>
 
             <button
@@ -123,35 +157,47 @@ const AdminNavbar = ({ navbarActive, setNavbarActive }) => {
                 setNavbarActive("users");
                 setMobileOpen(false);
               }}
-              className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`group relative flex items-center px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 navbarActive === "users"
-                  ? "bg-emerald-700 text-white border border-emerald-600 shadow-md"
-                  : "text-emerald-100 hover:bg-emerald-700 hover:text-white hover:border-emerald-600 border border-transparent"
+                  ? "text-white shadow-lg shadow-emerald-500/30"
+                  : "text-slate-300"
               }`}
             >
-              <Users className="w-4 h-4 mr-2" />
-              Users
+              {navbarActive === "users" && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl"></div>
+              )}
+              <div className={`absolute inset-0 rounded-xl transition-all duration-300 ${
+                navbarActive === "users" 
+                  ? "bg-transparent" 
+                  : "bg-slate-700/30 border border-slate-600/50"
+              }`}></div>
+              <Users className="w-4 h-4 mr-3 relative z-10" />
+              <span className="relative z-10">Users</span>
             </button>
           </nav>
 
           {admin && (
-            <div className="flex items-center space-x-2 px-3 py-2 bg-emerald-700 rounded-lg mt-3 border border-emerald-600">
-              <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center border border-emerald-500">
-                <UserIcon className="w-4 h-4 text-emerald-100" />
+            <div className="flex items-center space-x-3 px-4 py-3 bg-slate-700/30 rounded-xl border border-slate-600/50 backdrop-blur-sm">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full blur opacity-60"></div>
+                <div className="relative w-9 h-9 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-full flex items-center justify-center border border-emerald-400/30 shadow-lg">
+                  <UserIcon className="w-5 h-5 text-white" />
+                </div>
               </div>
               <div className="text-sm">
-                <div className="font-medium text-white">{admin.name}</div>
-                <div className="text-emerald-200 text-xs">{admin.email}</div>
+                <div className="font-semibold text-white">{admin.name}</div>
+                <div className="text-slate-400 text-xs">{admin.email}</div>
               </div>
             </div>
           )}
 
           <button
             onClick={handleLogout}
-            className="mt-3 flex items-center px-3 py-2 text-sm font-medium text-emerald-100 hover:bg-red-600 hover:text-white rounded-lg transition-all duration-200 w-full justify-center border border-transparent hover:border-red-500"
+            className="group relative flex items-center px-4 py-3 text-sm font-semibold text-white rounded-xl transition-all duration-300 w-full justify-center overflow-hidden"
           >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
+            <div className="absolute inset-0 bg-slate-700/30 group-hover:bg-gradient-to-r group-hover:from-red-600 group-hover:to-rose-600 transition-all duration-300 border border-slate-600/50 group-hover:border-red-500/50 rounded-xl"></div>
+            <LogOut className="w-4 h-4 mr-2 relative z-10" />
+            <span className="relative z-10">Logout</span>
           </button>
         </div>
       )}

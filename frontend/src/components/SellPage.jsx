@@ -246,7 +246,53 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const [formData, setFormData] = useState(() => {
     if (user?.user_id) {
       const savedData = localStorage.getItem(`rentFormData_${user.user_id}`);
-      return savedData ? JSON.parse(savedData) : initialFormData;
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          
+          // Helper to check if an object is a base64-encoded file
+          const isBase64File = (obj) => {
+            return obj && typeof obj === 'object' && obj.base64 && obj.name && obj.type;
+          };
+          
+          // Helper to convert base64 back to File
+          const base64ToFile = (base64Data) => {
+            const { name, type, lastModified, base64 } = base64Data;
+            try {
+              const byteString = atob(base64.split(',')[1]);
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type });
+              return new File([blob], name, { type, lastModified });
+            } catch (error) {
+              console.error('Error converting base64 to File:', error);
+              return null;
+            }
+          };
+          
+          // Restore File objects from base64 for all image fields
+          const imageFields = ['images', 'propertyPapers', 'utilityBill', 'otherDocs'];
+          
+          for (const field of imageFields) {
+            if (Array.isArray(parsedData[field]) && parsedData[field].length > 0) {
+              parsedData[field] = parsedData[field].map(item => {
+                if (isBase64File(item)) {
+                  return base64ToFile(item);
+                }
+                return item;
+              }).filter(item => item !== null);
+            }
+          }
+          
+          return parsedData;
+        } catch (error) {
+          console.error('Error loading form data from localStorage:', error);
+          return initialFormData;
+        }
+      }
     }
     return initialFormData;
   });
@@ -299,11 +345,70 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     }
   }, [user]);
 
-  // Persist form data and current step per-user
+  // Helper function to convert File to base64 for localStorage
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        base64: reader.result
+      });
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  // Helper function to convert base64 back to File
+  const base64ToFile = (base64Data) => {
+    const { name, type, lastModified, base64 } = base64Data;
+    const byteString = atob(base64.split(',')[1]);
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([ab], { type });
+    return new File([blob], name, { type, lastModified });
+  };
+
+  // Persist form data and current step per-user with image preservation
   useEffect(() => {
     if (!user?.user_id) return;
-    localStorage.setItem(`rentFormData_${user.user_id}`, JSON.stringify(formData));
-    localStorage.setItem(`rentFormStep_${user.user_id}`, currentStep.toString());
+    
+    const saveFormData = async () => {
+      try {
+        // Create a copy of formData to serialize
+        const dataToSave = { ...formData };
+        
+        // Convert File arrays to base64 arrays for all image fields
+        const imageFields = ['images', 'propertyPapers', 'utilityBill', 'otherDocs'];
+        
+        for (const field of imageFields) {
+          if (Array.isArray(formData[field]) && formData[field].length > 0) {
+            // Check if items are File objects
+            const hasFiles = formData[field].some(item => item instanceof File);
+            if (hasFiles) {
+              const base64Array = await Promise.all(
+                formData[field].map(file => 
+                  file instanceof File ? fileToBase64(file) : Promise.resolve(file)
+                )
+              );
+              dataToSave[field] = base64Array;
+            }
+          }
+        }
+        
+        localStorage.setItem(`rentFormData_${user.user_id}`, JSON.stringify(dataToSave));
+        localStorage.setItem(`rentFormStep_${user.user_id}`, currentStep.toString());
+      } catch (error) {
+        console.error('Error saving form data to localStorage:', error);
+      }
+    };
+    
+    saveFormData();
   }, [formData, currentStep, user]);
 
   const steps = [
@@ -640,10 +745,7 @@ const handleChange = (e) => {
           console.log("❌ Description too long");
         }
 
-      if (!formData.furnishing) {
-        newErrors.furnishing = "Furnishing status is required";
-        console.log("❌ Furnishing is missing");
-      }
+      // Furnishing is now optional - no validation required
 
       //  Maintenance (Optional - but if entered, min 500)
       if (formData.maintenance) {
@@ -1442,7 +1544,7 @@ const handleSubmit = async (e) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Furnishing Status *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Furnishing Status</label>
                   <div className="relative">
                     <select
                       ref={refs.furnishing}
