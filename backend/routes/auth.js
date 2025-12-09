@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
 const { OAuth2Client } = require("google-auth-library");
-const { sendVerificationEmail, isEmailConfigured } = require("../utils/emailService");
+const { sendVerificationEmail, isEmailConfigured } = require("../utils/emailServiceSendGrid");
 const { sendVerificationSMS } = require("../utils/smsService");
 const {
   generateCode,
