@@ -1987,7 +1987,7 @@ const handleSubmit = async (e) => {
                           Your CNIC verification was rejected. Please update your CNIC information in your profile to continue.
                         </p>
                         <a
-                          href="http://localhost:5173/my-profile?tab=profile"
+                          href="/my-profile?tab=profile"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2011,7 +2011,7 @@ const handleSubmit = async (e) => {
                           You need to verify your CNIC before publishing a property listing. Please go to your profile to upload and verify your CNIC.
                         </p>
                         <a
-                          href="http://localhost:5173/my-profile?tab=profile"
+                          href="/my-profile?tab=profile"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors text-sm font-medium"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
