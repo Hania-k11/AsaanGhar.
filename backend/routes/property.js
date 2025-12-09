@@ -796,7 +796,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
       LEFT JOIN users u ON p.owner_id = u.user_id
 
       WHERE p.is_deleted = 0
-      AND us.show_listings = TRUE
+      AND COALESCE(us.show_listings, 1) = 1
       AND p.approval_status = 'approved'
        AND p.status = 'active'
        AND u.cnic_verified = 1
@@ -927,7 +927,7 @@ router.get('/getall', async (req, res) => {
       LEFT JOIN users u ON p.owner_id = u.user_id
 
       WHERE p.is_deleted = 0
-      AND us.show_listings = TRUE
+      AND COALESCE(us.show_listings, 1) = 1
        AND u.cnic_verified = 1
     And u.phone_verified = 1
        AND p.approval_status = 'approved'
