@@ -69,28 +69,19 @@ const UserProfile = () => {
     fetchPropertyStatus();
   }, [user?.user_id]); 
 
-  // Initialize editData with safe defaults
+  // Initialize editData with only editable fields
   const [editData, setEditData] = useState({
     first_name: user?.first_name || "",
     last_name: user?.last_name || "",
-    email: user?.email || "",
-    phone_number: user?.phone_number || "",
-    age: user?.age || 0,
     gender: user?.gender || "",
-    profileImage: user?.profileImage || "",
-    created_at: user?.created_at || new Date().toISOString(),
+    updated_at: user?.updated_at || new Date().toISOString(),
   });
 
   const handleEdit = () => {
     setEditData({
       first_name: user?.first_name || "",
       last_name: user?.last_name || "",
-      email: user?.email || "",
-      phone_number: user?.phone_number || "",
-      age: user?.age || 0,
       gender: user?.gender || "",
-      profileImage: user?.profileImage || "",
-      created_at: user?.created_at || new Date().toISOString(),
     });
     setShowEditModal(true);
   };
@@ -104,12 +95,7 @@ const UserProfile = () => {
     setEditData({
       first_name: user?.first_name || "",
       last_name: user?.last_name || "",
-      email: user?.email || "",
-      phone_number: user?.phone_number || "",
-      age: user?.age || "",
       gender: user?.gender || "",
-      profileImage: user?.profileImage || "",
-      created_at: user?.created_at || new Date().toISOString(),
     });
     setShowEditModal(false);
   };
@@ -474,133 +460,95 @@ const UserProfile = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 flex justify-center p-4 pt-20 sm:pt-24 md:pt-18 overflow-y-auto"
-                  style={{ backdropFilter: "blur(10px)", backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+                  className="fixed inset-0  z-50  flex items-center justify-center p-4 overflow-y-auto"
+                  style={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+                  onClick={handleCancel}
                 >
                   <motion.div
-                    initial={{ scale: 0.9, y: 20 }}
-                    animate={{ scale: 1, y: 0 }}
-                    exit={{ scale: 0.9, y: 20 }}
-                    className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl text-gray-900 dark:text-gray-100"
+                    initial={{ scale: 0.9, y: 20, opacity: 0 }}
+                    animate={{ scale: 1, y: 0, opacity: 1 }}
+                    exit={{ scale: 0.9, y: 20, opacity: 0 }}
+                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                    className="bg-white dark:bg-gray-800 rounded-3xl p-8 max-w-xl w-full shadow-2xl text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/50"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit Profile</h3>
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                          <Edit3 className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Edit Profile</h3>
+                      </div>
                       <button
                         onClick={handleCancel}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200 hover:rotate-90"
                       >
                         <X className="w-6 h-6" />
                       </button>
                     </div>
       
-                    <div className="space-y-6">
-                      {/* Profile Image */}
-                      <div className="flex items-center space-x-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
-                        <div className="w-24 h-24 rounded-full border-2 border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                          {editData.profileImage ? (
-                            <img
-                              src={editData.profileImage || "/placeholder.svg"}
-                              alt="Profile"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            generatePlaceholderImage(editData.first_name, editData.last_name)
-                          )}
+                    {/* Profile Avatar Preview */}
+                    <div className="flex justify-center mb-8">
+                      <div className="relative group">
+                        <div className="w-28 h-28 rounded-full border-4 border-emerald-500/20 dark:border-emerald-400/20 bg-gray-200 dark:bg-gray-700 overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105">
+                          {generatePlaceholderImage(editData.first_name, editData.last_name)}
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Photo URL</p>
-                          <input
-                            type="text"
-                            value={editData.profileImage}
-                            onChange={(e) => handleInputChange("profileImage", e.target.value)}
-                            className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="Enter image URL"
-                          />
+                        <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-lg">
+                          <User className="w-5 h-5 text-white" />
                         </div>
                       </div>
+                    </div>
+
+                    <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-6 -mt-4">
+                    
+                    </p>
       
+                    <div className="space-y-5">
                       {/* Name Fields */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             First Name
                           </label>
                           <input
                             type="text"
                             value={editData.first_name}
                             onChange={(e) => handleInputChange("first_name", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="First Name"
+                            className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                            placeholder="Enter first name"
                           />
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                        <div className="group">
+                          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                            Last Name
+                          </label>
                           <input
                             type="text"
                             value={editData.last_name}
                             onChange={(e) => handleInputChange("last_name", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="Last Name"
+                            className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 placeholder-gray-400 dark:placeholder-gray-500"
+                            placeholder="Enter last name"
                           />
                         </div>
                       </div>
       
-                      {/* Contact Fields */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address
-                          </label>
-                          <input
-                            type="email"
-                            value={editData.email}
-                            onChange={(e) => handleInputChange("email", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="Email Address"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Phone Number
-                          </label>
-                          <input
-                            type="tel"
-                            value={editData.phone_number}
-                            onChange={(e) => handleInputChange("phone_number", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="Phone Number"
-                          />
-                        </div>
-                      </div>
-      
-                      {/* Age and Gender */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Age</label>
-                          <input
-                            type="number"
-                            value={editData.age}
-                            onChange={(e) => handleInputChange("age", Number.parseInt(e.target.value) || 0)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                            placeholder="Age"
-                            min="1"
-                            max="120"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Gender</label>
-                          <select
-                            value={editData.gender}
-                            onChange={(e) => handleInputChange("gender", e.target.value)}
-                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
-                          >
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Non-binary">Non-binary</option>
-                            <option value="Prefer not to say">Prefer not to say</option>
-                          </select>
-                        </div>
+                      {/* Gender Field */}
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          Gender
+                        </label>
+                        <select
+                          value={editData.gender}
+                          onChange={(e) => handleInputChange("gender", e.target.value)}
+                          className="w-full bg-gray-50 dark:bg-gray-900/50 border-2 border-gray-200 dark:border-gray-600 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all duration-200 cursor-pointer"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Non-binary">Non-binary</option>
+                          <option value="Prefer not to say">Prefer not to say</option>
+                        </select>
                       </div>
                     </div>
       
@@ -608,13 +556,13 @@ const UserProfile = () => {
                     <div className="flex space-x-4 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
                       <button
                         onClick={handleCancel}
-                        className="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 py-3 px-6 rounded-full font-medium transition-colors transform hover:-translate-y-0.5"
+                        className="flex-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 py-3.5 px-6 rounded-xl font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-sm hover:shadow"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleSave}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-6 rounded-full flex items-center justify-center space-x-2 font-medium transition-colors transform hover:-translate-y-0.5"
+                        className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3.5 px-6 rounded-xl flex items-center justify-center space-x-2 font-semibold transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
                       >
                         <Save className="w-5 h-5" />
                         <span>Save Changes</span>

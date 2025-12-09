@@ -28,6 +28,38 @@ import UserProfile from "./UserProfile";
 import LoggingOutModal from "./LoggingOutModal";
 import LoadingSpinner from "./LoadingSpinner";
 
+const generatePlaceholderImage = (firstName, lastName) => {
+  const safeFirstName = firstName || "U"; 
+  const safeLastName = lastName || "U"; 
+  const initials = `${safeFirstName[0]}${safeLastName[0]}`.toUpperCase();
+  const colors = ["#0D9488", "#14B8A6", "#047857", "#065F46", "#2dd4bf"];
+  const color = colors[initials.charCodeAt(0) % colors.length];
+
+  return (
+    <svg
+      width="120"
+      height="120"
+      viewBox="0 0 120 120"
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-full h-full rounded-full"
+    >
+      <rect x="0" y="0" width="120" height="120" fill={color} />
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="middle"
+        textAnchor="middle"
+        fontSize="48"
+        fontWeight="bold"
+        fill="#ffffff"
+        fontFamily="Inter, sans-serif"
+      >
+        {initials}
+      </text>
+    </svg>
+  );
+};
+
 const mockUserDetails = {
   name: "Sarah Johnson",
   email: "sarah.johnson@email.com",
@@ -227,16 +259,9 @@ return (
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
               >
-                <img
-                  src={displayUserDetails?.avatar || mockUserDetails.avatar}
-                  alt="User Avatar"
-                  className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover"
-                />
-                {(displayUserDetails?.verified || mockUserDetails.verified) && (
-                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  </div>
-                )}
+                <div className="w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden">
+                  {generatePlaceholderImage(displayUserDetails?.first_name, displayUserDetails?.last_name)}
+                </div>
               </motion.div>
               <h2 className="mt-3 text-xl font-bold">{displayUserDetails?.first_name}</h2>
               <div className="flex items-center gap-2 text-sm text-white opacity-90 mt-2">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import LoginModal from "./LoginModal";
-import { Home } from "lucide-react";
+import { Home, X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,6 +11,86 @@ import { motion } from "framer-motion";
 import AddressAutocomplete from "./AddressAutocomplete";
 import MapPicker from "./MapPicker";
 import "leaflet/dist/leaflet.css";
+
+// Image Preview Modal Component
+const ImagePreviewModal = ({ isOpen, images, currentIndex, onClose, onNavigate, title }) => {
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      document.addEventListener("keydown", handleEsc);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !images || images.length === 0) return null;
+
+  const currentImage = images[currentIndex];
+  const imageUrl = currentImage instanceof File ? URL.createObjectURL(currentImage) : currentImage;
+  const imageName = currentImage instanceof File ? currentImage.name : `Image ${currentIndex + 1}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 backdrop-blur-sm">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-10 p-2 bg-white rounded-full hover:bg-gray-100 transition-colors"
+        aria-label="Close preview"
+      >
+        <X className="w-6 h-6 text-gray-800" />
+      </button>
+
+      {/* Navigation Buttons */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={() => onNavigate((currentIndex - 1 + images.length) % images.length)}
+            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-800" />
+          </button>
+          <button
+            onClick={() => onNavigate((currentIndex + 1) % images.length)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Next image"
+          >
+            <ChevronRight className="w-6 h-6 text-gray-800" />
+          </button>
+        </>
+      )}
+
+      {/* Image Container */}
+      <div className="max-w-7xl max-h-[90vh] w-full mx-4">
+        <img
+          src={imageUrl}
+          alt={imageName}
+          className="w-full h-full object-contain rounded-lg"
+        />
+        
+        {/* Image Info */}
+        <div className="mt-4 text-center">
+          <p className="text-white text-lg font-semibold">{title}</p>
+          <p className="text-gray-300 text-sm mt-1">
+            {imageName} {images.length > 1 && `(${currentIndex + 1} of ${images.length})`}
+          </p>
+        </div>
+      </div>
+
+      {/* Click backdrop to close */}
+      <div 
+        className="absolute inset-0 -z-10" 
+        onClick={onClose}
+        aria-label="Close preview"
+      />
+    </div>
+  );
+};
 
 const SellPage = () => {
   const { isLoggedIn, showLoginModal, setShowLoginModal, user } = useAuth();
@@ -181,6 +261,14 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Image preview modal state
+  const [previewModal, setPreviewModal] = useState({
+    isOpen: false,
+    images: [],
+    currentIndex: 0,
+    title: ""
+  });
 
   // Auto-populate email, phone, and name from user data
   // This runs whenever user changes to handle async loading
@@ -302,12 +390,12 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     }
   };
 
-  // Allowed types for UI filtering
-  const ALLOW_DOC_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+  // Only allow images for all uploads (no PDFs)
   const ALLOW_IMG_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
   const MAX_FILE_SIZE_MB = 10;
   const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024; // 10MB
+  const MAX_IMAGES_STEP4 = 5; // Max property images
+  const MAX_IMAGES_STEP5 = 5; // Max images per document type in Step 5
 
 // Helper function to validate file size
 const validateFileSize = (file) => {
@@ -332,44 +420,77 @@ const handleChange = (e) => {
     // FILE INPUTS (for UI only)
     if (type === "file") {
       const toArray = (fl) => Array.from(fl || []);
+      const fileArray = toArray(files);
 
+      // Validate file types (images only)
+      const invalidFiles = fileArray.filter((f) => !ALLOW_IMG_TYPES.includes(f.type));
+      if (invalidFiles.length > 0) {
+        toast.error(
+          `Only image files are allowed (JPG, PNG, WEBP, GIF). ${invalidFiles.length} file(s) rejected.`,
+          {
+            position: "top-right",
+            autoClose: 4000,
+          }
+        );
+      }
+
+      const validTypeFiles = fileArray.filter((f) => ALLOW_IMG_TYPES.includes(f.type));
+      
+      // Validate file sizes
+      const validSizeFiles = validTypeFiles.filter(validateFileSize);
+      
+      if (validTypeFiles.length !== validSizeFiles.length) {
+        const rejectedCount = validTypeFiles.length - validSizeFiles.length;
+        // validateFileSize already shows individual errors, just log
+        console.log(`${rejectedCount} file(s) rejected due to size`);
+      }
+
+      // Handle Step 4: Property Images
       if (name === "images") {
-        const validTypeFiles = toArray(files).filter((f) => ALLOW_IMG_TYPES.includes(f.type));
-        const validSizeFiles = validTypeFiles.filter(validateFileSize);
-        
         const currentCount = (formData.images || []).length;
-        const remainingSlots = 5 - currentCount;
+        const remainingSlots = MAX_IMAGES_STEP4 - currentCount;
         
         if (validSizeFiles.length > remainingSlots) {
-          toast.warning(`Only ${remainingSlots} more image(s) can be added (max 5 total)`, {
-            position: "top-right",
-            autoClose: 3000,
-          });
+          toast.warning(
+            `Only ${remainingSlots} more image(s) can be added (max ${MAX_IMAGES_STEP4} total)`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
         }
         
         setFormData((prev) => ({
           ...prev,
-          images: [...(prev.images || []), ...validSizeFiles].slice(0, 5),
+          images: [...(prev.images || []), ...validSizeFiles].slice(0, MAX_IMAGES_STEP4),
         }));
-      } else if (name === "documents") {
-        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
-        const validSizeFiles = validTypeFiles.filter(validateFileSize);
+      } 
+      // Handle Step 5: Document uploads (propertyPapers, utilityBill, otherDocs)
+      else if (name === "propertyPapers" || name === "utilityBill" || name === "otherDocs") {
+        const currentCount = (formData[name] || []).length;
+        const remainingSlots = MAX_IMAGES_STEP5 - currentCount;
+        
+        if (validSizeFiles.length > remainingSlots) {
+          toast.warning(
+            `Only ${remainingSlots} more image(s) can be added to ${name.replace(/([A-Z])/g, ' $1').toLowerCase()} (max ${MAX_IMAGES_STEP5} total)`,
+            {
+              position: "top-right",
+              autoClose: 3000,
+            }
+          );
+        }
         
         setFormData((prev) => ({
           ...prev,
-          documents: [...(prev.documents || []), ...validSizeFiles].slice(0, 10),
+          [name]: [...(prev[name] || []), ...validSizeFiles].slice(0, MAX_IMAGES_STEP5),
         }));
+      }
+      // Legacy documents field (if still used)
+      else if (name === "documents") {
         setFormData((prev) => ({
           ...prev,
-          otherDocs: [...(prev.otherDocs || []), ...validSizeFiles].slice(0, 10),
-        }));
-      } else if (name === "propertyPapers" || name === "utilityBill") {
-        const validTypeFiles = toArray(files).filter((f) => ALLOW_DOC_TYPES.includes(f.type));
-        const validSizeFiles = validTypeFiles.filter(validateFileSize);
-        
-        setFormData((prev) => ({
-          ...prev,
-          [name]: [...(prev[name] || []), ...validSizeFiles].slice(0, 10),
+          documents: [...(prev.documents || []), ...validSizeFiles].slice(0, MAX_IMAGES_STEP5),
+          otherDocs: [...(prev.otherDocs || []), ...validSizeFiles].slice(0, MAX_IMAGES_STEP5),
         }));
       }
 
@@ -883,6 +1004,16 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={previewModal.isOpen}
+        images={previewModal.images}
+        currentIndex={previewModal.currentIndex}
+        title={previewModal.title}
+        onClose={() => setPreviewModal({ ...previewModal, isOpen: false })}
+        onNavigate={(newIndex) => setPreviewModal({ ...previewModal, currentIndex: newIndex })}
+      />
+      
      {/* Progress Steps */}
 <div className="mb-12">
   {/* ✅ Mobile View (no scroll, even gap, connectors only between steps, now with spacing) */}
@@ -1726,7 +1857,9 @@ const handleSubmit = async (e) => {
 
               {/* Image Upload (UI only) */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-4">Property Images * (Max 5 images)</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-4">
+                  Property Images * (Max {MAX_IMAGES_STEP4} images - JPG, PNG, WEBP, GIF only)
+                </label>
 
                 <div
                   ref={refs.images}
@@ -1743,14 +1876,14 @@ const handleSubmit = async (e) => {
                       </div>
                       <p className="text-lg font-semibold text-gray-700 mb-2">Upload Property Images</p>
                       <p className="text-sm text-gray-500">Click to browse or drag and drop</p>
-                      <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 10MB each</p>
+                      <p className="text-xs text-gray-400 mt-1">Images only: JPG, PNG, WEBP, GIF (Max 10MB each)</p>
                     </div>
                   </label>
 
                   <input
                     id="image-upload"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     multiple
                     className="hidden"
                     name="images"
@@ -1765,19 +1898,35 @@ const handleSubmit = async (e) => {
 
                 {formData.images.length > 0 && (
                   <div className="mt-6">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">Selected Images ({formData.images.length}/5)</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                      Selected Images ({formData.images.length}/{MAX_IMAGES_STEP4})
+                    </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                       {formData.images.map((file, index) => (
                         <div key={index} className="relative group">
-                          <img
-                            src={file instanceof File ? URL.createObjectURL(file) : file}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
-                          />
+                          <div 
+                            className="relative cursor-pointer overflow-hidden rounded-lg"
+                            onClick={() => setPreviewModal({
+                              isOpen: true,
+                              images: formData.images,
+                              currentIndex: index,
+                              title: "Property Images"
+                            })}
+                          >
+                            <img
+                              src={file instanceof File ? URL.createObjectURL(file) : file}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-24 object-cover rounded-lg border-2 border-gray-200 transition-all duration-200 group-hover:border-emerald-500 group-hover:shadow-lg group-hover:brightness-75"
+                            />
+                            {/* Zoom icon overlay on hover */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                            </div>
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 z-10"
                           >
                             ×
                           </button>
@@ -1804,7 +1953,9 @@ const handleSubmit = async (e) => {
             </div>
 
             <div className="space-y-10">
-              <p className="text-gray-700 text-sm mb-4">Upload your property documents for verification. Accepted formats: PDF, PNG, JPG. Max size 10MB per file.</p>
+              <p className="text-gray-700 text-sm mb-4">
+                Upload your property documents for verification. <strong>Images only</strong> (JPG, PNG, WEBP, GIF). Max 5 images per document type, max 10MB per file.
+              </p>
 
               {/* CNIC Verification Status */}
               <div ref={refs.cnicVerification}>
@@ -1877,7 +2028,7 @@ const handleSubmit = async (e) => {
 
               {/* Property Papers */}
               <div ref={refs.propertyPapers}>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Property Papers</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Property Papers * (Max {MAX_IMAGES_STEP5} images)</h3>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
                     errors.propertyPapers ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
@@ -1890,13 +2041,14 @@ const handleSubmit = async (e) => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <p className="text-sm text-gray-500">Upload property ownership papers</p>
+                      <p className="text-sm text-gray-500">Upload property ownership papers (images only)</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF - Max 10MB each</p>
                     </div>
                   </label>
                   <input
                     id="property-papers"
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     multiple
                     name="propertyPapers"
                     onChange={handleChange}
@@ -1909,21 +2061,35 @@ const handleSubmit = async (e) => {
 
                 {(formData.propertyPapers || []).length > 0 && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected ({formData.propertyPapers.length})</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Selected ({formData.propertyPapers.length}/{MAX_IMAGES_STEP5})
+                    </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                       {formData.propertyPapers.map((f, i) => (
                         <div key={i} className="relative group">
-                          {isImg(f) ? (
-                            <img src={fileURL(f)} alt={f.name} className="w-full h-24 object-cover rounded border" />
-                          ) : (
-                            <div className="w-full h-24 rounded border flex items-center justify-center text-xs px-2 text-center">
-                              {f.name}
+                          <div
+                            className="relative cursor-pointer overflow-hidden rounded"
+                            onClick={() => setPreviewModal({
+                              isOpen: true,
+                              images: formData.propertyPapers,
+                              currentIndex: i,
+                              title: "Property Papers"
+                            })}
+                          >
+                            <img 
+                              src={fileURL(f)} 
+                              alt={f.name} 
+                              className="w-full h-24 object-cover rounded border-2 border-gray-200 transition-all duration-200 group-hover:border-emerald-500 group-hover:shadow-lg group-hover:brightness-75" 
+                            />
+                            {/* Zoom icon overlay on hover */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                             </div>
-                          )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removePropertyPaper(i)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
                           >
                             ×
                           </button>
@@ -1937,7 +2103,7 @@ const handleSubmit = async (e) => {
 
               {/* Utility Bill */}
               <div ref={refs.utilityBill}>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Utility Bill</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Utility Bill * (Max {MAX_IMAGES_STEP5} images)</h3>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
                     errors.utilityBill ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
@@ -1950,13 +2116,14 @@ const handleSubmit = async (e) => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <p className="text-sm text-gray-500">Upload recent utility bill</p>
+                      <p className="text-sm text-gray-500">Upload recent utility bill (images only)</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF - Max 10MB each</p>
                     </div>
                   </label>
                   <input
                     id="utility-bill"
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     multiple
                     name="utilityBill"
                     onChange={handleChange}
@@ -1969,21 +2136,35 @@ const handleSubmit = async (e) => {
 
                 {(formData.utilityBill || []).length > 0 && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected ({formData.utilityBill.length})</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Selected ({formData.utilityBill.length}/{MAX_IMAGES_STEP5})
+                    </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                       {formData.utilityBill.map((f, i) => (
                         <div key={i} className="relative group">
-                          {isImg(f) ? (
-                            <img src={fileURL(f)} alt={f.name} className="w-full h-24 object-cover rounded border" />
-                          ) : (
-                            <div className="w-full h-24 rounded border flex items-center justify-center text-xs px-2 text-center">
-                              {f.name}
+                          <div
+                            className="relative cursor-pointer overflow-hidden rounded"
+                            onClick={() => setPreviewModal({
+                              isOpen: true,
+                              images: formData.utilityBill,
+                              currentIndex: i,
+                              title: "Utility Bill"
+                            })}
+                          >
+                            <img 
+                              src={fileURL(f)} 
+                              alt={f.name} 
+                              className="w-full h-24 object-cover rounded border-2 border-gray-200 transition-all duration-200 group-hover:border-emerald-500 group-hover:shadow-lg group-hover:brightness-75" 
+                            />
+                            {/* Zoom icon overlay on hover */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                             </div>
-                          )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeUtilityBill(i)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
                           >
                             ×
                           </button>
@@ -1997,7 +2178,7 @@ const handleSubmit = async (e) => {
 
               {/* Other Docs (multiple) */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Other Supporting Documents</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Other Supporting Documents (Max {MAX_IMAGES_STEP5} images)</h3>
                 <div
                   className={`border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200 ${
                     errors.otherDocs ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-emerald-500 hover:bg-emerald-50"
@@ -2010,13 +2191,14 @@ const handleSubmit = async (e) => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <p className="text-sm text-gray-500">Upload any other documents</p>
+                      <p className="text-sm text-gray-500">Upload any other documents (images only)</p>
+                      <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP, GIF - Max 10MB each</p>
                     </div>
                   </label>
                   <input
                     id="other-docs"
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
                     multiple
                     name="otherDocs"
                     onChange={handleChange}
@@ -2029,21 +2211,35 @@ const handleSubmit = async (e) => {
 
                 {(formData.otherDocs || []).length > 0 && (
                   <div className="mt-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected ({formData.otherDocs.length})</h4>
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Selected ({formData.otherDocs.length}/{MAX_IMAGES_STEP5})
+                    </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                       {formData.otherDocs.map((f, i) => (
                         <div key={i} className="relative group">
-                          {isImg(f) ? (
-                            <img src={fileURL(f)} alt={f.name} className="w-full h-24 object-cover rounded border" />
-                          ) : (
-                            <div className="w-full h-24 rounded border flex items-center justify-center text-xs px-2 text-center">
-                              {f.name}
+                          <div
+                            className="relative cursor-pointer overflow-hidden rounded"
+                            onClick={() => setPreviewModal({
+                              isOpen: true,
+                              images: formData.otherDocs,
+                              currentIndex: i,
+                              title: "Other Supporting Documents"
+                            })}
+                          >
+                            <img 
+                              src={fileURL(f)} 
+                              alt={f.name} 
+                              className="w-full h-24 object-cover rounded border-2 border-gray-200 transition-all duration-200 group-hover:border-emerald-500 group-hover:shadow-lg group-hover:brightness-75" 
+                            />
+                            {/* Zoom icon overlay on hover */}
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <ZoomIn className="w-6 h-6 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                             </div>
-                          )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeOtherDoc(i)}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 z-10"
                           >
                             ×
                           </button>
@@ -2057,14 +2253,14 @@ const handleSubmit = async (e) => {
 
               <div className="mt-6 p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-sm text-gray-700">
                 <p>
-                  Ensure your documents are clear and legible. Verification may take 24–48 hours. The property would not be approved without the verified
+                  Ensure your documents are clear and legible. All documents must be uploaded as <strong>images</strong> (photos or scans). Verification may take 24–48 hours. The property would not be approved without the verified
                   documents. Required documents include:
                 </p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>CNIC verification (completed in your profile)</li>
-                  <li>Property ownership documents</li>
-                  <li>Utility bills</li>
-                  <li>Other supporting papers if required</li>
+                  <li>Property ownership documents (max 5 images)</li>
+                  <li>Utility bills (max 5 images)</li>
+                  <li>Other supporting papers if required (max 5 images)</li>
                 </ul>
               </div>
             </div>

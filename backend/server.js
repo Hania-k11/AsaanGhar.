@@ -68,6 +68,9 @@ app.use('/api/settings', settingsRoutes);
 const whisperRoutes = require('./routes/whisper');
 app.use('/api/whisper', whisperRoutes);
 
+const inquiriesRoutes = require('./routes/inquiries');
+app.use('/api/inquiries', inquiriesRoutes);
+
 app.get('/', (req, res) => {
   res.send('FYP Backend working');
 });

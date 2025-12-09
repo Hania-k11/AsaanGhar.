@@ -1,6 +1,6 @@
 // src/components/admin/AdminModals.jsx
 import React, { useState, useEffect } from 'react';
-import { X, FileText, Download, ZoomIn, Loader, Check } from 'lucide-react';
+import { X, FileText, ZoomIn, Loader, Check, File } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './ToastProvider';
 import { useQueryClient } from '@tanstack/react-query';
@@ -113,6 +113,13 @@ const AdminModals = ({
       other: 'Other Document',
     };
     return typeMap[docType] || docType;
+  };
+
+  // Helper function to check if file is PDF
+  const isPDF = (url) => {
+    if (!url) return false;
+    const extension = url.toLowerCase().split('.').pop().split('?')[0];
+    return extension === 'pdf';
   };
 
   // Group documents by type
@@ -255,43 +262,53 @@ const AdminModals = ({
                         {getDocTypeName(docType)}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {docs.map((doc) => (
-                          <div
-                            key={doc.document_id}
-                            className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-                          >
-                            <div className="relative aspect-video bg-gray-100">
-                              <img
-                                src={doc.doc_url}
-                                alt={getDocTypeName(doc.doc_type)}
-                                className="w-full h-full object-cover cursor-pointer"
-                                onClick={() => setSelectedImage(doc.doc_url)}
-                              />
-                              <button
-                                onClick={() => setSelectedImage(doc.doc_url)}
-                                className="absolute top-2 right-2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-colors"
-                                title="View full size"
-                              >
-                                <ZoomIn className="w-4 h-4 text-gray-700" />
-                              </button>
+                        {docs.map((doc) => {
+                          const isDocPDF = isPDF(doc.doc_url);
+                          return (
+                            <div
+                              key={doc.document_id}
+                              className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                            >
+                              <div className="relative aspect-video bg-gray-100">
+                                {isDocPDF ? (
+                                  // PDF Preview
+                                  <div 
+                                    className="w-full h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+                                    onClick={() => setSelectedImage(doc.doc_url)}
+                                  >
+                                    <File className="w-16 h-16 text-red-600 mb-2" />
+                                    <span className="text-sm font-medium text-gray-700">PDF Document</span>
+                                  </div>
+                                ) : (
+                                  // Image Preview
+                                  <>
+                                    <img
+                                      src={doc.doc_url}
+                                      alt={getDocTypeName(doc.doc_type)}
+                                      className="w-full h-full object-cover cursor-pointer"
+                                      onClick={() => setSelectedImage(doc.doc_url)}
+                                    />
+                                    <button
+                                      onClick={() => setSelectedImage(doc.doc_url)}
+                                      className="absolute top-2 right-2 bg-white/90 hover:bg-white p-2 rounded-full shadow-md transition-colors"
+                                      title="View full size"
+                                    >
+                                      <ZoomIn className="w-4 h-4 text-gray-700" />
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                              <div className="p-3">
+                                <p className="text-xs text-gray-500 text-center">
+                                  Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
+                                </p>
+                                <p className="text-xs text-emerald-600 text-center mt-1">
+                                  Click to view {isDocPDF ? 'PDF' : 'full size'}
+                                </p>
+                              </div>
                             </div>
-                            <div className="p-3">
-                              <p className="text-xs text-gray-500">
-                                Uploaded: {new Date(doc.uploaded_at).toLocaleDateString()}
-                              </p>
-                              <a
-                                href={doc.doc_url}
-                                download
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-2 flex items-center justify-center w-full px-3 py-2 text-sm bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-200 transition-colors"
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download
-                              </a>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -363,32 +380,44 @@ const AdminModals = ({
                     <h4 className="text-lg font-semibold text-gray-800 mb-4">CNIC Documents</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedUser.cnic_front_url && (
-                        <div className="border rounded-lg overflow-hidden">
-                          <div className="bg-gray-100 px-4 py-2">
-                            <p className="text-sm font-medium text-gray-700">CNIC Front</p>
+                        <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                          <div className="bg-emerald-50 px-4 py-2 border-b border-emerald-100">
+                            <p className="text-sm font-medium text-emerald-900">CNIC Front</p>
                           </div>
-                          <div className="relative aspect-video bg-gray-50">
+                          <div className="relative aspect-video bg-gray-50 group cursor-pointer"
+                               onClick={() => setSelectedImage(selectedUser.cnic_front_url)}>
                             <img
                               src={selectedUser.cnic_front_url}
                               alt="CNIC Front"
-                              className="w-full h-full object-contain cursor-pointer"
-                              onClick={() => setSelectedImage(selectedUser.cnic_front_url)}
+                              className="w-full h-full object-contain transition-transform group-hover:scale-105"
                             />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                              <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 px-4 py-2 text-center">
+                            <p className="text-xs text-emerald-600">Click to view full size</p>
                           </div>
                         </div>
                       )}
                       {selectedUser.cnic_back_url && (
-                        <div className="border rounded-lg overflow-hidden">
-                          <div className="bg-gray-100 px-4 py-2">
-                            <p className="text-sm font-medium text-gray-700">CNIC Back</p>
+                        <div className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                          <div className="bg-emerald-50 px-4 py-2 border-b border-emerald-100">
+                            <p className="text-sm font-medium text-emerald-900">CNIC Back</p>
                           </div>
-                          <div className="relative aspect-video bg-gray-50">
+                          <div className="relative aspect-video bg-gray-50 group cursor-pointer"
+                               onClick={() => setSelectedImage(selectedUser.cnic_back_url)}>
                             <img
                               src={selectedUser.cnic_back_url}
                               alt="CNIC Back"
-                              className="w-full h-full object-contain cursor-pointer"
-                              onClick={() => setSelectedImage(selectedUser.cnic_back_url)}
+                              className="w-full h-full object-contain transition-transform group-hover:scale-105"
                             />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                              <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          <div className="bg-gray-50 px-4 py-2 text-center">
+                            <p className="text-xs text-emerald-600">Click to view full size</p>
                           </div>
                         </div>
                       )}
@@ -459,35 +488,41 @@ const AdminModals = ({
         </div>
       )}
 
-      {/* Image Viewer Modal */}
+      {/* Document Viewer Modal */}
       {selectedImage && (
         <div
-          className="fixed inset-0 backdrop-blur-sm bg-black/30  bg-opacity-90 flex items-center justify-center p-4 z-[60]"
+          className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center p-8 z-[60] animate-fadeIn"
           onClick={() => setSelectedImage(null)}
         >
           <button
             onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300"
+            className="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors bg-black/50 hover:bg-black/70 rounded-full p-3 backdrop-blur-sm"
+            title="Close (ESC)"
           >
-            <X className="w-8 h-8" />
+            <X className="w-6 h-6" />
           </button>
-          <img
-            src={selectedImage}
-            alt="Document"
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <a
-            href={selectedImage}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute bottom-4 right-4 flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Download className="w-5 h-5 mr-2" />
-            Download
-          </a>
+          <div className="relative max-w-7xl max-h-full flex items-center justify-center w-full">
+            {isPDF(selectedImage) ? (
+              // PDF Viewer
+              <iframe
+                src={selectedImage}
+                className="w-full h-[85vh] rounded-lg shadow-2xl bg-white"
+                title="PDF Document"
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              // Image Viewer
+              <img
+                src={selectedImage}
+                alt="Document"
+                className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm">
+              Click outside to close
+            </div>
+          </div>
         </div>
       )}
     </>

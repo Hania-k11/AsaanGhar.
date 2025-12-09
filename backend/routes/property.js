@@ -134,11 +134,20 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         pt.name AS property_type_name,
         fs.name AS furnishing_status_name,
         COALESCE(fav.favorite_count, 0) AS favorite_count,
+        COALESCE(inq_count.inquiry_count, 0) AS inquiries,
         GROUP_CONCAT(
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 
           SEPARATOR '||'
-        ) AS images
+        ) AS images,
+        -- Add contact information
+        c.contact_name,
+        c.contact_email,
+        c.contact_phone,
+        c.contact_whatsapp,
+        pc.pref_email,
+        pc.pref_phone,
+        pc.pref_whatsapp
       FROM properties p
       LEFT JOIN locations l ON p.location_id = l.location_id
       LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
@@ -148,7 +157,15 @@ router.get('/getmyproperties/:userId', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav ON p.property_id = fav.property_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS inquiry_count
+        FROM inquiries
+        GROUP BY property_id
+      ) inq_count ON p.property_id = inq_count.property_id
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
+      -- Join contact information
+      LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
+      LEFT JOIN contacts c ON pc.contact_id = c.contact_id
       WHERE p.owner_id = ?
         AND p.is_deleted = 0
     `;
@@ -393,6 +410,7 @@ router.get('/favorites/:userId', async (req, res) => {
         lt.name AS listing_type_name,
         f.created_at AS favorited_at,
         COALESCE(fav_count.favorite_count, 0) AS favorite_count,
+        COALESCE(inq_count.inquiry_count, 0) AS inquiries,
         GROUP_CONCAT(DISTINCT
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 
@@ -419,6 +437,11 @@ router.get('/favorites/:userId', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav_count ON p.property_id = fav_count.property_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS inquiry_count
+        FROM inquiries
+        GROUP BY property_id
+      ) inq_count ON p.property_id = inq_count.property_id
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
       -- Join amenities
       LEFT JOIN property_amenities pa ON p.property_id = pa.property_id
@@ -762,6 +785,11 @@ router.get('/getallnew/:user_id', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav_count ON p.property_id = fav_count.property_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS inquiry_count
+        FROM inquiries
+        GROUP BY property_id
+      ) inq_count ON p.property_id = inq_count.property_id
 
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
@@ -825,6 +853,7 @@ router.get('/getallnew/:user_id', async (req, res) => {
         -- Add favorites info
         IF(f_user.favorite_id IS NOT NULL, 1, 0) AS is_favorite,
         COALESCE(fav_count.favorite_count, 0) AS favorite_count,
+        COALESCE(inq_count.inquiry_count, 0) AS inquiries,
         GROUP_CONCAT(DISTINCT
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 
@@ -887,6 +916,11 @@ router.get('/getall', async (req, res) => {
         FROM favorites
         GROUP BY property_id
       ) fav_count ON p.property_id = fav_count.property_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS inquiry_count
+        FROM inquiries
+        GROUP BY property_id
+      ) inq_count ON p.property_id = inq_count.property_id
 
       LEFT JOIN property_images pi ON p.property_id = pi.property_id
       LEFT JOIN user_settings us ON p.owner_id = us.user_id
@@ -895,7 +929,7 @@ router.get('/getall', async (req, res) => {
       WHERE p.is_deleted = 0
       AND us.show_listings = TRUE
        AND u.cnic_verified = 1
-    AND u.phone_verified = 1
+    And u.phone_verified = 1
        AND p.approval_status = 'approved'
         AND p.status = 'active'
       
@@ -949,6 +983,7 @@ router.get('/getall', async (req, res) => {
         -- Add favorites info
         ${userId ? 'IF(f_user.favorite_id IS NOT NULL, 1, 0)' : '0'} AS is_favorite,
         COALESCE(fav_count.favorite_count, 0) AS favorite_count,
+        COALESCE(inq_count.inquiry_count, 0) AS inquiries,
         GROUP_CONCAT(DISTINCT
           CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
           ORDER BY pi.is_main DESC, pi.image_id ASC 

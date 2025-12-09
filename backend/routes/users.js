@@ -267,4 +267,55 @@ router.get('/profile', authenticateUser, async (req, res) => {
   }
 });
 
+// =====================
+// UPDATE USER PROFILE
+// =====================
+router.put('/update-profile', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { first_name, last_name, gender } = req.body;
+
+    // Validate input
+    if (!first_name || !last_name) {
+      return res.status(400).json({ error: 'First name and last name are required' });
+    }
+
+    // Trim whitespace
+    const trimmedFirstName = first_name.trim();
+    const trimmedLastName = last_name.trim();
+
+    if (trimmedFirstName.length === 0 || trimmedLastName.length === 0) {
+      return res.status(400).json({ error: 'First name and last name cannot be empty' });
+    }
+
+    // Update user record
+    await pool.query(
+      `UPDATE users 
+       SET first_name = ?, last_name = ?, gender = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE user_id = ?`,
+      [trimmedFirstName, trimmedLastName, gender || null, userId]
+    );
+
+    // Fetch updated user data
+    const [userRows] = await pool.query(
+      `SELECT user_id, first_name, last_name, email, phone_number, phone_verified, cnic, 
+              cnic_front_url, cnic_back_url, cnic_verified, profile_picture_url, city, bio, 
+              is_verified, created_at, updated_at, status, role, gender, age
+       FROM users 
+       WHERE user_id = ? 
+       LIMIT 1`,
+      [userId]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: userRows[0],
+    });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 module.exports = router;

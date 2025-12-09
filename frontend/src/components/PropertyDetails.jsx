@@ -81,9 +81,6 @@ const PropertyDetails = () => {
   const [liked, setLiked] = useState(false);
   const [reviewText, setReviewText] = useState("");
   const [contactForm, setContactForm] = useState({
-    name: '',
-    email: '',
-    phone: '',
     message: '',
     userType: 'Buyer/Tenant'
   });
@@ -210,40 +207,41 @@ const PropertyDetails = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()) {
-      displayToast("Please fill in all required fields", 'error');
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      displayToast("You need to log in to send message", 'error');
       return;
     }
 
-    const messagePayload = {
-      senderId: userId || "guest",
-      receiverId: property.owner_id || property.contact_name,
+    // Validate message field
+    if (!contactForm.message.trim()) {
+      displayToast("Please enter a message", 'error');
+      return;
+    }
+
+    const inquiryPayload = {
       propertyId: property.property_id,
-      propertyTitle: property.title,
-      senderName: contactForm.name,
-      senderEmail: contactForm.email,
-      senderPhone: contactForm.phone,
-      userType: contactForm.userType,
-      text: contactForm.message,
-      timestamp: new Date(),
+      messageContent: contactForm.message,
+      inquirerRole: contactForm.userType
     };
 
     try {
-      await fetch("/api/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(messagePayload),
-      });
+      // Use axios with credentials (cookies)
+      const response = await axios.post(
+        "/api/inquiries", 
+        inquiryPayload, 
+        { withCredentials: true }
+      );
 
-      await fetch(`/api/property/${property.property_id}/inquiries`, {
-        method: "POST",
-      });
-
-      displayToast("Message sent successfully!");
-      setContactForm({ name: '', email: '', phone: '', message: '', userType: 'Buyer/Tenant' });
+      if (response.data.success) {
+        displayToast("Message sent successfully!");
+        setContactForm({ message: '', userType: 'Buyer/Tenant' });
+      } else {
+        displayToast(response.data.message || "Failed to send message", 'error');
+      }
     } catch (error) {
       console.error("Message send error:", error);
-      displayToast("Failed to send message", 'error');
+      displayToast(error.response?.data?.message || "Failed to send message", 'error');
     }
   };
 
@@ -737,31 +735,13 @@ const PropertyDetails = () => {
                 transition={{ delay: 0.4, duration: 0.6 }}
                 className="space-y-4"
               >
-                <input
-                  type="text"
-                  placeholder="Your Name *"
-                  value={contactForm.name}
-                  onChange={(e) => handleContactFormChange('name', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition placeholder-gray-500"
-                  required
-                />
-
-                <input
-                  type="email"
-                  placeholder="Your Email *"
-                  value={contactForm.email}
-                  onChange={(e) => handleContactFormChange('email', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition placeholder-gray-500"
-                  required
-                />
-
-                <input
-                  type="tel"
-                  placeholder="Your Phone (Optional)"
-                  value={contactForm.phone}
-                  onChange={(e) => handleContactFormChange('phone', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition placeholder-gray-500"
-                />
+                {/* Informational Text */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    <Info size={16} className="flex-shrink-0" />
+                    <span>Message will be sent to owner's email</span>
+                  </p>
+                </div>
 
                 <textarea
                   rows="4"
@@ -795,7 +775,7 @@ const PropertyDetails = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleSendMessage}
-                  disabled={!contactForm.name.trim() || !contactForm.email.trim() || !contactForm.message.trim()}
+                  disabled={!contactForm.message.trim()}
                   className="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-300 shadow font-medium"
                 >
                   Send Message
