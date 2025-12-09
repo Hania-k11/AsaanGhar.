@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: mode === 'development' ? {
     proxy: {
       '/api': {
-        target: 'http://localhost:3001', // local backend
+        target: process.env.VITE_API_URL || 'http://localhost:3001',
         changeOrigin: true,
         secure: false,
       },

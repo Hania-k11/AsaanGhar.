@@ -5,7 +5,6 @@ import axios from "axios";
 import { useToast } from "./ToastProvider";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = "http://localhost:3001/api";
 
 const VerificationModal = ({ show, onClose, email }) => {
   const { success, error } = useToast();
@@ -77,7 +76,7 @@ const VerificationModal = ({ show, onClose, email }) => {
 
     try {
       const res = await axios.post(
-        `${API_BASE_URL}/auth/verify-signup`,
+        `/api/auth/verify-signup`,
         {
           email,
           emailCode: emailCodeString,
@@ -104,7 +103,7 @@ const VerificationModal = ({ show, onClose, email }) => {
     if (resendCooldown > 0) return;
 
     try {
-      await axios.post(`${API_BASE_URL}/auth/resend-code`, {
+      await axios.post(`/api/auth/resend-code`, {
         email,
       });
 

@@ -11,8 +11,6 @@ import VerificationModal from "./VerificationModal";
 
 import { GoogleLogin } from '@react-oauth/google'; 
 
-const API_BASE_URL = "http://localhost:3001/api"; 
-
 const LoginModal = () => {
    const { success, error, warning, info } = useToast();
    
@@ -76,7 +74,7 @@ const LoginModal = () => {
     const idToken = response.credential;
     
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/google-login`, {
+      const res = await axios.post(`/api/auth/google-login`, {
         token: idToken,
       }, {
         withCredentials: true 
@@ -210,7 +208,7 @@ const LoginModal = () => {
 
       // 8. Attempt signup
       try {
-        const res = await axios.post(`${API_BASE_URL}/auth/signup`, {
+        const res = await axios.post(`/api/auth/signup`, {
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           email: form.email.trim().toLowerCase(),

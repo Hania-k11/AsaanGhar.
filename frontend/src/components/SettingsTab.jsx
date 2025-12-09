@@ -16,7 +16,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 
-const API_BASE_URL = "http://localhost:3001/api";
 
 /* --- Reusable Components --- */
 const SectionHeader = ({ icon: Icon, title, description }) => (
@@ -169,7 +168,7 @@ const SettingsTab = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/settings`, {
+      const response = await fetch(`/api/settings`, {
         method: "GET",
         credentials: "include",
       });
@@ -220,7 +219,7 @@ const SettingsTab = () => {
 
     try {
       setChangingPassword(true);
-      const response = await fetch(`${API_BASE_URL}/settings/password`, {
+      const response = await fetch(`/api/settings/password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -288,7 +287,7 @@ const SettingsTab = () => {
   const handleSavePrivacy = async () => {
     try {
       setSavingPrivacy(true);
-      const response = await fetch(`${API_BASE_URL}/settings/privacy`, {
+      const response = await fetch(`/api/settings/privacy`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -327,7 +326,7 @@ const SettingsTab = () => {
 
     if (window.confirm("Are you sure you want to delete your account? This action is permanent.")) {
       try {
-        const response = await fetch(`${API_BASE_URL}/settings/account`, {
+        const response = await fetch(`/api/settings/account`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
