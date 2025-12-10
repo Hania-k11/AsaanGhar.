@@ -308,6 +308,9 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Track if localStorage has been loaded to prevent duplicate loads
+  const hasLoadedFromStorage = useRef(false);
+  
   // Image preview modal state
   const [previewModal, setPreviewModal] = useState({
     isOpen: false,
@@ -316,32 +319,148 @@ const RentForm = ({ setUserProperties, isLoggedIn, onLoginClick }) => {
     title: ""
   });
 
-  // Auto-populate email, phone, and name from user data
-  // This runs whenever user changes to handle async loading
+  // Helper functions for base64 conversion (moved up for use in the effect below)
+  const isBase64File = (obj) => {
+    return obj && typeof obj === 'object' && obj.base64 && obj.name && obj.type;
+  };
+
+  const base64ToFileHelper = (base64Data) => {
+    const { name, type, lastModified, base64 } = base64Data;
+    try {
+      const byteString = atob(base64.split(',')[1]);
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) {
+        ia[i] = byteString.charCodeAt(i);
+      }
+      const blob = new Blob([ab], { type });
+      return new File([blob], name, { type, lastModified });
+    } catch (error) {
+      console.error('Error converting base64 to File:', error);
+      return null;
+    }
+  };
+
+  // Load form data and step from localStorage when user becomes available
+  // This handles the case where user is null on initial mount due to async auth
   useEffect(() => {
-    if (user) {
-      setFormData((prev) => {
-        const updates = { ...prev };
+    if (!user?.user_id || hasLoadedFromStorage.current) return;
+    
+    try {
+      const savedData = localStorage.getItem(`rentFormData_${user.user_id}`);
+      const savedStep = localStorage.getItem(`rentFormStep_${user.user_id}`);
+      
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
         
-        // Always update from user data if available (handles async loading)
-        if (user.email) {
-          updates.ownerEmail = user.email;
-        }
+        // Restore File objects from base64 for all image fields
+        const imageFields = ['images', 'propertyPapers', 'utilityBill', 'otherDocs'];
         
-        if (user.phone_number) {
-          updates.phoneNumber = user.phone_number;
-        }
-        
-        // Auto-populate owner name from first_name and last_name
-        if (user.first_name || user.last_name) {
-          const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-          if (fullName) {
-            updates.ownerName = fullName;
+        for (const field of imageFields) {
+          if (Array.isArray(parsedData[field]) && parsedData[field].length > 0) {
+            parsedData[field] = parsedData[field].map(item => {
+              if (isBase64File(item)) {
+                return base64ToFileHelper(item);
+              }
+              return item;
+            }).filter(item => item !== null);
           }
         }
         
-        return updates;
-      });
+        setFormData(parsedData);
+        console.log('✅ Form data restored from localStorage');
+      }
+      
+      if (savedStep) {
+        setCurrentStep(Number(savedStep));
+        console.log('✅ Step restored from localStorage:', savedStep);
+      }
+      
+      hasLoadedFromStorage.current = true;
+    } catch (error) {
+      console.error('Error loading form data from localStorage:', error);
+      hasLoadedFromStorage.current = true;
+    }
+  }, [user?.user_id]);
+
+  // Auto-populate email, phone, and name from user data
+  // This runs whenever user changes to handle async loading
+  useEffect(() => {
+    if (user?.user_id) {
+      // 1. Try to restore saved data first
+      const savedData = localStorage.getItem(`rentFormData_${user.user_id}`);
+      const savedStep = localStorage.getItem(`rentFormStep_${user.user_id}`);
+      
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          
+          // Helper to check if an object is a base64-encoded file
+          const isBase64File = (obj) => {
+            return obj && typeof obj === 'object' && obj.base64 && obj.name && obj.type;
+          };
+          
+          // Helper to convert base64 back to File
+          const base64ToFileInstance = (base64Data) => {
+            const { name, type, lastModified, base64 } = base64Data;
+            try {
+              const byteString = atob(base64.split(',')[1]);
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type });
+              return new File([blob], name, { type, lastModified });
+            } catch (error) {
+              console.error('Error converting base64 to File:', error);
+              return null;
+            }
+          };
+          
+          // Restore File objects from base64 for all image fields
+          const imageFields = ['images', 'propertyPapers', 'utilityBill', 'otherDocs'];
+          
+          for (const field of imageFields) {
+            if (Array.isArray(parsedData[field]) && parsedData[field].length > 0) {
+              parsedData[field] = parsedData[field].map(item => {
+                if (isBase64File(item)) {
+                  return base64ToFileInstance(item);
+                }
+                return item;
+              }).filter(item => item !== null);
+            }
+          }
+          
+          // Merge saved data with any current user info updates
+          setFormData(prev => ({
+            ...parsedData,
+            // Ensure these are up to date from the verified user profile if they were empty in saved data
+            ownerEmail: parsedData.ownerEmail || user.email || prev.ownerEmail,
+            phoneNumber: parsedData.phoneNumber || user.phone_number || prev.phoneNumber,
+            ownerName: parsedData.ownerName || `${user.first_name || ''} ${user.last_name || ''}`.trim() || prev.ownerName
+          }));
+
+          if (savedStep) {
+            setCurrentStep(Number(savedStep));
+          }
+
+        } catch (error) {
+          console.error('Error restoring saved form data:', error);
+        }
+      } else {
+        // No saved data, just update from user profile
+        setFormData((prev) => {
+          const updates = { ...prev };
+          if (user.email) updates.ownerEmail = user.email;
+          if (user.phone_number) updates.phoneNumber = user.phone_number;
+          if (user.first_name || user.last_name) {
+            const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+            if (fullName) updates.ownerName = fullName;
+          }
+          return updates;
+        });
+      }
     }
   }, [user]);
 
