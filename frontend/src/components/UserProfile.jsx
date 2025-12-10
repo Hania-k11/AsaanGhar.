@@ -211,14 +211,14 @@ const UserProfile = () => {
                 <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="flex-1">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
                     <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.email}</p>
                   </div>
                   <button
                     onClick={() => setShowEmailModal(true)}
-                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline px-2 py-1"
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium hover:underline px-2 py-1 self-start sm:self-auto"
                   >
                     Change
                   </button>

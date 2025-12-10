@@ -312,8 +312,8 @@ const LoginModal = () => {
                 </h2>
 
                 {/* Social Logins */}
-       <div className="flex flex-col gap-3 mb-4">
-  <div className="w-full max-w-sm mx-auto"> 
+       <div className="flex flex-col items-center gap-3 mb-4 w-full">
+  <div className="w-full max-w-sm"> 
     <GoogleLogin
       onSuccess={handleGoogleSuccess}
       onError={() => error("Google login failed. Please try again.")}
