@@ -213,8 +213,8 @@ const UserProfile = () => {
               <div className="flex-1">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
                   <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
-                    <p className="text-gray-900 dark:text-gray-100 font-medium text-lg">{user.email}</p>
+                    <p className="text-sm md:text-md text-gray-500 dark:text-gray-400 font-medium mb-1">Email Address</p>
+                    <p className="text-gray-900 dark:text-gray-100 font-medium text-sm">{user.email}</p>
                   </div>
                   <button
                     onClick={() => setShowEmailModal(true)}
