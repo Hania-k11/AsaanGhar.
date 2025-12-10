@@ -31,31 +31,40 @@ const BuyPage = () => {
   const navigate = useNavigate();
   const { user, isLoggedIn } = useAuth();
   const userId = user?.user_id;
-
-  // Normal search states
-  const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");  
-  const [priceRange, setPriceRange] = useState([0, 9999999999999.99]);
-  const [sortBy, setSortBy] = useState("featured");
-  const [normalPage, setNormalPage] = useState(1);
-
-  // NLP search states
+  
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Normal search states
+  const [filter, setFilter] = useState(searchParams.get("filter") || "all");
+  const [searchTerm, setSearchTerm] = useState("");  
+  const [priceRange, setPriceRange] = useState([0, 9999999999999.99]);
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "featured");
+  const [normalPage, setNormalPage] = useState(Number(searchParams.get("page")) || 1);
+
+  // NLP search states
   const [nlpInput, setNlpInput] = useState(searchParams.get("q") || "");
   const [nlpQuery, setNlpQuery] = useState(searchParams.get("q") || "");
   const [nlpPage, setNlpPage] = useState(Number(searchParams.get("page")) || 1);
 
-  // whenever nlpQuery or page changes, sync to URL
+  // Master URL Sync Effect
   useEffect(() => {
     const params = {};
-    if (nlpQuery) params.q = nlpQuery;
-    if (nlpPage > 1) params.page = nlpPage;
-    setSearchParams(params);
-  }, [nlpQuery, nlpPage, setSearchParams]);
+    if (nlpQuery) {
+      // NLP Mode
+      params.q = nlpQuery;
+      if (nlpPage > 1) params.page = nlpPage;
+    } else {
+      // Normal Mode
+      if (filter !== "all") params.filter = filter;
+      if (sortBy !== "featured") params.sort = sortBy;
+      if (normalPage > 1) params.page = normalPage;
+    }
+    setSearchParams(params, { replace: true });
+  }, [nlpQuery, nlpPage, filter, sortBy, normalPage, setSearchParams]);
 
   useEffect(() => {
-    setFilter("all");
+    // Clear normal filter when NLP is active (optional, based on previous logic)
+    if (nlpQuery) setFilter("all");
   }, [nlpQuery]);
 
   // UI states
@@ -89,13 +98,40 @@ const BuyPage = () => {
     sort: sortBy, 
   });
 
-  // Reset pages when queries or filters change
+  // Track previous values to prevent unnecessary page resets (especially in StrictMode)
+  const prevFilterRef = React.useRef(filter);
+  const prevSortByRef = React.useRef(sortBy);
+  const prevSearchTermRef = React.useRef(searchTerm);
+  const prevPriceRangeRef = React.useRef(JSON.stringify(priceRange));
+
+  // Reset pages only when queries or filters genuinely change
   useEffect(() => {
-    setNormalPage(1);
+    const priceRangeJson = JSON.stringify(priceRange);
+    
+    const filterChanged = prevFilterRef.current !== filter;
+    const sortByChanged = prevSortByRef.current !== sortBy;
+    const searchTermChanged = prevSearchTermRef.current !== searchTerm;
+    const priceRangeChanged = prevPriceRangeRef.current !== priceRangeJson;
+
+    if (filterChanged || sortByChanged || searchTermChanged || priceRangeChanged) {
+      setNormalPage(1);
+    }
+
+    // Update refs
+    prevFilterRef.current = filter;
+    prevSortByRef.current = sortBy;
+    prevSearchTermRef.current = searchTerm;
+    prevPriceRangeRef.current = priceRangeJson;
   }, [filter, searchTerm, priceRange, sortBy]);
 
+  const prevNlpQueryRef = React.useRef(nlpQuery);
+
   useEffect(() => {
-    setNlpPage(1);
+    // Only reset page if the query actually changed
+    if (prevNlpQueryRef.current !== nlpQuery) {
+      setNlpPage(1);
+    }
+    prevNlpQueryRef.current = nlpQuery;
   }, [nlpQuery]);
 
   const isNlpActive = nlpQuery.trim().length > 0;
