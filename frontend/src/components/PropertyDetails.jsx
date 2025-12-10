@@ -2,7 +2,7 @@
 /* eslint-disable no-unused-vars */
 
 import React, { useEffect, useState, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -37,7 +37,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 import axios from 'axios';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useAuth } from "../context/AuthContext";
 
 const DetailItem = ({ label, value }) => (
@@ -79,13 +79,37 @@ const toggleFavoriteProperty = async ({ userId, propertyId, isCurrentlyLiked }) 
 };
 
 const PropertyDetails = () => {
+  const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const initialProperty = location.state?.property;
+  const { user, isLoggedIn } = useAuth();
+  const userId = user?.user_id;
+
+  // Fetch fresh property details
+  const { data: fetchedProperty, isLoading, error } = useQuery({
+    queryKey: ['property', id, userId],
+    queryFn: async () => {
+      const response = await axios.get(`/api/property/${id}`, {
+        params: { userId }
+      });
+      return response.data;
+    },
+    enabled: !!id,
+    staleTime: 0, // Always fetch fresh data on mount
+  });
   
-  // Use local state for property to allow updates
-  const [property, setProperty] = useState(initialProperty);
+  // Use local state for property to allow updates (optimistic UI)
+  // Initialize with passed state if available, otherwise wait for fetch
+  const [property, setProperty] = useState(initialProperty || null);
   
+  // Update local state when fetched data arrives
+  useEffect(() => {
+    if (fetchedProperty) {
+      setProperty(fetchedProperty);
+    }
+  }, [fetchedProperty]);
+
   console.log("Amenities data received:", property?.amenities);
 
   const queryClient = useQueryClient();
@@ -105,15 +129,6 @@ const PropertyDetails = () => {
   
   const sliderRef = useRef(null);
 
-  const { user, isLoggedIn } = useAuth();
-  const userId = user?.user_id;
-
-  // Sync local property state when navigation state changes
-  useEffect(() => {
-    if (initialProperty) {
-      setProperty(initialProperty);
-    }
-  }, [initialProperty?.property_id]);
 
   // Toast notification function
   const displayToast = (message, type = 'success') => {

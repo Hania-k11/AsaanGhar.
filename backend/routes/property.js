@@ -1437,4 +1437,79 @@ router.post(
 );
 
 //.
+// Get Single Property Details (with favorite status)
+router.get('/:propertyId', async (req, res) => {
+  const propertyId = parseInt(req.params.propertyId, 10);
+  const userId = req.query.userId ? parseInt(req.query.userId, 10) : null;
+
+  if (isNaN(propertyId)) return res.status(400).json({ error: 'Invalid property ID' });
+
+  try {
+    let sql = `
+      SELECT 
+        p.*,
+        l.area AS location_name,
+        l.city AS location_city,
+        pt.name AS property_type_name,
+        fs.name AS furnishing_status_name,
+        lt.name AS listing_type_name,
+        COALESCE(fav_count.favorite_count, 0) AS favorite_count,
+        COALESCE(inq_count.inquiry_count, 0) AS inquiries,
+        GROUP_CONCAT(DISTINCT
+          CONCAT(pi.image_id, ':', pi.image_url, ':', pi.is_main) 
+          ORDER BY pi.is_main DESC, pi.image_id ASC 
+          SEPARATOR '||'
+        ) AS images,
+        -- Add contact information
+        c.contact_name,
+        c.contact_email,
+        c.contact_phone,
+        c.contact_whatsapp,
+        pc.pref_email,
+        pc.pref_phone,
+        pc.pref_whatsapp,
+        -- Add favorites info
+        ${userId ? 'IF(f_user.favorite_id IS NOT NULL, 1, 0)' : '0'} AS is_favorite
+      FROM properties p
+      LEFT JOIN locations l ON p.location_id = l.location_id
+      LEFT JOIN property_types pt ON p.property_type_id = pt.property_type_id
+      LEFT JOIN furnishing_statuses fs ON p.furnishing_status_id = fs.furnishing_status_id
+      LEFT JOIN listing_types lt ON p.listing_type_id = lt.listing_type_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS favorite_count
+        FROM favorites
+        GROUP BY property_id
+      ) fav_count ON p.property_id = fav_count.property_id
+      LEFT JOIN (
+        SELECT property_id, COUNT(*) AS inquiry_count
+        FROM inquiries
+        GROUP BY property_id
+      ) inq_count ON p.property_id = inq_count.property_id
+      LEFT JOIN property_images pi ON p.property_id = pi.property_id
+      -- Join contact information
+      LEFT JOIN property_contacts pc ON p.property_id = pc.property_id
+      LEFT JOIN contacts c ON pc.contact_id = c.contact_id
+      ${userId ? 'LEFT JOIN favorites f_user ON p.property_id = f_user.property_id AND f_user.user_id = ?' : ''}
+      WHERE p.property_id = ?
+        AND p.is_deleted = 0
+      GROUP BY p.property_id
+    `;
+
+    const params = userId ? [userId, propertyId] : [propertyId];
+
+    const [rows] = await pool.query(sql, params);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    const property = parsePropertyImages(rows[0]);
+
+    res.status(200).json(property);
+  } catch (err) {
+    console.error('Error fetching property details:', err);
+    res.status(500).json({ error: 'Failed to retrieve property details' });
+  }
+});
+
 module.exports = router;
