@@ -206,7 +206,7 @@ const handleUpload = async () => {
           onChange={(e) => setCnicNumber(e.target.value.replace(/\D/g, '').slice(0, 13))}
           placeholder="Enter 13-digit CNIC"
           maxLength={13}
-          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+          className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-emerald-600"
         />
       </div>
 
