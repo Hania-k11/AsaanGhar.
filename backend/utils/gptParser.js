@@ -33,6 +33,8 @@ Examples:
 - "mujhe dha me ghar chahiye" → "I want a house in DHA"
 - "gulshan me flat kiraye pe" → "flat for rent in Gulshan"
 - "hous in johar" → "house in Johar"
+- "hous in pechs" → "house in PECHS"
+- "partment in scheme33" → "apartment in Scheme 33"
 - "3 bed room apartmnt" → "3 bedroom apartment"
 
 User Query: "${userInput}"
@@ -60,10 +62,36 @@ Normalized Query:`;
 }
 
 function isRealEstateQuery(input) {
-  // Check for real estate related keywords in English, Urdu, and Roman Urdu
-  const realEstateKeywords = /\b(ghar|house|flat|home|apartment|property|bangla|ghr|kamra|room|bedroom|bathroom|area|karachi|lahore|islamabad|dha|defence|defense|gulshan|johar|rent|sale|buy|purchase|lease|kiraya|kiray|bechna|khareedna|makan|plot|land|commercial|residential|office|shop|warehouse|marla|kanal|sqft|square|furnished|unfurnished|کرایہ|بیچنا|گھر|مکان|فلیٹ)\b/i;
+  const keywordString = `
+    ghar|house|flat|home|apartment|property|bangla|banglow|bungalow|
+    ghr|makaan|makan|room|kamra|bed|bedroom|bath|bathroom|kitchen|
+    lounge|drawing|dining|portion|upper|lower|annexe|annex|unit|
+
+    rent|kiraya|kiraye|kiray|lease|sale|sell|buy|purchase|
+    bechna|khareedna|invest|investment|tolet|to-let|tenant|
+
+    plot|land|residential|commercial|industrial|
+    office|shop|warehouse|factory|villa|penthouse|studio|
+    farmhouse|farm|building|hall|hostel|
+
+    marla|kanal|sqft|square|yard|gaz|acre|
+
+    furnished|unfurnished|semi|parking|balcony|lift|elevator|
+    security|home|generator|backup|gas|water|electricity|
+
+    karachi|lahore|islamabad|rawalpindi|pindi|multan|quetta|
+    faisalabad|sialkot|pechs|pchs|PECHS|Scheme 33|
+    dha|defence|defense|gulshan|jauhar|johar|nazimabad|clifton|
+    bahria|bahriatown|scheme|malir|surjani|korangi|
+
+    کرایہ|بیچنا|خریدنا|گھر|مکان|فلیٹ|پلٹ|زمین|کمرہ|بیڈروم|باتھ|فراشنڈ
+  `.replace(/\s/g, '');
+
+  const realEstateKeywords = new RegExp(`\\b(${keywordString})\\b`, 'gi');
+
   return realEstateKeywords.test(input);
 }
+
 
 async function parseSearchQuery(userInput) {
   // Step 1: Normalize the query (translate Urdu/Roman Urdu, fix typos)
