@@ -37,6 +37,4 @@ Converts spoken or typed input into structured constraints and returns accurate,
 ```text
 /frontend       # React.js frontend code
 /backend        # Node.js/Express backend code
-/utils          # NLP processing & helper functions
-/database       # MySQL schema & queries
-/docs           # Documentation, API guides, FYP report
+
