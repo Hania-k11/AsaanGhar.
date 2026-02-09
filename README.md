@@ -15,7 +15,7 @@ Converts spoken or typed input into structured constraints and returns accurate,
 ## 🚀 Features
 - **Natural Language Search:** Type or speak queries like `"3-bedroom apartments near schools with parking"`.
 - **AI/NLP Processing:** Extracts location, bedrooms, amenities, and nearby facilities.
-- **Distance Calculation:** Filters properties by proximity using Google Maps API.
+- **Distance Calculation:** Filters properties by proximity using Open Street Maps API.
 - **Full-Stack Implementation:** React.js/Next.js frontend, Node.js/Express backend, MySQL database.
 - **Responsive Design:** Optimized for both desktop and mobile.
 - **Cloud Deployment:** Frontend on Vercel, backend & database on Railway.
@@ -27,7 +27,7 @@ Converts spoken or typed input into structured constraints and returns accurate,
 - **Backend:** Node.js, Express.js, RESTful APIs  
 - **Database:** MySQL  
 - **AI/NLP:** Constraint extraction, preprocessing, dataset handling  
-- **APIs:** Google Maps, Distance Calculation  
+- **APIs:** Open Street Maps, Distance Calculation  
 - **Version Control:** Git, GitHub  
 - **Deployment:** Vercel, Railway  
 
