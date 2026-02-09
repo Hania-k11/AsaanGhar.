@@ -1,52 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NLP-Based Real Estate Search Platform - FYP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            margin: 20px;
-            color: #333;
-        }
-        h1, h2, h3 {
-            color: #1f4f82;
-        }
-        code {
-            background-color: #f4f4f4;
-            padding: 2px 4px;
-            border-radius: 4px;
-        }
-        pre {
-            background-color: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-        ul {
-            margin: 10px 0 20px 20px;
-        }
-        a {
-            color: #1f4f82;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <h1>NLP-Based Real Estate Search Platform</h1>
+# 🏡 NLP-Based Real Estate Search Platform
 
-    <h2>👋 Project Overview</h2>
-    <p>
-        This project is a full-stack web application that allows users to search for real estate properties using <strong>natural language queries</strong>. 
-        It converts spoken or typed input into structured constraints and returns results that match multiple conditions accurately. 
-        The platform integrates AI/NLP, mapping APIs, and database filtering to provide a user-friendly and intelligent property search experience.
-    </p>
+[![GitHub repo size](https://img.shields.io/github/repo-size/yourusername/real-estate-nlp)](https://github.com/yourusername/real-estate-nlp)
+[![GitHub stars](https://img.shields.io/github/stars/yourusername/real-estate-nlp?style=social)](https://github.com/yourusername/real-estate-nlp)
+[![GitHub forks](https://img.shields.io/github/forks/yourusername/real-estate-nlp?style=social)](https://github.com/yourusername/real-estate-nlp)
 
-    <h2>💻 Features</h2>
-    <ul>
-        <li><strong>Natural Language Search:</strong> Type or speak queries like "3-bedroom apartments near schools with parking" and receive accurate results.</li>
-        <li><strong>AI/NLP Processing:</strong> Extracts constraints (location, bedrooms, amenities, distances) from natural language input.</li>
-        <li><strong>Distance Calculation:</strong> Integrates Google Maps and other APIs to filter properties based on proximity to amenities.</li>
-        <li><strong>Full-Stack Implementation:</strong> Frontend in Re
+---
+
+## 👋 About the Project
+A **full-stack real estate platform** that allows users to search for properties using **natural language queries**.  
+Converts spoken or typed input into structured constraints and returns accurate, multi-condition results.  
+
+---
+
+## 🚀 Features
+- **Natural Language Search:** Type or speak queries like `"3-bedroom apartments near schools with parking"`.
+- **AI/NLP Processing:** Extracts location, bedrooms, amenities, and nearby facilities.
+- **Distance Calculation:** Filters properties by proximity using Google Maps API.
+- **Full-Stack Implementation:** React.js/Next.js frontend, Node.js/Express backend, MySQL database.
+- **Responsive Design:** Optimized for both desktop and mobile.
+- **Cloud Deployment:** Frontend on Vercel, backend & database on Railway.
+
+---
+
+## 🛠 Technologies Used
+- **Frontend:** React.js, Next.js, HTML, CSS, Tailwind CSS  
+- **Backend:** Node.js, Express.js, RESTful APIs  
+- **Database:** MySQL  
+- **AI/NLP:** Constraint extraction, preprocessing, dataset handling  
+- **APIs:** Google Maps, Distance Calculation  
+- **Version Control:** Git, GitHub  
+- **Deployment:** Vercel, Railway  
+
+---
+
+## 🗂 Repository Structure
+```text
+/frontend       # React.js frontend code
+/backend        # Node.js/Express backend code
+/utils          # NLP processing & helper functions
+/database       # MySQL schema & queries
+/docs           # Documentation, API guides, FYP report
